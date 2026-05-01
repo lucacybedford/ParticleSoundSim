@@ -4,8 +4,6 @@
 
 ## Immediate
 
-- [ ] Set up C++ project with GLFW + GLAD + GLM + Dear ImGui build system (CMake)
-
 ---
 
 ## In Progress
@@ -15,7 +13,6 @@
 ## Backlog
 
 - [ ] Design core data structures: particle, room geometry, surface, microphone
-- [ ] Implement basic room construction (axis-aligned bounding box to start)
 - [ ] Implement particle emitter (sound source): position, emission angle, frequency, amplitude
 - [ ] Implement particle propagation step (velocity, time-of-flight, distance attenuation)
 - [ ] Implement surface collision detection and response (reflection)
@@ -33,3 +30,7 @@
 ---
 
 ## Done
+
+- [x] Set up C++ project with GLFW + GLAD + GLM + Dear ImGui build system (CMake)
+- [x] Convert to using GLM instead of Eigen
+- [x] Implement basic room construction (axis-aligned bounding box to start)
