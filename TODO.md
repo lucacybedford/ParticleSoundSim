@@ -18,6 +18,11 @@
 
 ## Backlog
 
+- [ ] Define particle initial energy `e_0 = W/N * \del t` (`W`: source power, `N`: particles, `\del t`: sound step)
+- [ ] Implement angle-dependent absorption coefficient
+- [ ] Implement air absorption probability: `f(r) = exp(-mr)` (`r`: distance, `m`: atmospheric absorption coefficient)
+- [ ] Generate RIR
+- [ ] Convolve RIR with input sound, produce output sound
 - [ ] Implement virtual microphone accumulation (particle hit detection + signal reconstruction)
 - [ ] Implement material property model (absorption coefficient per surface)
 - [ ] Implement transmission through surfaces (partial pass-through)
