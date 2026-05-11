@@ -18,12 +18,13 @@ struct Plane {
 };
 
 struct Point {
-  int MAX_ITERATIONS = 5;
-  double dt = 0.016; // 1/60th of a second (duration of one timestep)
+  static constexpr int MAX_ITERATIONS = 5;
+  static constexpr double dt =
+      0.016; // 1/60th of a second (duration of one timestep)
   double vel = 10;
   dvec2 x{50, 50};
   dvec2 v{0.1, 0.1};
-  Point(double vx, double vy, double vel) : v(vx, vy), vel(vel) {
+  Point(double vx, double vy, double speed) : v(vx, vy), vel(speed) {
     v = glm::normalize(v) * vel;
   };
   Point() {
@@ -38,16 +39,37 @@ struct Point {
     // vel *= 0.8;
     v = glm::normalize(v) * vel;
   }
+  // NOTE: r might be unused, waiting for future implementation
+  // TODO: Use vector of pairs
   void update(unsigned int r, std::vector<Plane> &planes) {
     double remaining_dt = dt;
 
+    // std::vector<std::pair<double, Plane *>> hits;
+    // hits.reserve(planes.size());
+
     int iteration = 0;
     while (remaining_dt > 0 && iteration < MAX_ITERATIONS) {
+      //   hits.clear();
+      //   dvec2 x_new = x + v * remaining_dt;
+      //   for (Plane &p : planes) {
+      //     double denom = glm::dot(p.n, x_new - x);
+      //     if (std::abs(denom) < 1e-12)
+      //       continue;
+      //     double t = glm::dot(p.n, p.p - x) / denom;
+      //
+      //     if (t > 1 || t < 0) {
+      //       continue;
+      //     }
+      //     hits.emplace_back(t, &p);
+      //   }
       dvec2 x_new = x + v * remaining_dt;
       std::map<double, std::reference_wrapper<Plane>> planeDistances;
 
       for (Plane &p : planes) {
-        double t = glm::dot(p.n, p.p - x) / glm::dot(p.n, x_new - x);
+        double denom = glm::dot(p.n, x_new - x);
+        if (std::abs(denom) < 1e-12)
+          continue;
+        double t = glm::dot(p.n, p.p - x) / denom;
 
         if (t > 1 || t < 0) {
           continue;
@@ -55,6 +77,13 @@ struct Point {
           planeDistances.emplace(t, std::ref(p));
         }
       }
+
+      // if (hits.empty()) {
+      //   auto it =
+      //       std::min_element(hits.begin(), hits.end(),
+      //                        [](auto &a, auto &b) { return a.first < b.first;
+      //                        });
+      // }
 
       if (planeDistances.size() > 0) {
         auto &[minT, collisionPlaneRef] = *planeDistances.begin();
@@ -121,7 +150,7 @@ int main() {
     points.emplace_back();
   }
 
-  std::vector<Plane> planes = diamondPlanes(10);
+  std::vector<Plane> planes = diamondPlanes(20);
 
   while (!glfwWindowShouldClose(window)) {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -139,10 +168,13 @@ int main() {
     }
     glEnd();
 
+    for (Point &p : points) {
+      p.update(POINT_RADIUS * 0.5, planes);
+    }
+
     glPointSize(POINT_RADIUS * 2);
     glBegin(GL_POINTS);
     for (Point &p : points) {
-      p.update(POINT_RADIUS * 0.5, planes);
       float vx = p.dt * p.x[0];
       float vy = p.dt * p.x[1];
       glColor3f(std::abs(vx), std::abs(vy), vx + vy);
