@@ -4,13 +4,13 @@
 
 ## Immediate
 
-- [ ] Place point definition for planes inside object -> avoids recalculating at each loop
-- [ ] Design core data structures: particle, room geometry, surface, microphone
 
 ---
 
 ## In Progress
 
+- [ ] Place point definition for planes inside object -> avoids recalculating at each loop
+- [ ] Design core data structures: particle, room geometry, surface, microphone
 - [ ] Implement particle emitter (sound source): position, emission angle, frequency band, amplitude
 - [ ] Implement particle propagation step (velocity, time-of-flight, distance attenuation)
 - [ ] Implement surface collision detection and response (reflection)
