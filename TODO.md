@@ -2,17 +2,17 @@
 
 ---
 
-## Immediate
-
-
----
-
-## In Progress
+## Immediate (This week)
 
 - [ ] Place point definition for planes inside object -> avoids recalculating at each loop
 - [ ] Design core data structures: particle, room geometry, surface, microphone
 - [ ] Implement particle emitter (sound source): position, emission angle, frequency band, amplitude
 - [ ] Implement particle propagation step (velocity, time-of-flight, distance attenuation)
+
+---
+
+## In Progress
+
 - [ ] Implement surface collision detection and response (reflection)
 - [ ] Build OpenGL visualisation: room geometry, particles, microphone positions
 
