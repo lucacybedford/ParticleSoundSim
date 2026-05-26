@@ -1,7 +1,6 @@
 #include "glm/geometric.hpp"
-#include <functional>
 #include <glm/glm.hpp>
-#include <map>
+#include <limits>
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 #include <random>
@@ -12,9 +11,16 @@ using glm::dvec2;
 struct Plane {
   dvec2 n;
   dvec2 p;
+  dvec2 tangent;
+  dvec2 end_a;
+  dvec2 end_b;
   double l;
   Plane(dvec2 normal, dvec2 point, double length)
-      : n(glm::normalize(normal)), p(point), l(length) {}
+      : n(glm::normalize(normal)), p(point), l(length) {
+    tangent = {-n[1], n[0]};
+    end_a = p - tangent * (l / 2);
+    end_b = p + tangent * (l / 2);
+  }
 };
 
 struct Point {
@@ -35,64 +41,32 @@ struct Point {
     v[1] = realDist(gen);
     v = glm::normalize(v) * vel;
   };
-  void hit(Plane &plane) {
-    // vel *= 0.8;
-    v = glm::normalize(v) * vel;
-  }
-  // NOTE: r might be unused, waiting for future implementation
-  // TODO: Use vector of pairs
+  void hit(Plane &plane) { v = glm::normalize(v) * vel; }
   void update(unsigned int r, std::vector<Plane> &planes) {
     double remaining_dt = dt;
 
-    // std::vector<std::pair<double, Plane *>> hits;
-    // hits.reserve(planes.size());
-
     int iteration = 0;
     while (remaining_dt > 0 && iteration < MAX_ITERATIONS) {
-      //   hits.clear();
-      //   dvec2 x_new = x + v * remaining_dt;
-      //   for (Plane &p : planes) {
-      //     double denom = glm::dot(p.n, x_new - x);
-      //     if (std::abs(denom) < 1e-12)
-      //       continue;
-      //     double t = glm::dot(p.n, p.p - x) / denom;
-      //
-      //     if (t > 1 || t < 0) {
-      //       continue;
-      //     }
-      //     hits.emplace_back(t, &p);
-      //   }
       dvec2 x_new = x + v * remaining_dt;
-      std::map<double, std::reference_wrapper<Plane>> planeDistances;
+      double minT = std::numeric_limits<double>::max();
+      Plane *closestPlane = nullptr;
 
       for (Plane &p : planes) {
         double denom = glm::dot(p.n, x_new - x);
         if (std::abs(denom) < 1e-12)
           continue;
         double t = glm::dot(p.n, p.p - x) / denom;
-
-        if (t > 1 || t < 0) {
-          continue;
-        } else {
-          planeDistances.emplace(t, std::ref(p));
+        if (t >= 0 && t <= 1 && t < minT) {
+          minT = t;
+          closestPlane = &p;
         }
       }
 
-      // if (hits.empty()) {
-      //   auto it =
-      //       std::min_element(hits.begin(), hits.end(),
-      //                        [](auto &a, auto &b) { return a.first < b.first;
-      //                        });
-      // }
-
-      if (planeDistances.size() > 0) {
-        auto &[minT, collisionPlaneRef] = *planeDistances.begin();
-        Plane &collisionPlane = collisionPlaneRef.get();
-
+      if (closestPlane) {
         dvec2 x_hit = x + minT * (x_new - x);
-        x = x_hit + collisionPlane.n * 0.00001;
-        hit(collisionPlane);
-        dvec2 v_new = v - 2 * glm::dot(v, collisionPlane.n) * collisionPlane.n;
+        x = x_hit + closestPlane->n * 0.00001;
+        hit(*closestPlane);
+        dvec2 v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
         remaining_dt = remaining_dt * (1 - minT);
         v = v_new;
       } else {
@@ -159,12 +133,8 @@ int main() {
     glBegin(GL_LINES);
     glColor3f(1, 1, 1);
     for (const Plane &plane : planes) {
-      dvec2 tangent(-plane.n[1], plane.n[0]);
-      double half_len = plane.l / 2;
-      dvec2 a = plane.p - tangent * half_len;
-      dvec2 b = plane.p + tangent * half_len;
-      glVertex2f(a[0], a[1]);
-      glVertex2f(b[0], b[1]);
+      glVertex2f(plane.end_a[0], plane.end_a[1]);
+      glVertex2f(plane.end_b[0], plane.end_b[1]);
     }
     glEnd();
 
