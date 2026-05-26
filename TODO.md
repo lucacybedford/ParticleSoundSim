@@ -12,8 +12,7 @@
 
 ## In Progress
 
-- [ ] Implement surface collision detection and response (reflection)
-- [ ] Build OpenGL visualisation: room geometry, particles, microphone positions
+- [ ] Implement surface collision detection and response
 
 ---
 
