@@ -33,10 +33,7 @@ struct Point {
   Point(double vx, double vy, double speed) : v(vx, vy), vel(speed) {
     v = glm::normalize(v) * vel;
   };
-  Point() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> realDist(-1, 1);
+  Point(std::mt19937 &gen, std::uniform_real_distribution<double> &realDist) {
     v[0] = realDist(gen);
     v[1] = realDist(gen);
     v = glm::normalize(v) * vel;
@@ -119,9 +116,12 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> realDist(-1, 1);
   std::vector<Point> points;
   for (int i = 0; i < static_cast<int>(NUM_POINTS); i++) {
-    points.emplace_back();
+    points.emplace_back(gen, realDist);
   }
 
   std::vector<Plane> planes = diamondPlanes(20);
