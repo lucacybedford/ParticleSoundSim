@@ -20,6 +20,7 @@ FetchContent_MakeAvailable(glfw)
 
 find_package(OpenGL REQUIRED)
 
-add_executable(ParticleSoundSim src/main.cpp)
+add_executable(ParticleSoundSim src/main.cpp src/Plane.cpp src/Particle.cpp src/Receiver.cpp)
 
 target_link_libraries(ParticleSoundSim PRIVATE glm::glm glfw OpenGL::GL)
+target_include_directories(ParticleSoundSim PRIVATE include)
