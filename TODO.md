@@ -2,28 +2,26 @@
 
 ---
 
-## Immediate (This week)
+## In Progress
 
-- [ ] Design core data structures: particle, room geometry, surface, microphone
-- [ ] Implement particle emitter (sound source): position, emission angle, frequency band, amplitude
-- [ ] Implement particle propagation step (velocity, time-of-flight, distance attenuation)
+- [ ] Implement distance attenuation for particles
+- [ ] Add particle emitter: including position, emission angle, amplitude
 
 ---
 
-## In Progress
+## This week
 
+- [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
 - [ ] Implement surface collision detection and response
 
 ---
 
 ## Backlog — Core Physics
 
-- [ ] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
-- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
-- [ ] Per-particle frequency-band energy vector (octave or third-octave bands)
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement per-surface IIR filters for frequency-dependent absorption at reflection
-- [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
+- [ ] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
+- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
 - [ ] Implement material property model (absorption coefficient per surface, per band)
 - [ ] Implement transmission through surfaces (partial pass-through, per band)
 
@@ -31,7 +29,7 @@
 
 ## Backlog — Receiver & RIR
 
-- [ ] Implement virtual microphone accumulation (particle hit detection into time–energy histogram: time bin × frequency band × direction)
+- [ ] Implement virtual microphone accumulation with direction
 - [ ] Generate broadband RIR from histogram (energy → pressure, randomised phase per band)
 - [ ] Convolve RIR with input sound, produce output sound (FFT-based / partitioned convolution)
 
@@ -73,3 +71,5 @@
 - [x] Convert to using GLM instead of Eigen
 - [x] Implement basic room construction (axis-aligned bounding box to start)
 - [x] Place point definition for planes inside object -> avoids recalculating at each loop
+- [x] Design core data structures: particle, room geometry, surface, microphone
+- [x] Per-particle frequency-band energy vector
