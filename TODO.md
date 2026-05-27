@@ -11,6 +11,7 @@
 
 ## This week
 
+- [ ] Visualise histogram accumulation
 - [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
 - [ ] Implement surface collision detection and response
 
@@ -47,7 +48,6 @@
 
 ## Backlog — Visualisation & UI
 
-- [ ] Integrate GLAD (OpenGL loader)
 - [ ] Integrate Dear ImGui
 - [ ] Implement Dear ImGui sidebar (particle count, material sliders, play/pause, waveform)
 - [ ] Add waveform display in ImGui panel (reconstructed signal at microphone)
