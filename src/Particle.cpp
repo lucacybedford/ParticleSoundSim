@@ -3,14 +3,12 @@
 #include <glm/geometric.hpp>
 #include <limits>
 
-Particle::Particle(double vx, double vy, double speed) : v(vx, vy), vel(speed) {
-  v = glm::normalize(v) * vel;
-}
-
 Particle::Particle(std::mt19937 &gen,
-                   std::uniform_real_distribution<double> &realDist) {
-  v[0] = realDist(gen);
-  v[1] = realDist(gen);
+                   std::uniform_real_distribution<double> &angDist,
+                   dvec2 &position)
+    : x(position) {
+  v[0] = cos(angDist(gen));
+  v[1] = sin(angDist(gen));
   v = glm::normalize(v) * vel;
 }
 

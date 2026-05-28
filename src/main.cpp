@@ -1,11 +1,10 @@
+#include "Emitter.hpp"
 #include "Particle.hpp"
 #include "Plane.hpp"
 #include "Receiver.hpp"
 #include <algorithm>
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
-#include <algorithm>
-#include <random>
 #include <vector>
 
 std::vector<Plane> diamondPlanes(double size) {
@@ -48,12 +47,14 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<double> realDist(-1, 1);
+  std::vector<Emitter> emitters;
+  emitters.emplace_back(dvec2{50, 40}, 5 * M_PI / 4, 7 * M_PI / 4);
+  emitters.emplace_back(dvec2{50, 60}, 1 * M_PI / 4, 3 * M_PI / 4);
+
   std::vector<Particle> particles;
-  for (int i = 0; i < static_cast<int>(NUM_PARTICLES); i++) {
-    particles.emplace_back(gen, realDist);
+  for (Emitter &em : emitters) {
+    auto emitted = em.emit(NUM_PARTICLES);
+    particles.insert(particles.end(), emitted.begin(), emitted.end());
   }
 
   std::vector<Plane> planes = diamondPlanes(20);

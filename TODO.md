@@ -5,7 +5,6 @@
 ## In Progress
 
 - [ ] Implement distance attenuation for particles
-- [ ] Add particle emitter: including position, emission angle, amplitude
 - [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
 - [ ] Implement surface collision detection and response
 - [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
@@ -74,3 +73,4 @@
 - [x] Place point definition for planes inside object -> avoids recalculating at each loop
 - [x] Design core data structures: particle, room geometry, surface, microphone
 - [x] Per-particle frequency-band energy vector
+- [x] Add particle emitter: including position, emission angle, amplitude

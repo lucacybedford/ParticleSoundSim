@@ -12,10 +12,10 @@ struct Particle {
   dvec2 x{50, 50};
   dvec2 v{0.1, 0.1};
   bool alive = true;
-  std::array<double, 8> energies{100, 100, 100, 100, 100, 100, 100, 100};
+  std::array<double, 8> energies{1, 1, 1, 1, 1, 1, 1, 1};
 
-  Particle(double vx, double vy, double speed);
-  Particle(std::mt19937 &gen, std::uniform_real_distribution<double> &realDist);
+  Particle(std::mt19937 &gen, std::uniform_real_distribution<double> &angDist,
+           dvec2 &position);
 
   void hit(Plane &plane);
   void move(double dt, std::vector<Plane> &planes);
