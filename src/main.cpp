@@ -103,10 +103,19 @@ int main() {
 
     // Draw receivers
     glBegin(GL_POINTS);
-    for (Receiver &r : receivers) {
+    for (const Receiver &r : receivers) {
       glPointSize(r.size * 2);
       glColor3f(1.0f, 0.0f, 0.0f);
       glVertex2f(r.x[0], r.x[1]);
+    }
+    glEnd();
+
+    // Draw emitters
+    glBegin(GL_POINTS);
+    for (const Emitter &e : emitters) {
+      glPointSize(2);
+      glColor3f(0.7f, 1.0f, 0.0f);
+      glVertex2f(e.x[0], e.x[1]);
     }
     glEnd();
 
