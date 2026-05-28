@@ -6,14 +6,15 @@
 
 - [ ] Implement distance attenuation for particles
 - [ ] Add particle emitter: including position, emission angle, amplitude
+- [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
+- [ ] Implement surface collision detection and response
+- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
 
 ---
 
 ## This week
 
 - [ ] Visualise histogram accumulation
-- [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
-- [ ] Implement surface collision detection and response
 
 ---
 
@@ -22,7 +23,6 @@
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement per-surface IIR filters for frequency-dependent absorption at reflection
 - [ ] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
-- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
 - [ ] Implement material property model (absorption coefficient per surface, per band)
 - [ ] Implement transmission through surfaces (partial pass-through, per band)
 
@@ -56,6 +56,7 @@
 
 ## Backlog — Performance
 
+- [ ] Implement purely backend version
 - [ ] Profile and identify bottlenecks
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
 - [ ] CPU parallelisation (multithreading, SIMD)
