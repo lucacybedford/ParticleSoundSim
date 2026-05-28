@@ -22,5 +22,5 @@ struct Particle {
   void move(double dt, std::vector<Plane> &planes);
   void check_receiver_collision(double time, std::vector<Receiver> &receivers);
   void absorb();
-  void check_energy();
+  double check_energy();
 };

@@ -92,10 +92,11 @@ int main() {
     glPointSize(POINT_RADIUS * 2);
     glBegin(GL_POINTS);
     for (Particle &p : particles) {
-      float r = static_cast<float>((p.x[0] - 30.0) / 40.0);
-      float g = static_cast<float>((p.x[1] - 30.0) / 40.0);
-      float b = static_cast<float>((r + g) / 2.0);
-      glColor3f(r, g, b);
+      double energy = p.check_energy();
+      float t = static_cast<float>(
+          std::log10(energy) / -6); // rescale to 0 for full and 1 at threshold
+      t = std::clamp(t, 0.0f, 1.0f);
+      glColor3f(1 - t, 1 - t, 1 - 0.8 * t);
       glVertex2f(p.x[0], p.x[1]);
     }
     glEnd();

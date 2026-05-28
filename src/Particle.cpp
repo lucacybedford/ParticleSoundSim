@@ -15,11 +15,12 @@ Particle::Particle(std::mt19937 &gen,
 
 void Particle::absorb() { alive = false; }
 
-void Particle::check_energy() {
+double Particle::check_energy() {
   double energy_sum = std::accumulate(energies.begin(), energies.end(), 0.0);
   if (energy_sum < energy_threshold) {
     absorb();
   }
+  return energy_sum;
 }
 
 void Particle::hit(Plane &plane) {

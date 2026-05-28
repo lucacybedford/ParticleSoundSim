@@ -4,10 +4,10 @@
 
 ## In Progress
 
+- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
 - [ ] Implement distance attenuation for particles
 - [ ] Implement air absorption: `f(r) = exp(-m·r)` (`r`: distance, `m`: band-dependent atmospheric absorption coefficient)
 - [ ] Implement surface collision detection and response
-- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
 
 ---
 
