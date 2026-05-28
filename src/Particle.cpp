@@ -2,6 +2,7 @@
 #include "Receiver.hpp"
 #include <glm/geometric.hpp>
 #include <limits>
+#include <numeric>
 
 Particle::Particle(std::mt19937 &gen,
                    std::uniform_real_distribution<double> &angDist,
@@ -13,6 +14,13 @@ Particle::Particle(std::mt19937 &gen,
 }
 
 void Particle::absorb() { alive = false; }
+
+void Particle::check_energy() {
+  double energy_sum = std::accumulate(energies.begin(), energies.end(), 0.0);
+  if (energy_sum < energy_threshold) {
+    absorb();
+  }
+}
 
 void Particle::hit(Plane &plane) {
   v = glm::normalize(v) * vel;

@@ -6,7 +6,6 @@ Emitter::Emitter(const dvec2 &x) : x(x) {}
 Emitter::Emitter(const dvec2 &x, float start, float end)
     : x(x), ang_start(start), ang_end(end) {}
 
-// TODO: finish implementing emitting code
 std::vector<Particle> Emitter::emit(const int num_particles) {
   std::random_device rd;
   std::mt19937 gen(rd());

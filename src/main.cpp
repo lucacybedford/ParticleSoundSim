@@ -65,8 +65,20 @@ int main() {
   double time = 0;
 
   while (!glfwWindowShouldClose(window)) {
+
+    // Update particles
+    for (Particle &p : particles) {
+      p.move(DT, planes);
+      p.check_receiver_collision(time, receivers);
+      p.check_energy();
+    }
+    particles.erase(std::remove_if(particles.begin(), particles.end(),
+                                   [](const Particle &p) { return !p.alive; }),
+                    particles.end());
+
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Draw room
     glLineWidth(5);
     glBegin(GL_LINES);
     glColor3f(1, 1, 1);
@@ -76,14 +88,7 @@ int main() {
     }
     glEnd();
 
-    for (Particle &p : particles) {
-      p.move(DT, planes);
-      p.check_receiver_collision(time, receivers);
-    }
-    particles.erase(std::remove_if(particles.begin(), particles.end(),
-                                   [](const Particle &p) { return !p.alive; }),
-                    particles.end());
-
+    // Draw particles
     glPointSize(POINT_RADIUS * 2);
     glBegin(GL_POINTS);
     for (Particle &p : particles) {
@@ -95,7 +100,7 @@ int main() {
     }
     glEnd();
 
-    // glPointSize(POINT_RADIUS * 2);
+    // Draw receivers
     glBegin(GL_POINTS);
     for (Receiver &r : receivers) {
       glPointSize(r.size * 2);

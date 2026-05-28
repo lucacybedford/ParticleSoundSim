@@ -8,6 +8,7 @@ struct Receiver;
 
 struct Particle {
   static constexpr int MAX_ITERATIONS = 5;
+  static constexpr double energy_threshold = 1e-6;
   double vel = 100;
   dvec2 x{50, 50};
   dvec2 v{0.1, 0.1};
@@ -21,4 +22,5 @@ struct Particle {
   void move(double dt, std::vector<Plane> &planes);
   void check_receiver_collision(double time, std::vector<Receiver> &receivers);
   void absorb();
+  void check_energy();
 };
