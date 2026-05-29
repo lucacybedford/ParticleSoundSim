@@ -20,7 +20,22 @@ FetchContent_MakeAvailable(glfw)
 
 find_package(OpenGL REQUIRED)
 
-add_executable(ParticleSoundSim src/main.cpp src/Plane.cpp src/Particle.cpp src/Receiver.cpp src/Emitter.cpp)
+# Shared, render-free simulation core. Both apps link against this so they run
+# identical physics. Only glm is needed here -- no GLFW/OpenGL.
+add_library(core
+  src/Plane.cpp
+  src/Particle.cpp
+  src/Receiver.cpp
+  src/Emitter.cpp
+  src/Scene.cpp
+  src/Simulation.cpp)
+target_include_directories(core PUBLIC include)
+target_link_libraries(core PUBLIC glm::glm)
 
-target_link_libraries(ParticleSoundSim PRIVATE glm::glm glfw OpenGL::GL)
-target_include_directories(ParticleSoundSim PRIVATE include)
+# Front-end: the visual simulation (GLFW window + OpenGL rendering).
+add_executable(ParticleSoundSim src/app_visual.cpp)
+target_link_libraries(ParticleSoundSim PRIVATE core glfw OpenGL::GL)
+
+# Back-end: the headless offline simulation.
+add_executable(ParticleSoundSimOffline src/app_offline.cpp)
+target_link_libraries(ParticleSoundSimOffline PRIVATE core)
