@@ -1,4 +1,6 @@
 #pragma once
+#include "AirAbsorption.hpp"
+#include "Atmosphere.hpp"
 #include "Particle.hpp"
 #include "Scene.hpp"
 #include "SimConfig.hpp"
@@ -11,11 +13,13 @@
 struct Simulation {
   Scene scene;                    // the room (walls/emitters/receivers)
   SimConfig cfg;                  // tunable parameters
+  Atmosphere atmosphere;          // the medium (sets the speed of sound)
+  AirAbsorption air;              // precomputed air-absorption coefficients
   std::vector<Particle> particles; // live sound particles
   double time = 0;                // simulation clock (seconds)
 
-  // Builds the scene's particles by emitting from every emitter.
-  Simulation(Scene scene, SimConfig cfg);
+  // Builds the scene's particles, launching each at the speed of sound.
+  Simulation(Scene scene, SimConfig cfg, Atmosphere atmosphere);
 
   // Advance the whole simulation by dt: move every particle, deposit any that
   // reach a receiver, cull dead ones, then tick the clock. This is exactly the

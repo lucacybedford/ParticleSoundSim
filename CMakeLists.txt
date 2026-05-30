@@ -27,6 +27,8 @@ add_library(core
   src/Particle.cpp
   src/Receiver.cpp
   src/Emitter.cpp
+  src/Atmosphere.cpp
+  src/AirAbsorption.cpp
   src/Scene.cpp
   src/Simulation.cpp)
 target_include_directories(core PUBLIC include)

@@ -1,4 +1,5 @@
 #include "Particle.hpp"
+#include "AirAbsorption.hpp"
 #include "Receiver.hpp"
 #include <glm/geometric.hpp>
 #include <limits>
@@ -6,8 +7,8 @@
 
 Particle::Particle(std::mt19937 &gen,
                    std::uniform_real_distribution<double> &angDist,
-                   dvec2 &position)
-    : x(position) {
+                   dvec2 &position, double speed)
+    : vel(speed), x(position) {
   v[0] = cos(angDist(gen));
   v[1] = sin(angDist(gen));
   v = glm::normalize(v) * vel;
@@ -31,11 +32,15 @@ void Particle::hit(Plane &plane) {
 }
 
 void Particle::check_receiver_collision(double time,
-                                        std::vector<Receiver> &receivers) {
-  for (Receiver &r : receivers) {
-    float dist = glm::distance(r.x, x);
-    if (dist <= r.size) {
-      r.receive(time, energies);
+                                        std::vector<Receiver> &receivers,
+                                        const AirAbsorption *summation) {
+  for (Receiver &rec : receivers) {
+    float dist = glm::distance(rec.x, x);
+    if (dist <= rec.size) {
+      std::array<double, 8> e = energies;
+      if (summation)
+        summation->attenuate_total(e, vel * time); // r = speed * elapsed time
+      rec.receive(time, e);
       absorb();
     }
   }

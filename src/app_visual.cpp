@@ -13,7 +13,11 @@ int main() {
   const unsigned int POINT_RADIUS = 8;
 
   SimConfig cfg;
-  Simulation sim(make_diamond_scene(20), cfg);
+  cfg.fidelity = SimConfig::Fidelity::Realtime;
+  cfg.playback_speed = 0.02; // 50x slow-motion (real sound speed, slow display)
+
+  Atmosphere air; // 20 C -> 343.2 m/s
+  Simulation sim(make_diamond_scene(), cfg, air);
 
   GLFWwindow *window;
   if (!glfwInit())
@@ -26,9 +30,24 @@ int main() {
   }
 
   glfwMakeContextCurrent(window);
+
+  // Fit the camera to the room's bounding box (+ margin) instead of hardcoding
+  // it, so it works for any room dimensions.
+  double minx = 1e30, miny = 1e30, maxx = -1e30, maxy = -1e30;
+  for (const Plane &pl : sim.scene.planes) {
+    for (const dvec2 &pt : {pl.end_a, pl.end_b}) {
+      minx = std::min(minx, pt[0]);
+      maxx = std::max(maxx, pt[0]);
+      miny = std::min(miny, pt[1]);
+      maxy = std::max(maxy, pt[1]);
+    }
+  }
+  double margin = 0.1 * std::max(maxx - minx, maxy - miny);
+
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-10.0, 110.0, -10.0, 110.0, -1.0, 1.0);
+  glOrtho(minx - margin, maxx + margin, miny - margin, maxy + margin, -1.0,
+          1.0);
   glMatrixMode(GL_MODELVIEW);
 
   glEnable(GL_POINT_SMOOTH);
@@ -36,8 +55,9 @@ int main() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   while (!glfwWindowShouldClose(window)) {
-    // Advance the physics by one frame.
-    sim.step(cfg.dt);
+    // Advance the physics by one frame. playback_speed shrinks the time slice
+    // so motion looks slow on screen; the sound speed itself is unchanged.
+    sim.step(cfg.dt * cfg.playback_speed);
 
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -56,27 +76,27 @@ int main() {
     glBegin(GL_POINTS);
     for (Particle &p : sim.particles) {
       double energy = p.check_energy();
-      float t = static_cast<float>(std::log10(energy) /
-                                   -6); // rescale to 0 for full and 1 at threshold
+      float t = static_cast<float>(
+          std::log10(energy) / -6); // rescale to 0 for full and 1 at threshold
       t = std::clamp(t, 0.0f, 1.0f);
       glColor3f(1 - t, 1 - t, 1 - 0.8 * t);
       glVertex2f(p.x[0], p.x[1]);
     }
     glEnd();
 
-    // Draw receivers
+    // Draw receivers (fixed pixel size; glPointSize is in pixels, not metres).
+    glPointSize(14);
     glBegin(GL_POINTS);
     for (const Receiver &r : sim.scene.receivers) {
-      glPointSize(r.size * 2);
       glColor3f(1.0f, 0.0f, 0.0f);
       glVertex2f(r.x[0], r.x[1]);
     }
     glEnd();
 
     // Draw emitters
+    glPointSize(10);
     glBegin(GL_POINTS);
     for (const Emitter &e : sim.scene.emitters) {
-      glPointSize(2);
       glColor3f(0.7f, 1.0f, 0.0f);
       glVertex2f(e.x[0], e.x[1]);
     }

@@ -15,6 +15,6 @@ struct Scene {
   std::vector<Receiver> receivers;
 };
 
-// Builds the test scene that main() used to construct inline: a rotated square
-// room from four diagonal planes, two emitters, one receiver.
-Scene make_diamond_scene(double size);
+// Builds the test scene: a rotated square ("diamond") room, two emitters, one
+// receiver. `room_radius` is the centre-to-wall distance in metres.
+Scene make_diamond_scene(double room_radius = 2.4);
