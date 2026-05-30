@@ -6,9 +6,6 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 
-// Front-end driver: owns the window and the render loop. All physics is
-// delegated to Simulation::step(); this file is purely "build a sim, advance it
-// one frame, draw it".
 int main() {
   const unsigned int POINT_RADIUS = 8;
 
@@ -16,7 +13,7 @@ int main() {
   cfg.fidelity = SimConfig::Fidelity::Realtime;
   cfg.playback_speed = 0.02; // 50x slow-motion (real sound speed, slow display)
 
-  Atmosphere air; // 20 C -> 343.2 m/s
+  Atmosphere air;
   Simulation sim(make_diamond_scene(), cfg, air);
 
   GLFWwindow *window;
@@ -31,8 +28,7 @@ int main() {
 
   glfwMakeContextCurrent(window);
 
-  // Fit the camera to the room's bounding box (+ margin) instead of hardcoding
-  // it, so it works for any room dimensions.
+  // fit camera to room dimensions
   double minx = 1e30, miny = 1e30, maxx = -1e30, maxy = -1e30;
   for (const Plane &pl : sim.scene.planes) {
     for (const dvec2 &pt : {pl.end_a, pl.end_b}) {
@@ -55,8 +51,6 @@ int main() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   while (!glfwWindowShouldClose(window)) {
-    // Advance the physics by one frame. playback_speed shrinks the time slice
-    // so motion looks slow on screen; the sound speed itself is unchanged.
     sim.step(cfg.dt * cfg.playback_speed);
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -84,7 +78,7 @@ int main() {
     }
     glEnd();
 
-    // Draw receivers (fixed pixel size; glPointSize is in pixels, not metres).
+    // Draw receivers
     glPointSize(14);
     glBegin(GL_POINTS);
     for (const Receiver &r : sim.scene.receivers) {

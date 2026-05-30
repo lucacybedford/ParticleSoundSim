@@ -26,6 +26,7 @@ double Particle::check_energy() {
 
 void Particle::hit(Plane &plane) {
   v = glm::normalize(v) * vel;
+  // applies the material's absorption coefficients for each frequency band
   for (size_t i = 0; i < energies.size(); i++) {
     energies[i] *= (1 - plane.absorption[i]);
   }
@@ -38,8 +39,9 @@ void Particle::check_receiver_collision(double time,
     float dist = glm::distance(rec.x, x);
     if (dist <= rec.size) {
       std::array<double, 8> e = energies;
+      // apply summation method of offline
       if (summation)
-        summation->attenuate_total(e, vel * time); // r = speed * elapsed time
+        summation->attenuate_total(e, vel * time);
       rec.receive(time, e);
       absorb();
     }
@@ -49,6 +51,8 @@ void Particle::check_receiver_collision(double time,
 void Particle::move(double dt, std::vector<Plane> &planes) {
   double remaining_dt = dt;
 
+  // uses max iterations for calculating particle position after wall
+  // interaction
   int iteration = 0;
   while (remaining_dt > 0 && iteration < MAX_ITERATIONS) {
     dvec2 x_new = x + v * remaining_dt;
@@ -59,6 +63,7 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
       double denom = glm::dot(p.n, x_new - x);
       if (std::abs(denom) < 1e-12)
         continue;
+      // calculate position along particle path of wall interaction
       double t = glm::dot(p.n, p.p - x) / denom;
       if (t >= 0 && t <= 1 && t < minT) {
         minT = t;
@@ -67,9 +72,11 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
     }
 
     if (closestPlane) {
+      // reposition particle
       dvec2 x_hit = x + minT * (x_new - x);
       x = x_hit + closestPlane->n * 0.00001;
       hit(*closestPlane);
+      // adjust velocity
       dvec2 v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       remaining_dt = remaining_dt * (1 - minT);
       v = v_new;

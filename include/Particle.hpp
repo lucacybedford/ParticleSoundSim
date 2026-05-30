@@ -10,9 +10,9 @@ struct AirAbsorption;
 struct Particle {
   static constexpr int MAX_ITERATIONS = 5;
   static constexpr double energy_threshold = 1e-6;
-  double vel; // particle speed in m/s == speed of sound; set at construction
-  dvec2 x{50, 50};
-  dvec2 v{0.1, 0.1};
+  double vel;
+  dvec2 x;
+  dvec2 v;
   bool alive = true;
   std::array<double, 8> energies{1, 1, 1, 1, 1, 1, 1, 1};
 
@@ -21,10 +21,8 @@ struct Particle {
 
   void hit(Plane &plane);
   void move(double dt, std::vector<Plane> &planes);
-  // `summation` is non-null only in offline mode: when set, the particle's
-  // energy is attenuated by the ISO summation method over its total path
-  // (vel*time) at the moment of detection. In online mode air absorption has
-  // already been applied per-step during flight, so it is left null.
+  // summation is only defined for offline mode to employ accurate absorption
+  // calculations
   void check_receiver_collision(double time, std::vector<Receiver> &receivers,
                                 const AirAbsorption *summation);
   void absorb();

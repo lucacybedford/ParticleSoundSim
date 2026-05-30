@@ -7,6 +7,7 @@ void Receiver::receive(double time, std::array<double, 8> &energies) {
   if (bin >= histogram.size()) {
     histogram.resize(bin + 1, {0, 0, 0, 0, 0, 0, 0, 0});
   }
+  // adds particle's energies to appropriate band at arrival time
   for (size_t i = 0; i < 8; i++) {
     histogram[bin][i] += energies[i];
   }
