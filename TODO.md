@@ -4,7 +4,6 @@
 
 ## In Progress
 
-- [ ] Implement air absorption: `e = e * exp(-m·dt)` (`m`: band-dependent atmospheric absorption coefficient)
 - [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
 - [ ] Implement surface collision detection and response
 
@@ -12,10 +11,6 @@
 
 ## This week
 
-- [ ] Divide simulation into backend and frontend
-- [ ] Use ISO sound attenuation equation for calculating coefficients
-- [ ] Implement summation method for backend, offline simulation
-- [ ] Implement simple single band centre coefficient for visual simulation
 - [ ] Visualise histogram accumulation
 
 ---
@@ -77,3 +72,8 @@
 - [x] Design core data structures: particle, room geometry, surface, microphone
 - [x] Per-particle frequency-band energy vector
 - [x] Add particle emitter: including position, emission angle, amplitude
+- [x] Implement air absorption: `e = e * exp(-m·dt)` (`m`: band-dependent atmospheric absorption coefficient)
+- [x] Divide simulation into backend and frontend
+- [x] Use ISO sound attenuation equation for calculating coefficients
+- [x] Implement summation method for backend, offline simulation
+- [x] Implement simple single band centre coefficient for visual simulation
