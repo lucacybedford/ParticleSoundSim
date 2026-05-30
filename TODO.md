@@ -5,12 +5,13 @@
 ## In Progress
 
 - [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
-- [ ] Implement surface collision detection and response
+- [ ] Implement real wall material absorption coefficients
 
 ---
 
 ## This week
 
+- [ ] Implement RIR convolution with input sound
 - [ ] Visualise histogram accumulation
 
 ---
@@ -53,7 +54,6 @@
 
 ## Backlog — Performance
 
-- [ ] Implement purely backend version
 - [ ] Profile and identify bottlenecks
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
 - [ ] CPU parallelisation (multithreading, SIMD)
@@ -77,3 +77,4 @@
 - [x] Use ISO sound attenuation equation for calculating coefficients
 - [x] Implement summation method for backend, offline simulation
 - [x] Implement simple single band centre coefficient for visual simulation
+- [x] Implement purely backend version
