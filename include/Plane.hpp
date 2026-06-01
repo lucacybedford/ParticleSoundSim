@@ -11,7 +11,7 @@ struct Plane {
   dvec2 end_a;
   dvec2 end_b;
   double l;
-  std::array<double, 8> absorption{0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5};
+  std::array<double, 8> absorption{0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2};
 
   Plane(dvec2 normal, dvec2 point, double length);
 };

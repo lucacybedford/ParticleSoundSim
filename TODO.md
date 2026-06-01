@@ -4,7 +4,7 @@
 
 ## In Progress
 
-- [ ] Define particle initial energy `e_0 = W · Δt / N` (`W`: source power, `Δt`: emission duration, `N`: particles)
+- [ ] Define particle initial energy `e_0 = E_0 / N` (`E_0`: source power, `Δt`: emission duration, `N`: particles)
 - [ ] Implement real wall material absorption coefficients
 
 ---

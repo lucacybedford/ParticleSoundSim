@@ -12,3 +12,4 @@ struct Scene {
 };
 
 Scene make_diamond_scene(double room_radius = 2.4);
+Scene make_big_box();
