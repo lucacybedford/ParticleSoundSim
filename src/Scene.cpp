@@ -19,7 +19,8 @@ Scene make_big_box() {
   scene.planes.emplace_back(Plane({-1, 0}, c, height));
   scene.planes.emplace_back(Plane({0, -1}, d, width));
 
-  scene.emitters.emplace_back(centre + dvec2{0, 5}, 1 * M_PI / 4, 3 * M_PI / 4);
+  scene.emitters.emplace_back(centre + dvec2{0, -15}, 1 * M_PI / 4,
+                              3 * M_PI / 4);
   scene.receivers.emplace_back(0, 15, 0.5);
 
   return scene;

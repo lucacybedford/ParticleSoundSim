@@ -11,7 +11,7 @@ int main() {
 
   SimConfig cfg;
   cfg.fidelity = SimConfig::Fidelity::Realtime;
-  cfg.playback_speed = 0.02; // 50x slow-motion (real sound speed, slow display)
+  cfg.playback_speed = 0.05; // 20x slow-motion (real sound speed, slow display)
 
   Atmosphere air;
   Simulation sim(make_big_box(), cfg, air);
