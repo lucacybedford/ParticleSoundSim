@@ -6,7 +6,7 @@
 // impulse response and convolved output, and to load a dry test signal.
 struct Audio {
   int sample_rate = 44100;
-  std::vector<float> samples; // mono, nominally in [-1, 1]
+  std::vector<float> samples; // mono, in [-1, 1]
 };
 
 // Reads a 16-bit PCM WAV. Multi-channel files are downmixed to mono.
