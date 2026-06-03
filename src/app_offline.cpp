@@ -44,6 +44,7 @@ int main() {
   }
 
   std::string input_path = "dry.wav";
+  std::string output_path = "30x10_concrete.wav";
 
   // Build a pressure RIR from the first receiver and export it. Convolve a dry
   // signal with it if a dry.wav is sitting in the working directory.
@@ -69,7 +70,7 @@ int main() {
       // (For a real run, resample dry to the RIR rate if they differ.)
       std::vector<float> wet = convolve(dry.samples, rir);
       normalize_peak(wet);
-      wav_write("wet.wav", Audio{dry.sample_rate, wet});
+      wav_write(output_path, Audio{dry.sample_rate, wet});
       std::printf("Convolved dry.wav -> wet.wav (%zu samples)\n", wet.size());
     } else {
       std::printf("No dry.wav found -- skipping convolution.\n");
