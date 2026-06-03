@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iterator>
 
+// namespace for helper functions only used in this file
 namespace {
 
 uint16_t rd_u16(const unsigned char *p) {
@@ -55,7 +56,7 @@ bool wav_read(const std::string &path, Audio &out) {
     return false;
 
   out.sample_rate = static_cast<int>(rate);
-  std::size_t total = data_len / 2;        // int16 samples
+  std::size_t total = data_len / 2; // int16 samples
   std::size_t frames = total / channels;
   out.samples.resize(frames);
   for (std::size_t i = 0; i < frames; ++i) {
@@ -87,9 +88,10 @@ bool wav_write(const std::string &path, const Audio &in) {
     f.write(reinterpret_cast<char *>(b), 2);
   };
   auto w32 = [&](uint32_t v) {
-    unsigned char b[4] = {
-        static_cast<unsigned char>(v), static_cast<unsigned char>(v >> 8),
-        static_cast<unsigned char>(v >> 16), static_cast<unsigned char>(v >> 24)};
+    unsigned char b[4] = {static_cast<unsigned char>(v),
+                          static_cast<unsigned char>(v >> 8),
+                          static_cast<unsigned char>(v >> 16),
+                          static_cast<unsigned char>(v >> 24)};
     f.write(reinterpret_cast<char *>(b), 4);
   };
 
@@ -97,8 +99,8 @@ bool wav_write(const std::string &path, const Audio &in) {
   w32(36 + data_len);
   f.write("WAVE", 4);
   f.write("fmt ", 4);
-  w32(16);            // PCM fmt chunk size
-  w16(1);             // audio format = PCM
+  w32(16); // PCM fmt chunk size
+  w16(1);  // audio format = PCM
   w16(channels);
   w32(rate);
   w32(byte_rate);

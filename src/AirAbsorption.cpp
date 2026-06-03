@@ -1,6 +1,7 @@
 #include "AirAbsorption.hpp"
 #include <cmath>
 
+// namespace for helper functions only used in this file
 namespace {
 // ANSI octave band numbers from 63Hz to 8kHz
 constexpr std::array<int, AirAbsorption::NUM_BANDS> kBandNumbers{
