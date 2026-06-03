@@ -3,6 +3,7 @@
 #include <cmath>
 #include <random>
 
+// namespace for helper functions only used in this file
 namespace {
 
 // A single biquad (second-order) section, direct form I. We use it as an octave

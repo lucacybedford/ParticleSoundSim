@@ -5,6 +5,7 @@
 
 #include "pocketfft_hdronly.h"
 
+// namespace for helper functions only used in this file
 namespace {
 
 std::size_t next_pow2(std::size_t n) {
@@ -15,7 +16,8 @@ std::size_t next_pow2(std::size_t n) {
 }
 
 // Real-to-complex forward FFT of `in` (length nfft) into `out` (nfft/2+1 bins).
-void rfft(const std::vector<double> &in, std::vector<std::complex<double>> &out) {
+void rfft(const std::vector<double> &in,
+          std::vector<std::complex<double>> &out) {
   const std::size_t nfft = in.size();
   pocketfft::shape_t shape{nfft};
   pocketfft::stride_t stride_in{static_cast<ptrdiff_t>(sizeof(double))};
@@ -26,7 +28,8 @@ void rfft(const std::vector<double> &in, std::vector<std::complex<double>> &out)
 }
 
 // Complex-to-real inverse FFT, normalised by 1/nfft so it is a true inverse.
-void irfft(const std::vector<std::complex<double>> &in, std::vector<double> &out) {
+void irfft(const std::vector<std::complex<double>> &in,
+           std::vector<double> &out) {
   const std::size_t nfft = out.size();
   pocketfft::shape_t shape{nfft};
   pocketfft::stride_t stride_in{
