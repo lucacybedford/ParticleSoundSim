@@ -4,7 +4,7 @@
 
 ## In Progress
 
-- [ ] Implement real wall material absorption coefficients
+- [ ] Create three distinct rooms
 
 ---
 
@@ -16,6 +16,7 @@
 
 ## Backlog – Issues
 
+- [ ] Allow for non-convex rooms by defining plane length
 - [ ] Turn input into 44.1kHz sample rate to make sure to get correct pitch
 - [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
 - [ ] Look into Linkwitz-Riley to fix the octave biquads overlap/gap normalisation
@@ -87,3 +88,4 @@
 - [x] Implement purely backend version
 - [x] Define particle initial energy `e_0 = E_0 / N` (`E_0`: source power, `Δt`: emission duration, `N`: particles)
 - [x] Implement RIR convolution with input sound
+- [x] Implement real wall material absorption coefficients
