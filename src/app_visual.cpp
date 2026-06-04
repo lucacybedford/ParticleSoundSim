@@ -1,8 +1,8 @@
+#include "Materials.hpp"
 #include "Scene.hpp"
 #include "SimConfig.hpp"
 #include "Simulation.hpp"
 #include <algorithm>
-#include <cmath>
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 
@@ -13,8 +13,10 @@ int main() {
   cfg.fidelity = SimConfig::Fidelity::Realtime;
   cfg.playback_speed = 0.05; // 20x slow-motion (real sound speed, slow display)
 
+  Material room_material = materials::mAbsorber;
+
   Atmosphere air;
-  Simulation sim(make_10x5_concrete_room(), cfg, air);
+  Simulation sim(make_room(10, 30, room_material), cfg, air);
 
   GLFWwindow *window;
   if (!glfwInit())

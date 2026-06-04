@@ -6,6 +6,7 @@
 #include "Simulation.hpp"
 #include "Wav.hpp"
 #include <cstdio>
+#include <string>
 
 int main() {
   SimConfig cfg;
@@ -13,7 +14,7 @@ int main() {
 
   float room_width = 5;
   float room_height = 10;
-  Material room_material = materials::mSolidWood;
+  Material room_material = materials::mAbsorber;
 
   Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
 
@@ -48,11 +49,14 @@ int main() {
                 i, hist.size(), first_ms, total);
   }
 
+  std::string r_width = std::to_string(static_cast<int>(room_width));
+  std::string r_height = std::to_string(static_cast<int>(room_height));
+  std::string r_material = room_material.name;
+  std::string r_particles = std::to_string(cfg.num_particles);
+
   std::string input_path = "dry.wav";
-  std::string output_path = "./output/" +
-                            std::to_string(static_cast<int>(room_width)) + "x" +
-                            std::to_string(static_cast<int>(room_height)) +
-                            "_" + room_material.name + "_room_100000.wav";
+  std::string output_path = "./output/" + r_width + "x" + r_height + "_" +
+                            r_material + "_room_" + r_particles + ".wav";
 
   // Build a pressure RIR from the first receiver and export it. Convolve a dry
   // signal with it if a dry.wav is sitting in the working directory.
