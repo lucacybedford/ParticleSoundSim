@@ -4,8 +4,6 @@
 
 ## In Progress
 
-- [ ] Create three distinct rooms
-
 ---
 
 ## This week
@@ -89,3 +87,4 @@
 - [x] Define particle initial energy `e_0 = E_0 / N` (`E_0`: source power, `Δt`: emission duration, `N`: particles)
 - [x] Implement RIR convolution with input sound
 - [x] Implement real wall material absorption coefficients
+- [x] Create three distinct rooms
