@@ -2,7 +2,104 @@
 #include "Materials.hpp"
 #include <cmath>
 
-Scene make_big_box() {
+Scene make_room(float width, float height, Material &material) {
+  Scene scene;
+
+  const dvec2 centre{0, 0};
+
+  dvec2 a{centre[0] - (width / 2), centre[1]};
+  dvec2 b{centre[0], centre[1] - (height / 2)};
+  dvec2 c{centre[0] + (width / 2), centre[1]};
+  dvec2 d{centre[0], centre[1] + (height / 2)};
+
+  scene.planes.emplace_back(Plane({1, 0}, a, height, material));
+  scene.planes.emplace_back(Plane({0, 1}, b, width, material));
+  scene.planes.emplace_back(Plane({-1, 0}, c, height, material));
+  scene.planes.emplace_back(Plane({0, -1}, d, width, material));
+
+  scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
+                              3 * M_PI / 4);
+  scene.receivers.emplace_back(0, 3, 0.3);
+
+  return scene;
+}
+
+Scene make_10x5_absorber_room() {
+  Scene scene;
+
+  const dvec2 centre{0, 0};
+
+  const double height = 10;
+  const double width = 5;
+
+  dvec2 a{centre[0] - (width / 2), centre[1]};
+  dvec2 b{centre[0], centre[1] - (height / 2)};
+  dvec2 c{centre[0] + (width / 2), centre[1]};
+  dvec2 d{centre[0], centre[1] + (height / 2)};
+
+  scene.planes.emplace_back(Plane({1, 0}, a, height, materials::mAbsorber));
+  scene.planes.emplace_back(Plane({0, 1}, b, width, materials::mAbsorber));
+  scene.planes.emplace_back(Plane({-1, 0}, c, height, materials::mAbsorber));
+  scene.planes.emplace_back(Plane({0, -1}, d, width, materials::mAbsorber));
+
+  scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
+                              3 * M_PI / 4);
+  scene.receivers.emplace_back(0, 3, 0.3);
+
+  return scene;
+}
+
+Scene make_10x5_wood_room() {
+  Scene scene;
+
+  const dvec2 centre{0, 0};
+
+  const double height = 10;
+  const double width = 5;
+
+  dvec2 a{centre[0] - (width / 2), centre[1]};
+  dvec2 b{centre[0], centre[1] - (height / 2)};
+  dvec2 c{centre[0] + (width / 2), centre[1]};
+  dvec2 d{centre[0], centre[1] + (height / 2)};
+
+  scene.planes.emplace_back(Plane({1, 0}, a, height, materials::mSolidWood));
+  scene.planes.emplace_back(Plane({0, 1}, b, width, materials::mSolidWood));
+  scene.planes.emplace_back(Plane({-1, 0}, c, height, materials::mSolidWood));
+  scene.planes.emplace_back(Plane({0, -1}, d, width, materials::mSolidWood));
+
+  scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
+                              3 * M_PI / 4);
+  scene.receivers.emplace_back(0, 3, 0.3);
+
+  return scene;
+}
+
+Scene make_10x5_concrete_room() {
+  Scene scene;
+
+  const dvec2 centre{0, 0};
+
+  const double height = 10;
+  const double width = 5;
+
+  dvec2 a{centre[0] - (width / 2), centre[1]};
+  dvec2 b{centre[0], centre[1] - (height / 2)};
+  dvec2 c{centre[0] + (width / 2), centre[1]};
+  dvec2 d{centre[0], centre[1] + (height / 2)};
+
+  scene.planes.emplace_back(Plane({1, 0}, a, height, materials::mConcrete));
+  scene.planes.emplace_back(Plane({0, 1}, b, width, materials::mConcrete));
+  scene.planes.emplace_back(Plane({-1, 0}, c, height, materials::mConcrete));
+  scene.planes.emplace_back(Plane({0, -1}, d, width, materials::mConcrete));
+
+  scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
+                              3 * M_PI / 4);
+  scene.receivers.emplace_back(0, 3, 0.3);
+
+  return scene;
+}
+
+Scene make_30x10_concrete_room() {
   Scene scene;
 
   const dvec2 centre{0, 0};
@@ -20,7 +117,7 @@ Scene make_big_box() {
   scene.planes.emplace_back(Plane({-1, 0}, c, height, materials::mConcrete));
   scene.planes.emplace_back(Plane({0, -1}, d, width, materials::mConcrete));
 
-  scene.emitters.emplace_back(centre + dvec2{0, -2}, 1 * M_PI / 4,
+  scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
                               3 * M_PI / 4);
   scene.receivers.emplace_back(0, 3, 0.3);
 

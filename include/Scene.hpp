@@ -11,5 +11,10 @@ struct Scene {
   std::vector<Receiver> receivers;
 };
 
+Scene make_room(float width, float height, Material &material);
+Scene make_10x5_concrete_room();
+Scene make_10x5_absorber_room();
+Scene make_10x5_wood_room();
+Scene make_30x10_concrete_room();
 Scene make_diamond_scene(double room_radius = 2.4);
 Scene make_big_box();

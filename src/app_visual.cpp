@@ -14,7 +14,7 @@ int main() {
   cfg.playback_speed = 0.05; // 20x slow-motion (real sound speed, slow display)
 
   Atmosphere air;
-  Simulation sim(make_big_box(), cfg, air);
+  Simulation sim(make_10x5_concrete_room(), cfg, air);
 
   GLFWwindow *window;
   if (!glfwInit())

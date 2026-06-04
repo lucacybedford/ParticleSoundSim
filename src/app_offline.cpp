@@ -1,4 +1,5 @@
 #include "Convolver.hpp"
+#include "Materials.hpp"
 #include "RIRBuilder.hpp"
 #include "Scene.hpp"
 #include "SimConfig.hpp"
@@ -10,7 +11,11 @@ int main() {
   SimConfig cfg;
   Atmosphere air;
 
-  Simulation sim(make_big_box(), cfg, air);
+  float room_width = 5;
+  float room_height = 10;
+  Material room_material = materials::mSolidWood;
+
+  Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
@@ -44,7 +49,10 @@ int main() {
   }
 
   std::string input_path = "dry.wav";
-  std::string output_path = "30x10_concrete.wav";
+  std::string output_path = "./output/" +
+                            std::to_string(static_cast<int>(room_width)) + "x" +
+                            std::to_string(static_cast<int>(room_height)) +
+                            "_" + room_material.name + "_room_100000.wav";
 
   // Build a pressure RIR from the first receiver and export it. Convolve a dry
   // signal with it if a dry.wav is sitting in the working directory.
