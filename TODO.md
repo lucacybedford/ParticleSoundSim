@@ -9,12 +9,12 @@
 ## This week
 
 - [ ] Visualise histogram accumulation
+- [ ] Allow for non-convex rooms by defining plane length
 
 ---
 
 ## Backlog – Issues
 
-- [ ] Allow for non-convex rooms by defining plane length
 - [ ] Turn input into 44.1kHz sample rate to make sure to get correct pitch
 - [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
 - [ ] Look into Linkwitz-Riley to fix the octave biquads overlap/gap normalisation
@@ -35,8 +35,6 @@
 ## Backlog — Receiver & RIR
 
 - [ ] Implement virtual microphone accumulation with direction
-- [ ] Generate broadband RIR from histogram (energy → pressure, randomised phase per band)
-- [ ] Convolve RIR with input sound, produce output sound (FFT-based / partitioned convolution)
 
 ---
 
@@ -88,3 +86,5 @@
 - [x] Implement RIR convolution with input sound
 - [x] Implement real wall material absorption coefficients
 - [x] Create three distinct rooms
+- [x] Generate broadband RIR from histogram (energy → pressure, randomised phase per band)
+- [x] Convolve RIR with input sound, produce output sound (FFT-based / partitioned convolution)
