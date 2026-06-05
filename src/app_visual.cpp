@@ -10,6 +10,7 @@ int main() {
   const unsigned int POINT_RADIUS = 8;
 
   SimConfig cfg;
+  cfg.num_particles = 1000;
   cfg.fidelity = SimConfig::Fidelity::Realtime;
   cfg.playback_speed = 0.05; // 20x slow-motion (real sound speed, slow display)
 

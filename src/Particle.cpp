@@ -60,19 +60,25 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
     Plane *closestPlane = nullptr;
 
     for (Plane &p : planes) {
+      // component of particle's motion perpendicular to the wall
       double denom = glm::dot(p.n, x_new - x);
       if (std::abs(denom) < 1e-12)
         continue;
-      // calculate position along particle path of wall interaction
+      // fraction along the path where it crosses the wall's infinite plane
       double t = glm::dot(p.n, p.p - x) / denom;
-      if (t >= 0 && t <= 1 && t < minT) {
-        minT = t;
-        closestPlane = &p;
-      }
+      if (t < 0 || t > 1 || t >= minT)
+        continue;
+      // verify the crossing is on the finite segment, not the infinite plane
+      dvec2 x_hit = x + t * (x_new - x);
+      double dist = glm::dot(x_hit - p.p, p.tangent);
+      if (std::abs(dist) > p.l / 2)
+        continue;
+      minT = t;
+      closestPlane = &p;
     }
 
     if (closestPlane) {
-      // reposition particle
+      // reposition particle just off the wall surface
       dvec2 x_hit = x + minT * (x_new - x);
       x = x_hit + closestPlane->n * 0.00001;
       hit(*closestPlane);
