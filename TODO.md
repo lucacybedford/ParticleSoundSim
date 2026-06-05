@@ -9,7 +9,6 @@
 ## This week
 
 - [ ] Visualise histogram accumulation
-- [ ] Allow for non-convex rooms by defining plane length
 
 ---
 
@@ -88,3 +87,4 @@
 - [x] Create three distinct rooms
 - [x] Generate broadband RIR from histogram (energy → pressure, randomised phase per band)
 - [x] Convolve RIR with input sound, produce output sound (FFT-based / partitioned convolution)
+- [x] Allow for non-convex rooms by defining plane length
