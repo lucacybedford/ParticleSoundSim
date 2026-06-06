@@ -14,7 +14,7 @@ int main() {
 
   float room_width = 5;
   float room_height = 10;
-  Material room_material = materials::mAbsorber;
+  Material room_material = materials::mConcrete;
 
   Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
 
