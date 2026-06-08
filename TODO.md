@@ -8,8 +8,8 @@
 
 ## This week
 
-- [ ] Enable passing input file as main argument
 - [ ] Visualise histogram accumulation
+- [ ] Compare to Allen1979 image-source method results
 
 ---
 
@@ -40,7 +40,6 @@
 
 ## Backlog — Validation
 
-- [ ] Implement Allen (1979) image-source method reference for rectangular rooms
 - [ ] Compare RT60 against Sabine and Eyring closed-form predictions
 - [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
 - [ ] Compare clarity metrics C50 and D50 against ISM baseline
@@ -89,3 +88,4 @@
 - [x] Generate broadband RIR from histogram (energy → pressure, randomised phase per band)
 - [x] Convolve RIR with input sound, produce output sound (FFT-based / partitioned convolution)
 - [x] Allow for non-convex rooms by defining plane length
+- [x] Enable passing input file as main argument
