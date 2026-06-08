@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 
   float room_width = 10;
   float room_height = 30;
-  Material room_material = materials::mConcrete;
+  Material room_material = materials::mSolidWood;
 
   // Simulation sim(make_room(room_width, room_height, room_material), cfg,
   // air);
