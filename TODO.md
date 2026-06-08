@@ -8,6 +8,7 @@
 
 ## This week
 
+- [ ] Enable passing input file as main argument
 - [ ] Visualise histogram accumulation
 
 ---
