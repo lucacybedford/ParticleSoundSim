@@ -12,12 +12,13 @@ int main() {
   SimConfig cfg;
   cfg.num_particles = 1000;
   cfg.fidelity = SimConfig::Fidelity::Realtime;
-  cfg.playback_speed = 0.05; // 20x slow-motion (real sound speed, slow display)
+  cfg.playback_speed = 0.05; // 20x slow-motion
 
-  Material room_material = materials::mAbsorber;
+  Material room_material = materials::mSolidWood;
 
   Atmosphere air;
-  Simulation sim(make_room(10, 30, room_material), cfg, air);
+  // Simulation sim(make_room(10, 30, room_material), cfg, air);
+  Simulation sim(make_L_room(room_material), cfg, air);
 
   GLFWwindow *window;
   if (!glfwInit())

@@ -18,3 +18,4 @@ Scene make_10x5_wood_room();
 Scene make_30x10_concrete_room();
 Scene make_diamond_scene(double room_radius = 2.4);
 Scene make_big_box();
+Scene make_L_room(Material &material);

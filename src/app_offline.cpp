@@ -18,7 +18,9 @@ int main(int argc, char *argv[]) {
   float room_height = 30;
   Material room_material = materials::mConcrete;
 
-  Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
+  // Simulation sim(make_room(room_width, room_height, room_material), cfg,
+  // air);
+  Simulation sim(make_L_room(room_material), cfg, air);
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/clap-" + r_width + "x" + r_height + "_" +
+  std::string output_path = "./output/L-" + r_width + "x" + r_height + "_" +
                             r_material + "_room_" + r_particles + ".wav";
 
   if (!sim.scene.receivers.empty()) {

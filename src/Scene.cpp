@@ -1,5 +1,6 @@
 #include "Scene.hpp"
 #include "Materials.hpp"
+#include "Receiver.hpp"
 #include <cmath>
 
 Scene make_room(float width, float height, Material &material) {
@@ -20,6 +21,30 @@ Scene make_room(float width, float height, Material &material) {
   scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
                               3 * M_PI / 4);
   scene.receivers.emplace_back(0, 3, 0.3);
+
+  return scene;
+}
+
+Scene make_L_room(Material &mat) {
+  Scene scene;
+
+  dvec2 a{0, 0};
+  dvec2 b{1.5, 3};
+  dvec2 c{-1.5, 6};
+  dvec2 d{-4.5, 4.5};
+  dvec2 e{-3, 3};
+  dvec2 f{-1.5, 1.5};
+
+  scene.planes.emplace_back(Plane{{0, 1}, a, 3, mat});
+  scene.planes.emplace_back(Plane{{-1, 0}, b, 6, mat});
+  scene.planes.emplace_back(Plane{{0, -1}, c, 6, mat});
+  scene.planes.emplace_back(Plane{{1, 0}, d, 3, mat});
+  scene.planes.emplace_back(Plane{{0, 1}, e, 3, mat});
+  scene.planes.emplace_back(Plane{{1, 0}, f, 3, mat});
+
+  scene.emitters.emplace_back(Emitter{{-3, 4.5}});
+
+  scene.receivers.emplace_back(Receiver{0.0, 1.5, 0.3});
 
   return scene;
 }
