@@ -6,8 +6,6 @@
 // namespace for helper functions only used in this file
 namespace {
 
-// A single biquad (second-order) section, direct form I. We use it as an octave
-// bandpass to split the noise carrier into bands.
 struct Biquad {
   double b0, b1, b2, a1, a2;
   double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
@@ -22,9 +20,6 @@ struct Biquad {
   }
 };
 
-// RBJ cookbook constant-skirt bandpass for a band of width `bw` octaves centred
-// (geometrically) at `fc`. Octave bands have fc/sqrt2 .. fc*sqrt2 edges, so a
-// 1-octave bandwidth fits each band.
 Biquad make_bandpass(double fc, double fs, double bw) {
   double w0 = 2.0 * M_PI * fc / fs;
   double cw = std::cos(w0);
