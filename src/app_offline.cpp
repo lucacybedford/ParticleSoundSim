@@ -8,12 +8,14 @@
 #include <cstdio>
 #include <string>
 
-int main() {
+int main(int argc, char *argv[]) {
   SimConfig cfg;
   Atmosphere air;
 
-  float room_width = 5;
-  float room_height = 10;
+  cfg.num_particles = 100000;
+
+  float room_width = 10;
+  float room_height = 30;
   Material room_material = materials::mConcrete;
 
   Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
@@ -55,11 +57,12 @@ int main() {
   std::string r_particles = std::to_string(cfg.num_particles);
 
   std::string input_path = "dry.wav";
-  std::string output_path = "./output/" + r_width + "x" + r_height + "_" +
+  if (argc == 2) {
+    input_path = argv[1];
+  }
+  std::string output_path = "./output/clap-" + r_width + "x" + r_height + "_" +
                             r_material + "_room_" + r_particles + ".wav";
 
-  // Build a pressure RIR from the first receiver and export it. Convolve a dry
-  // signal with it if a dry.wav is sitting in the working directory.
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
     builder.sample_rate = 44100;
@@ -79,13 +82,13 @@ int main() {
 
     Audio dry;
     if (wav_read(input_path, dry)) {
-      // (For a real run, resample dry to the RIR rate if they differ.)
       std::vector<float> wet = convolve(dry.samples, rir);
       normalize_peak(wet);
       wav_write(output_path, Audio{dry.sample_rate, wet});
-      std::printf("Convolved dry.wav -> wet.wav (%zu samples)\n", wet.size());
+      std::printf("Convolved %s -> wet.wav (%zu samples)\n", input_path.c_str(),
+                  wet.size());
     } else {
-      std::printf("No dry.wav found -- skipping convolution.\n");
+      std::printf("No %s found – skipping convolution.\n", input_path.c_str());
     }
   }
 
