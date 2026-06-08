@@ -18,7 +18,6 @@ FetchContent_Declare(glfw
 )
 FetchContent_MakeAvailable(glfw)
 
-# pocketfft -- single-header FFT, used by the overlap-add convolver.
 FetchContent_Declare(pocketfft
   GIT_REPOSITORY https://github.com/mreineck/pocketfft.git
   GIT_TAG cpp
@@ -30,8 +29,6 @@ target_compile_definitions(pocketfft INTERFACE POCKETFFT_NO_MULTITHREADING)
 
 find_package(OpenGL REQUIRED)
 
-# Shared, render-free simulation core. Both apps link against this so they run
-# identical physics. Only glm is needed here -- no GLFW/OpenGL.
 add_library(core
   src/Plane.cpp
   src/Particle.cpp
@@ -48,10 +45,10 @@ target_include_directories(core PUBLIC include)
 target_link_libraries(core PUBLIC glm::glm)
 target_link_libraries(core PRIVATE pocketfft)
 
-# Front-end: the visual simulation (GLFW window + OpenGL rendering).
+# Front-end: the visual simulation
 add_executable(ParticleSoundSim src/app_visual.cpp)
 target_link_libraries(ParticleSoundSim PRIVATE core glfw OpenGL::GL)
 
-# Back-end: the headless offline simulation.
+# Back-end: the headless offline simulation
 add_executable(ParticleSoundSimOffline src/app_offline.cpp)
 target_link_libraries(ParticleSoundSimOffline PRIVATE core)
