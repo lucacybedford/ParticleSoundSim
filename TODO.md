@@ -8,6 +8,7 @@
 
 ## This week
 
+- [ ] Fix a reproducible test suite of rooms with known absorption coefficients
 - [ ] Visualise histogram accumulation
 - [ ] Compare to Allen1979 image-source method results
 
@@ -41,7 +42,6 @@
 - [ ] Compare RT60 against Sabine and Eyring closed-form predictions
 - [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
 - [ ] Compare clarity metrics C50 and D50 against ISM baseline
-- [ ] Fix a reproducible test suite of canonical rooms with known absorption coefficients
 
 ---
 
