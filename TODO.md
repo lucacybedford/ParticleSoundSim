@@ -24,9 +24,7 @@
 ## Backlog — Core Physics
 
 - [ ] Implement angle-dependent absorption coefficient (per band)
-- [ ] Implement per-surface IIR filters for frequency-dependent absorption at reflection
 - [ ] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
-- [ ] Implement material property model (absorption coefficient per surface, per band)
 - [ ] Implement transmission through surfaces (partial pass-through, per band)
 - [ ] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
 
@@ -89,3 +87,5 @@
 - [x] Convolve RIR with input sound, produce output sound (FFT-based / partitioned convolution)
 - [x] Allow for non-convex rooms by defining plane length
 - [x] Enable passing input file as main argument
+- [x] Implement per-surface IIR filters for frequency-dependent absorption at reflection
+- [x] Implement material property model (absorption coefficient per surface, per band)
