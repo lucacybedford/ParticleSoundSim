@@ -18,9 +18,8 @@ int main(int argc, char *argv[]) {
   float room_height = 30;
   Material room_material = materials::mSolidWood;
 
-  // Simulation sim(make_room(room_width, room_height, room_material), cfg,
-  // air);
-  Simulation sim(make_L_room(room_material), cfg, air);
+  Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
+  // Simulation sim(make_L_room(room_material), cfg, air);
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
