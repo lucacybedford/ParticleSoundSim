@@ -6,21 +6,21 @@
 Scene make_room(float width, float height, Material &material) {
   Scene scene;
 
-  const dvec3 centre{0, 0, 0};
+  const dvec2 centre{0, 0};
 
-  dvec3 a{centre[0] - (width / 2), centre[1], 1.5};
-  dvec3 b{centre[0], centre[1] - (height / 2), 1.5};
-  dvec3 c{centre[0] + (width / 2), centre[1], 1.5};
-  dvec3 d{centre[0], centre[1] + (height / 2), 1.5};
+  dvec2 a{centre[0] - (width / 2), centre[1]};
+  dvec2 b{centre[0], centre[1] - (height / 2)};
+  dvec2 c{centre[0] + (width / 2), centre[1]};
+  dvec2 d{centre[0], centre[1] + (height / 2)};
 
-  scene.planes.emplace_back(Plane({1, 0, 0}, a, width, height, material));
-  scene.planes.emplace_back(Plane({0, 1, 0}, b, width, height, material));
-  scene.planes.emplace_back(Plane({-1, 0, 0}, c, width, height, material));
-  scene.planes.emplace_back(Plane({0, -1, 0}, d, width, height, material));
+  scene.planes.emplace_back(Plane({1, 0}, a, height, material));
+  scene.planes.emplace_back(Plane({0, 1}, b, width, material));
+  scene.planes.emplace_back(Plane({-1, 0}, c, height, material));
+  scene.planes.emplace_back(Plane({0, -1}, d, width, material));
 
-  scene.emitters.emplace_back(centre + dvec3{0, -3, 1.7}, 1 * M_PI / 4,
+  scene.emitters.emplace_back(centre + dvec2{0, -3}, 1 * M_PI / 4,
                               3 * M_PI / 4);
-  scene.receivers.emplace_back(Receiver{{0, 3, 1.7}, 0.3});
+  scene.receivers.emplace_back(0, 3, 0.3);
 
   return scene;
 }

@@ -4,19 +4,13 @@
 #include <glm/geometric.hpp>
 #include <limits>
 #include <numeric>
-#include <random>
 
 Particle::Particle(std::mt19937 &gen,
-                   std::uniform_real_distribution<double> &h_angDist,
-                   std::uniform_real_distribution<double> &v_angDist,
-                   dvec3 &position, double speed)
+                   std::uniform_real_distribution<double> &angDist,
+                   dvec2 &position, double speed)
     : vel(speed), x(position) {
-  double h_ang = h_angDist(gen);
-  double v_ang = v_angDist(gen); // sin(elevation)
-  double r = std::sqrt(1.0 - v_ang * v_ang);
-  v[0] = r * std::cos(h_ang);
-  v[1] = r * std::sin(h_ang);
-  v[2] = v_ang;
+  v[0] = cos(angDist(gen));
+  v[1] = sin(angDist(gen));
   v = glm::normalize(v) * vel;
 }
 
@@ -61,7 +55,7 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
   // interaction
   int iteration = 0;
   while (remaining_dt > 0 && iteration < MAX_ITERATIONS) {
-    dvec3 x_new = x + v * remaining_dt;
+    dvec2 x_new = x + v * remaining_dt;
     double minT = std::numeric_limits<double>::max();
     Plane *closestPlane = nullptr;
 
@@ -75,10 +69,9 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
       if (t < 0 || t > 1 || t >= minT)
         continue;
       // verify the crossing is on the finite segment, not the infinite plane
-      dvec3 x_hit = x + t * (x_new - x);
-      double h_dist = glm::dot(x_hit - p.p, p.h_tangent);
-      double v_dist = glm::dot(x_hit - p.p, p.v_tangent);
-      if (std::abs(h_dist) > p.l / 2 || std::abs(v_dist) > p.h / 2)
+      dvec2 x_hit = x + t * (x_new - x);
+      double dist = glm::dot(x_hit - p.p, p.tangent);
+      if (std::abs(dist) > p.l / 2)
         continue;
       minT = t;
       closestPlane = &p;
@@ -86,11 +79,11 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
 
     if (closestPlane) {
       // reposition particle just off the wall surface
-      dvec3 x_hit = x + minT * (x_new - x);
+      dvec2 x_hit = x + minT * (x_new - x);
       x = x_hit + closestPlane->n * 0.00001;
       hit(*closestPlane);
       // adjust velocity
-      dvec3 v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
+      dvec2 v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       remaining_dt = remaining_dt * (1 - minT);
       v = v_new;
     } else {

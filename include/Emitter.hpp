@@ -3,16 +3,13 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-using glm::dvec3;
+using glm::dvec2;
 
 struct Emitter {
-  dvec3 x;
-  float h_ang_start = 0;
-  float h_ang_end = M_PI * 2;
-  float v_ang_start = -M_PI / 2;
-  float v_ang_end = M_PI / 2;
-  Emitter(const dvec3 &x);
-  Emitter(const dvec3 &x, float h_start, float h_end, float v_start,
-          float v_end);
+  dvec2 x;
+  float ang_start = 0;
+  float ang_end = M_PI * 2;
+  Emitter(const dvec2 &x);
+  Emitter(const dvec2 &x, float start, float end);
   std::vector<Particle> emit(int particle_num, double speed);
 };
