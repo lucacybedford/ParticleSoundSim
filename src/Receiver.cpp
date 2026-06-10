@@ -1,6 +1,6 @@
 #include "Receiver.hpp"
 
-Receiver::Receiver(dvec3 x, float size) : x(x), size(size) {}
+Receiver::Receiver(double x, double y, float size) : x(x, y), size(size) {}
 
 void Receiver::receive(double time, std::array<double, 8> &energies) {
   size_t bin = static_cast<size_t>(time / bin_width);
