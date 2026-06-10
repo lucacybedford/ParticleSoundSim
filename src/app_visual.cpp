@@ -20,6 +20,11 @@ int main() {
   // Simulation sim(make_room(10, 30, room_material), cfg, air);
   Simulation sim(make_L_room(room_material), cfg, air);
 
+  if (cfg.dt > Receiver::bin_width) {
+    printf("dt must be smaller than receiver bin width.");
+    return 1;
+  }
+
   GLFWwindow *window;
   if (!glfwInit())
     return -1;

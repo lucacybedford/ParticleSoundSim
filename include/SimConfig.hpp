@@ -5,7 +5,7 @@ struct SimConfig {
   enum class Fidelity { Offline, Realtime };
 
   unsigned int num_particles = 1000; // particles per emitter
-  double dt = 0.002;                 // simulation time step (seconds)
+  double dt = 0.001;                 // simulation time step (seconds)
   double max_time = 20.0;            // offline max run time (s)
 
   double playback_speed = 1.0;

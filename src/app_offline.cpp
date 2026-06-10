@@ -21,6 +21,11 @@ int main(int argc, char *argv[]) {
   Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
   // Simulation sim(make_L_room(room_material), cfg, air);
 
+  if (cfg.dt > Receiver::bin_width) {
+    printf("dt must be smaller than receiver bin width.");
+    return 1;
+  }
+
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
 
