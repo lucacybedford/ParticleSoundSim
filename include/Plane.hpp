@@ -3,16 +3,21 @@
 #include <array>
 #include <glm/glm.hpp>
 
-using glm::dvec2;
+using glm::dvec3;
 
 struct Plane {
-  dvec2 n;
-  dvec2 p;
+  dvec3 n;
+  dvec3 p;
   double l;
-  dvec2 tangent;
-  dvec2 end_a;
-  dvec2 end_b;
+  double h;
+  dvec3 h_tangent;
+  dvec3 v_tangent;
+  dvec3 h_end_a;
+  dvec3 h_end_b;
+  dvec3 v_end_a;
+  dvec3 v_end_b;
   std::array<double, 8> absorption;
 
-  Plane(dvec2 normal, dvec2 point, double length, const Material &material);
+  Plane(dvec3 normal, dvec3 point, double length, double height,
+        const Material &material);
 };
