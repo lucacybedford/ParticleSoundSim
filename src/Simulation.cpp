@@ -18,13 +18,13 @@ void Simulation::step(double dt) {
   const bool offline = cfg.fidelity == SimConfig::Fidelity::Offline;
 
   for (Particle &p : particles) {
-    p.move(dt, scene.planes);
+    p.move(time, dt, scene.planes, scene.receivers,
+           offline ? &air : nullptr);
 
     // only applies the simple air absorption for offline running
     if (!offline)
       air.decay_step(p.energies, p.vel * dt);
 
-    p.check_receiver_collision(time, scene.receivers, offline ? &air : nullptr);
     p.check_energy();
   }
 

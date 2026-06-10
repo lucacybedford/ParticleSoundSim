@@ -21,11 +21,10 @@ struct Particle {
            double speed);
 
   void hit(Plane &plane);
-  void move(double dt, std::vector<Plane> &planes);
   // summation is only defined for offline mode to employ accurate absorption
   // calculations
-  void check_receiver_collision(double time, std::vector<Receiver> &receivers,
-                                const AirAbsorption *summation);
+  void move(double time, double dt, std::vector<Plane> &planes,
+            std::vector<Receiver> &receivers, const AirAbsorption *summation);
   void absorb();
   double check_energy();
 };

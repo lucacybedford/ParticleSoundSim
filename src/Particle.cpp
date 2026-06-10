@@ -1,6 +1,7 @@
 #include "Particle.hpp"
 #include "AirAbsorption.hpp"
 #include "Receiver.hpp"
+#include <cmath>
 #include <glm/geometric.hpp>
 #include <limits>
 #include <numeric>
@@ -38,23 +39,27 @@ void Particle::hit(Plane &plane) {
   }
 }
 
-void Particle::check_receiver_collision(double time,
-                                        std::vector<Receiver> &receivers,
-                                        const AirAbsorption *summation) {
-  for (Receiver &rec : receivers) {
-    float dist = glm::distance(rec.x, x);
-    if (dist <= rec.size) {
-      std::array<double, 8> e = energies;
-      // apply summation method of offline
-      if (summation)
-        summation->attenuate_total(e, vel * time);
-      rec.receive(time, e);
-      absorb();
-    }
-  }
-};
+// earliest crossing into sphere
+static double sphere_hit(const dvec3 &x, const dvec3 &d, const dvec3 &c,
+                         double r) {
+  dvec3 m = x - c;
+  double cc = glm::dot(m, m) - r * r;
+  if (cc <= 0)
+    return 0; // already inside the sphere
+  double a = glm::dot(d, d);
+  double b = glm::dot(m, d);
+  if (b >= 0)
+    return -1; // moving away from the sphere
+  double disc = b * b - a * cc;
+  if (disc < 0)
+    return -1; // line misses the sphere
+  double t = (-b - std::sqrt(disc)) / a;
+  return (t <= 1) ? t : -1;
+}
 
-void Particle::move(double dt, std::vector<Plane> &planes) {
+void Particle::move(double time, double dt, std::vector<Plane> &planes,
+                    std::vector<Receiver> &receivers,
+                    const AirAbsorption *summation) {
   double remaining_dt = dt;
 
   // uses max iterations for calculating particle position after wall
@@ -82,6 +87,28 @@ void Particle::move(double dt, std::vector<Plane> &planes) {
         continue;
       minT = t;
       closestPlane = &p;
+    }
+
+    // check if the receiver is closer than the wall
+    double recT = std::numeric_limits<double>::max();
+    Receiver *hitReceiver = nullptr;
+    for (Receiver &rec : receivers) {
+      double t = sphere_hit(x, x_new - x, rec.x, rec.size);
+      if (t >= 0 && t < recT) {
+        recT = t;
+        hitReceiver = &rec;
+      }
+    }
+
+    if (hitReceiver && recT < minT) {
+      double arrival = time + (dt - remaining_dt) + recT * remaining_dt;
+      std::array<double, 8> e = energies;
+      // apply summation method of offline
+      if (summation)
+        summation->attenuate_total(e, vel * arrival);
+      hitReceiver->receive(arrival, e);
+      absorb();
+      return;
     }
 
     if (closestPlane) {
