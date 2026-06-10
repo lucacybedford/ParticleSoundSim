@@ -39,14 +39,14 @@ int main() {
 
   // fit camera to room dimensions
   double minx = 1e30, miny = 1e30, maxx = -1e30, maxy = -1e30;
-  for (const Plane &pl : sim.scene.planes) {
-    for (const dvec2 &pt : {pl.end_a, pl.end_b}) {
-      minx = std::min(minx, pt[0]);
-      maxx = std::max(maxx, pt[0]);
-      miny = std::min(miny, pt[1]);
-      maxy = std::max(maxy, pt[1]);
-    }
-  }
+  // for (const Plane &pl : sim.scene.planes) {
+  //   for (const dvec2 &pt : {pl.end_a, pl.end_b}) {
+  //     minx = std::min(minx, pt[0]);
+  //     maxx = std::max(maxx, pt[0]);
+  //     miny = std::min(miny, pt[1]);
+  //     maxy = std::max(maxy, pt[1]);
+  //   }
+  // }
   double margin = 0.1 * std::max(maxx - minx, maxy - miny);
 
   glMatrixMode(GL_PROJECTION);
@@ -68,10 +68,10 @@ int main() {
     glLineWidth(5);
     glBegin(GL_LINES);
     glColor3f(1, 1, 1);
-    for (const Plane &plane : sim.scene.planes) {
-      glVertex2f(plane.end_a[0], plane.end_a[1]);
-      glVertex2f(plane.end_b[0], plane.end_b[1]);
-    }
+    // for (const Plane &plane : sim.scene.planes) {
+    //   glVertex2f(plane.end_a[0], plane.end_a[1]);
+    //   glVertex2f(plane.end_b[0], plane.end_b[1]);
+    // }
     glEnd();
 
     // Draw particles

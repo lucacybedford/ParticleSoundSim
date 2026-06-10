@@ -14,11 +14,13 @@ int main(int argc, char *argv[]) {
 
   cfg.num_particles = 100000;
 
-  float room_width = 10;
-  float room_height = 30;
+  float room_width = 5;
+  float room_length = 10;
+  float room_height = 3;
   Material room_material = materials::mSolidWood;
 
-  Simulation sim(make_room(room_width, room_height, room_material), cfg, air);
+  Simulation sim(make_room(room_width, room_length, room_height, room_material),
+                 cfg, air);
   // Simulation sim(make_L_room(room_material), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
@@ -66,7 +68,7 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/L-" + r_width + "x" + r_height + "_" +
+  std::string output_path = "./output/3D/3d-" + r_width + "x" + r_height + "_" +
                             r_material + "_room_" + r_particles + ".wav";
 
   if (!sim.scene.receivers.empty()) {

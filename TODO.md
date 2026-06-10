@@ -4,8 +4,6 @@
 
 ## In Progress
 
-- [ ] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
-
 ---
 
 ## This week
@@ -91,3 +89,4 @@
 - [x] Implement per-surface IIR filters for frequency-dependent absorption at reflection
 - [x] Implement material property model (absorption coefficient per surface, per band)
 - [x] Implement check for time bin >= dt
+- [x] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)

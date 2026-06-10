@@ -3,17 +3,22 @@
 #include "Receiver.hpp"
 #include <cmath>
 
-Scene make_room(float width, float height, Material &material) {
+Scene make_room(float width, float length, float height, Material &material) {
   Scene scene;
 
   dvec3 a{-(width / 2), 0, 1.5};
-  dvec3 b{0, 0 - (height / 2), 1.5};
+  dvec3 b{0, 0 - (length / 2), 1.5};
   dvec3 c{(width / 2), 0, 1.5};
-  dvec3 d{0, (height / 2), 1.5};
+  dvec3 d{0, (length / 2), 1.5};
 
-  scene.planes.emplace_back(Plane({1, 0, 0}, a, width, height, material));
+  scene.planes.emplace_back(
+      Plane({0, 0, 1}, {0, 0, 0}, width, length, material));
+  scene.planes.emplace_back(
+      Plane({0, 0, -1}, {0, 0, height}, width, length, material));
+
+  scene.planes.emplace_back(Plane({1, 0, 0}, a, length, height, material));
   scene.planes.emplace_back(Plane({0, 1, 0}, b, width, height, material));
-  scene.planes.emplace_back(Plane({-1, 0, 0}, c, width, height, material));
+  scene.planes.emplace_back(Plane({-1, 0, 0}, c, length, height, material));
   scene.planes.emplace_back(Plane({0, -1, 0}, d, width, height, material));
 
   scene.emitters.emplace_back(dvec3{0, -3, 1.7}, 1 * M_PI / 4, 3 * M_PI / 4,
