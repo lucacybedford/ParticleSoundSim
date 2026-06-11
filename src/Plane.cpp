@@ -12,8 +12,8 @@ Plane::Plane(dvec3 normal, dvec3 point, double length, double height,
     h_tangent = glm::normalize(dvec3{-n[1], n[0], 0});
   }
   v_tangent = glm::cross(n, h_tangent);
-  h_end_a = p - h_tangent * (l / 2);
-  h_end_b = p + h_tangent * (l / 2);
-  v_end_a = p - v_tangent * (h / 2);
-  v_end_b = p + v_tangent * (h / 2);
+  const dvec3 half_l = h_tangent * (l / 2);
+  const dvec3 half_h = v_tangent * (h / 2);
+  corners = {p - half_l - half_h, p + half_l - half_h, p + half_l + half_h,
+             p - half_l + half_h};
 }
