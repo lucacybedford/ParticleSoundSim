@@ -4,8 +4,6 @@
 
 ## In Progress
 
-- [ ] Turn input into 44.1kHz sample rate to make sure to get correct pitch
-
 ---
 
 ## This week
@@ -19,7 +17,6 @@
 ## Backlog – Issues
 
 - [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
-- [ ] Look into Linkwitz-Riley to fix the octave biquads overlap/gap normalisation
 
 ---
 
@@ -92,3 +89,4 @@
 - [x] Implement material property model (absorption coefficient per surface, per band)
 - [x] Implement check for time bin >= dt
 - [x] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
+- [x] Turn input into 44.1kHz sample rate to make sure to get correct pitch

@@ -27,6 +27,36 @@ add_library(pocketfft INTERFACE)
 target_include_directories(pocketfft INTERFACE ${pocketfft_SOURCE_DIR})
 target_compile_definitions(pocketfft INTERFACE POCKETFFT_NO_MULTITHREADING)
 
+# libsamplerate 0.2.2 declares a cmake_minimum_required older than CMake 4 accepts
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(LIBSAMPLERATE_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(LIBSAMPLERATE_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(libsamplerate
+  GIT_REPOSITORY https://github.com/libsndfile/libsamplerate.git
+  GIT_TAG 0.2.2
+)
+FetchContent_MakeAvailable(libsamplerate)
+
+# dr_wav: single-header WAV reader/writer (no tags upstream; pinned by commit)
+FetchContent_Declare(dr_libs
+  GIT_REPOSITORY https://github.com/mackron/dr_libs.git
+  GIT_TAG 47a4f08e777faddf59a8955c4ea84f69f41020d5
+  GIT_SUBMODULES "" # tests-only submodules; not needed for the headers
+)
+FetchContent_MakeAvailable(dr_libs)
+add_library(dr_libs INTERFACE)
+target_include_directories(dr_libs INTERFACE ${dr_libs_SOURCE_DIR})
+
+# iir1: IIR filter design (Butterworth band-pass for the octave filterbank)
+set(IIR1_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(IIR1_BUILD_DEMO OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(iir1
+  GIT_REPOSITORY https://github.com/berndporr/iir1.git
+  GIT_TAG 1.9.5
+)
+FetchContent_MakeAvailable(iir1)
+
 find_package(OpenGL REQUIRED)
 
 add_library(core
@@ -43,7 +73,7 @@ add_library(core
   src/Wav.cpp)
 target_include_directories(core PUBLIC include)
 target_link_libraries(core PUBLIC glm::glm)
-target_link_libraries(core PRIVATE pocketfft)
+target_link_libraries(core PRIVATE pocketfft samplerate dr_libs iir_static)
 
 # Front-end: the visual simulation
 add_executable(ParticleSoundSim src/app_visual.cpp)

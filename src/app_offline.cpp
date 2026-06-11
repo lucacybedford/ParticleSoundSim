@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
   float room_width = 5;
   float room_length = 10;
   float room_height = 3;
-  Material room_material = materials::mSolidWood;
+  Material room_material = materials::mConcrete;
 
   Simulation sim(make_room(room_width, room_length, room_height, room_material),
                  cfg, air);
@@ -68,8 +68,8 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/3d-" + r_width + "x" + r_height + "_" +
-                            r_material + "_room_" + r_particles + ".wav";
+  std::string output_path = "./output/3D/3d-new-" + r_width + "x" + r_height +
+                            "_" + r_material + "_room_" + r_particles + ".wav";
 
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
@@ -91,8 +91,15 @@ int main(int argc, char *argv[]) {
     Audio dry;
     if (wav_read(input_path, dry)) {
       if (dry.sample_rate != builder.sample_rate) {
-        std::printf("Expected input with 44.1kHz sample rate.\n");
-        return 1;
+        std::printf("Resampling %s from %d Hz to %d Hz\n", input_path.c_str(),
+                    dry.sample_rate, builder.sample_rate);
+        dry.samples =
+            resample(dry.samples, dry.sample_rate, builder.sample_rate);
+        dry.sample_rate = builder.sample_rate;
+        if (dry.samples.empty()) {
+          std::printf("Resampling failed – skipping convolution.\n");
+          return 1;
+        }
       }
       std::vector<float> wet = convolve(dry.samples, rir);
       normalize_peak(wet);
