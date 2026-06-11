@@ -36,8 +36,7 @@ RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
     for (std::size_t n = 0; n < L; ++n)
       noise[n] = gauss(rng);
 
-    // bandpass the noise to this octave band: edges at fc/sqrt(2)..fc*sqrt(2),
-    // upper edge clamped below Nyquist for low sample rates
+    // bandpass the noise to this octave band
     const double fc = kBandCentres[b];
     const double lo = fc / std::sqrt(2.0);
     const double hi = std::min(fc * std::sqrt(2.0), 0.95 * nyquist);
@@ -46,8 +45,7 @@ RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
     for (std::size_t n = 0; n < L; ++n)
       noise[n] = bp.filter(noise[n]);
 
-    // 3. Shape by the pressure-amplitude envelope = sqrt(energy), linearly
-    //    interpolating the coarse 1 ms histogram up to audio rate.
+    // linearly interpolating energy values between bins
     double synth_energy = 0.0;
     for (std::size_t n = 0; n < L; ++n) {              // for each sample
       double t_bin = n / samples_per_bin;              // get bin currently in

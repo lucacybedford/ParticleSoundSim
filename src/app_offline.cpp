@@ -84,13 +84,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
-    // Calibrate the RIR to a physical scale. Every particle is emitted with
-    // unit energy per band, so histogram energy — and therefore RIR energy —
-    // grows linearly with the particle count. Energy scales with amplitude
-    // squared, so dividing amplitude by sqrt(N) makes the RIR independent of
-    // N: it becomes the response per unit emitted energy. Two rooms simulated
-    // with different particle counts or materials are now directly comparable
-    // by level.
+    // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
     const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
     for (float &v : rir)
       v *= cal;
@@ -117,14 +111,11 @@ int main(int argc, char *argv[]) {
         }
       }
       std::vector<float> wet = convolve(dry.samples, rir);
-      // No normalization: the wet level reflects the room's true response,
-      // so output loudness is comparable across runs. Written as 32-bit
-      // float, so levels outside [-1, 1] are preserved rather than clipped.
       float peak = 0.0f;
       for (float v : wet)
         peak = std::max(peak, std::fabs(v));
       if (!wav_write(output_path, Audio{dry.sample_rate, wet})) {
-        std::printf("Failed to write %s (does the directory exist?)\n",
+        std::printf("Failed to write %s (directory must exist)\n",
                     output_path.c_str());
         return 1;
       }
