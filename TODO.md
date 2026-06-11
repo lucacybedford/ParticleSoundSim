@@ -4,11 +4,13 @@
 
 ## In Progress
 
+- [ ] Fix a reproducible test suite of rooms with known absorption coefficients
+- [ ] Get visual app to work with 3D graphics
+
 ---
 
 ## This week
 
-- [ ] Fix a reproducible test suite of rooms with known absorption coefficients
 - [ ] Visualise histogram accumulation
 - [ ] Compare to Allen1979 image-source method results
 
