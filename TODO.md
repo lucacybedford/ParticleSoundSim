@@ -4,8 +4,8 @@
 
 ## In Progress
 
+- [ ] Implement rotating camera
 - [ ] Fix a reproducible test suite of rooms with known absorption coefficients
-- [ ] Get visual app to work with 3D graphics
 
 ---
 
@@ -92,3 +92,4 @@
 - [x] Implement check for time bin >= dt
 - [x] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
 - [x] Turn input into 44.1kHz sample rate to make sure to get correct pitch
+- [x] Get visual app to work with 3D graphics
