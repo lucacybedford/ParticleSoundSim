@@ -12,6 +12,7 @@ Particle::Particle(std::mt19937 &gen,
                    std::uniform_real_distribution<double> &v_angDist,
                    dvec3 &position, double speed)
     : vel(speed), x(position) {
+  energies.fill(1.0);
   double h_ang = h_angDist(gen);
   double v_ang = v_angDist(gen); // sin(elevation)
   double r = std::sqrt(1.0 - v_ang * v_ang);
@@ -102,7 +103,7 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
 
     if (hitReceiver && recT < minT) {
       double arrival = time + (dt - remaining_dt) + recT * remaining_dt;
-      std::array<double, 8> e = energies;
+      BandEnergies e = energies;
       // apply summation method of offline
       if (summation)
         summation->attenuate_total(e, vel * arrival);

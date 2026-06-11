@@ -1,6 +1,5 @@
 #pragma once
 #include "Plane.hpp"
-#include <array>
 #include <random>
 #include <vector>
 
@@ -14,7 +13,7 @@ struct Particle {
   dvec3 x;
   dvec3 v;
   bool alive = true;
-  std::array<double, 8> energies{1, 1, 1, 1, 1, 1, 1, 1};
+  BandEnergies energies; // initialised to 1.0 per band in the constructor
 
   Particle(std::mt19937 &gen, std::uniform_real_distribution<double> &h_angDist,
            std::uniform_real_distribution<double> &v_angDist, dvec3 &position,

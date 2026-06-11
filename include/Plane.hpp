@@ -1,6 +1,5 @@
 #pragma once
 #include "Material.hpp"
-#include <array>
 #include <glm/glm.hpp>
 
 using glm::dvec3;
@@ -16,7 +15,7 @@ struct Plane {
   dvec3 h_end_b;
   dvec3 v_end_a;
   dvec3 v_end_b;
-  std::array<double, 8> absorption;
+  BandEnergies absorption;
 
   Plane(dvec3 normal, dvec3 point, double length, double height,
         const Material &material);

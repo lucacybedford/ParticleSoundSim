@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   // Simulation sim(make_L_room(room_material), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
-    printf("dt must be smaller than receiver bin width.");
+    std::printf("dt must be smaller than receiver bin width.\n");
     return 1;
   }
 
@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
   }
 
   std::string r_width = std::to_string(static_cast<int>(room_width));
+  std::string r_length = std::to_string(static_cast<int>(room_length));
   std::string r_height = std::to_string(static_cast<int>(room_height));
   std::string r_material = room_material.name;
   std::string r_particles = std::to_string(cfg.num_particles);
@@ -68,12 +69,12 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/3d-new-" + r_width + "x" + r_height +
-                            "_" + r_material + "_room_" + r_particles + ".wav";
+  std::string output_path = "./output/3D/3d-new-" + r_width + "x" + r_length +
+                            "x" + r_height + "_" + r_material + "_room_" +
+                            r_particles + ".wav";
 
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
-    builder.sample_rate = 44100;
     builder.bin_width = Receiver::bin_width;
 
     std::vector<float> rir = builder.build(sim.scene.receivers[0].histogram);
@@ -84,7 +85,10 @@ int main(int argc, char *argv[]) {
 
     Audio rir_audio{builder.sample_rate, rir};
     normalize_peak(rir_audio.samples);
-    wav_write("rir.wav", rir_audio);
+    if (!wav_write("rir.wav", rir_audio)) {
+      std::printf("Failed to write rir.wav\n");
+      return 1;
+    }
     std::printf("Wrote rir.wav (%zu samples, %.3f s)\n", rir.size(),
                 rir.size() / static_cast<double>(builder.sample_rate));
 
@@ -102,10 +106,15 @@ int main(int argc, char *argv[]) {
         }
       }
       std::vector<float> wet = convolve(dry.samples, rir);
+      // peak-normalised: output loudness is NOT comparable across runs
       normalize_peak(wet);
-      wav_write(output_path, Audio{dry.sample_rate, wet});
-      std::printf("Convolved %s -> wet.wav (%zu samples)\n", input_path.c_str(),
-                  wet.size());
+      if (!wav_write(output_path, Audio{dry.sample_rate, wet})) {
+        std::printf("Failed to write %s (does the directory exist?)\n",
+                    output_path.c_str());
+        return 1;
+      }
+      std::printf("Convolved %s -> %s (%zu samples)\n", input_path.c_str(),
+                  output_path.c_str(), wet.size());
     } else {
       std::printf("No %s found – skipping convolution.\n", input_path.c_str());
     }

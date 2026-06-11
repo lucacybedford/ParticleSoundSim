@@ -5,7 +5,7 @@
 #include <random>
 
 std::vector<float>
-RIRBuilder::build(const std::vector<std::array<double, 8>> &hist) const {
+RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
   const std::size_t n_bins = hist.size();
   if (n_bins == 0)
     return {};
@@ -24,7 +24,7 @@ RIRBuilder::build(const std::vector<std::array<double, 8>> &hist) const {
   std::vector<double> band(L);
 
   // loop over bands of histogram
-  for (int b = 0; b < 8; ++b) {
+  for (int b = 0; b < kNumBands; ++b) {
     double target_energy =
         0.0; // accumulation of all energy in band as reference
     for (std::size_t k = 0; k < n_bins; ++k)
@@ -38,7 +38,7 @@ RIRBuilder::build(const std::vector<std::array<double, 8>> &hist) const {
 
     // bandpass the noise to this octave band: edges at fc/sqrt(2)..fc*sqrt(2),
     // upper edge clamped below Nyquist for low sample rates
-    const double fc = band_centres[b];
+    const double fc = kBandCentres[b];
     const double lo = fc / std::sqrt(2.0);
     const double hi = std::min(fc * std::sqrt(2.0), 0.95 * nyquist);
     Iir::Butterworth::BandPass<4> bp;
