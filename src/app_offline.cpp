@@ -5,6 +5,7 @@
 #include "SimConfig.hpp"
 #include "Simulation.hpp"
 #include "Wav.hpp"
+#include <cmath>
 #include <cstdio>
 #include <string>
 
@@ -17,7 +18,7 @@ int main(int argc, char *argv[]) {
   float room_width = 5;
   float room_length = 10;
   float room_height = 3;
-  Material room_material = materials::mConcrete;
+  Material room_material = materials::mSolidWood;
 
   Simulation sim(make_room(room_width, room_length, room_height, room_material),
                  cfg, air);
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/3d-new-" + r_width + "x" + r_length +
+  std::string output_path = "./output/3D/32-bit-" + r_width + "x" + r_length +
                             "x" + r_height + "_" + r_material + "_room_" +
                             r_particles + ".wav";
 
@@ -83,8 +84,18 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
+    // Calibrate the RIR to a physical scale. Every particle is emitted with
+    // unit energy per band, so histogram energy — and therefore RIR energy —
+    // grows linearly with the particle count. Energy scales with amplitude
+    // squared, so dividing amplitude by sqrt(N) makes the RIR independent of
+    // N: it becomes the response per unit emitted energy. Two rooms simulated
+    // with different particle counts or materials are now directly comparable
+    // by level.
+    const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
+    for (float &v : rir)
+      v *= cal;
+
     Audio rir_audio{builder.sample_rate, rir};
-    normalize_peak(rir_audio.samples);
     if (!wav_write("rir.wav", rir_audio)) {
       std::printf("Failed to write rir.wav\n");
       return 1;
@@ -106,15 +117,20 @@ int main(int argc, char *argv[]) {
         }
       }
       std::vector<float> wet = convolve(dry.samples, rir);
-      // peak-normalised: output loudness is NOT comparable across runs
-      normalize_peak(wet);
+      // No normalization: the wet level reflects the room's true response,
+      // so output loudness is comparable across runs. Written as 32-bit
+      // float, so levels outside [-1, 1] are preserved rather than clipped.
+      float peak = 0.0f;
+      for (float v : wet)
+        peak = std::max(peak, std::fabs(v));
       if (!wav_write(output_path, Audio{dry.sample_rate, wet})) {
         std::printf("Failed to write %s (does the directory exist?)\n",
                     output_path.c_str());
         return 1;
       }
-      std::printf("Convolved %s -> %s (%zu samples)\n", input_path.c_str(),
-                  output_path.c_str(), wet.size());
+      std::printf("Convolved %s -> %s (%zu samples, peak %.3g = %.1f dBFS)\n",
+                  input_path.c_str(), output_path.c_str(), wet.size(), peak,
+                  20.0 * std::log10(peak));
     } else {
       std::printf("No %s found – skipping convolution.\n", input_path.c_str());
     }

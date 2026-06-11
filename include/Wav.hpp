@@ -12,7 +12,8 @@ struct Audio {
 // file is missing or unreadable.
 bool wav_read(const std::string &path, Audio &out);
 
-// Writes a 16-bit PCM mono WAV. Samples outside [-1, 1] are clipped.
+// Writes a mono 32-bit IEEE float WAV: no clipping, absolute sample values
+// are preserved exactly.
 bool wav_write(const std::string &path, const Audio &in);
 
 // Scales samples in place so the peak magnitude equals `peak` (default 0.9).

@@ -36,29 +36,19 @@ bool wav_read(const std::string &path, Audio &out) {
 bool wav_write(const std::string &path, const Audio &in) {
   drwav_data_format fmt{};
   fmt.container = drwav_container_riff;
-  fmt.format = DR_WAVE_FORMAT_PCM;
+  fmt.format = DR_WAVE_FORMAT_IEEE_FLOAT;
   fmt.channels = 1;
   fmt.sampleRate = static_cast<drwav_uint32>(in.sample_rate);
-  fmt.bitsPerSample = 16;
+  fmt.bitsPerSample = 32;
 
   drwav wav;
   if (!drwav_init_file_write(&wav, path.c_str(), &fmt, nullptr))
     return false;
 
-  std::vector<drwav_int16> pcm(in.samples.size());
-  for (std::size_t i = 0; i < in.samples.size(); ++i) {
-    long s = std::lround(in.samples[i] * 32767.0f);
-    if (s > 32767)
-      s = 32767;
-    if (s < -32768)
-      s = -32768;
-    pcm[i] = static_cast<drwav_int16>(s);
-  }
-
   drwav_uint64 written =
-      drwav_write_pcm_frames(&wav, pcm.size(), pcm.data());
+      drwav_write_pcm_frames(&wav, in.samples.size(), in.samples.data());
   drwav_uninit(&wav);
-  return written == pcm.size();
+  return written == in.samples.size();
 }
 
 std::vector<float> resample(const std::vector<float> &in, int in_rate,
