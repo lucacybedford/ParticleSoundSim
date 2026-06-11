@@ -27,6 +27,7 @@ bool wav_read(const std::string &path, Audio &out) {
                                std::istreambuf_iterator<char>());
   if (d.size() < 44)
     return false;
+  // check if the file is in the right format
   if (std::memcmp(d.data(), "RIFF", 4) != 0 ||
       std::memcmp(d.data() + 8, "WAVE", 4) != 0)
     return false;
@@ -36,7 +37,7 @@ bool wav_read(const std::string &path, Audio &out) {
   const unsigned char *data_ptr = nullptr;
   uint32_t data_len = 0;
 
-  // Walk the RIFF chunks looking for "fmt " and "data".
+  // go over the chunks looking for "fmt" and "data"
   std::size_t pos = 12;
   while (pos + 8 <= d.size()) {
     const unsigned char *c = d.data() + pos;

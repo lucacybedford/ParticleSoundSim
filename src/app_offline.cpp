@@ -90,6 +90,10 @@ int main(int argc, char *argv[]) {
 
     Audio dry;
     if (wav_read(input_path, dry)) {
+      if (dry.sample_rate != builder.sample_rate) {
+        std::printf("Expected input with 44.1kHz sample rate.\n");
+        return 1;
+      }
       std::vector<float> wet = convolve(dry.samples, rir);
       normalize_peak(wet);
       wav_write(output_path, Audio{dry.sample_rate, wet});
