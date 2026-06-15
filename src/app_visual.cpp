@@ -5,10 +5,19 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/trigonometric.hpp"
 #include <algorithm>
+#include <cmath>
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+// Orbit-distance multiplier (in units of scene radius), adjusted by scrolling.
+static double g_zoom = 2.0;
+
+static void scroll_callback(GLFWwindow *, double, double yoffset) {
+  g_zoom *= std::pow(0.9, yoffset); // scroll up = zoom in
+  g_zoom = std::clamp(g_zoom, 0.2, 8.0);
+}
 
 int main() {
   const unsigned int POINT_RADIUS = 8;
@@ -40,6 +49,7 @@ int main() {
   }
 
   glfwMakeContextCurrent(window);
+  glfwSetScrollCallback(window, scroll_callback);
 
   dvec3 bb_min{1e30}, bb_max{-1e30};
   for (const Plane &pl : sim.scene.planes) {
@@ -55,20 +65,45 @@ int main() {
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixd(glm::value_ptr(proj));
 
-  dvec3 eye = centre + dvec3{0.8, -1.5, 0.9} * radius;
-  glm::dmat4 view = glm::lookAt(eye, centre, dvec3{0, 0, 1});
-  glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixd(glm::value_ptr(view));
-
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_POINT_SMOOTH);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  // Orbit camera state (spherical coordinates around the scene centre)
+  double yaw = 0.5;   // azimuth, radians
+  double pitch = 0.5; // elevation, radians
+  bool dragging = false;
+  double last_x = 0, last_y = 0;
+
   while (!glfwWindowShouldClose(window)) {
     sim.step(cfg.dt * cfg.playback_speed);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Left-drag to orbit the camera around the scene centre
+    double mx, my;
+    glfwGetCursorPos(window, &mx, &my);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+      if (dragging) {
+        yaw -= (mx - last_x) * 0.01;
+        pitch += (my - last_y) * 0.01;
+        pitch = std::clamp(pitch, -1.55, 1.55); // avoid flipping over the poles
+      }
+      dragging = true;
+    } else {
+      dragging = false;
+    }
+    last_x = mx;
+    last_y = my;
+
+    dvec3 eye = centre + g_zoom * radius *
+                             dvec3{std::cos(pitch) * std::cos(yaw),
+                                   std::cos(pitch) * std::sin(yaw),
+                                   std::sin(pitch)};
+    glm::dmat4 view = glm::lookAt(eye, centre, dvec3{0, 0, 1});
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixd(glm::value_ptr(view));
 
     // Draw room
     glLineWidth(2);
