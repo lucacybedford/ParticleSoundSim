@@ -30,7 +30,7 @@ int main() {
   Material room_material = materials::mSolidWood;
 
   Atmosphere air;
-  Simulation sim(make_room(5, 10, 3, room_material), cfg, air);
+  Simulation sim(make_room(5, 7, 3, room_material), cfg, air);
   // Simulation sim(make_L_room(room_material), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
@@ -97,10 +97,10 @@ int main() {
     last_x = mx;
     last_y = my;
 
-    dvec3 eye = centre + g_zoom * radius *
-                             dvec3{std::cos(pitch) * std::cos(yaw),
-                                   std::cos(pitch) * std::sin(yaw),
-                                   std::sin(pitch)};
+    dvec3 eye =
+        centre + g_zoom * radius *
+                     dvec3{std::cos(pitch) * std::cos(yaw),
+                           std::cos(pitch) * std::sin(yaw), std::sin(pitch)};
     glm::dmat4 view = glm::lookAt(eye, centre, dvec3{0, 0, 1});
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixd(glm::value_ptr(view));
