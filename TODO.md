@@ -12,6 +12,8 @@
 
 - [ ] Visualise histogram accumulation
 - [ ] Compare to Allen1979 image-source method results
+- [ ] Implement angle-dependent absorption coefficient (per band)
+- [ ] Implement diffusion reflection
 
 ---
 
@@ -23,10 +25,7 @@
 
 ## Backlog — Core Physics
 
-- [ ] Implement angle-dependent absorption coefficient (per band)
-- [ ] Implement diffusion reflection
 - [ ] Implement transmission through surfaces
-- [ ] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
 
 ---
 
@@ -93,3 +92,4 @@
 - [x] Turn input into 44.1kHz sample rate to make sure to get correct pitch
 - [x] Get visual app to work with 3D graphics
 - [x] Implement rotating camera
+- [x] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
