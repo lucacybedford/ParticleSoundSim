@@ -30,8 +30,8 @@ int main() {
   Material room_material = materials::mSolidWood;
 
   Atmosphere air;
-  Simulation sim(make_room(5, 7, 3, room_material), cfg, air);
-  // Simulation sim(make_L_room(room_material), cfg, air);
+  // Simulation sim(make_room(5, 7, 3, room_material), cfg, air);
+  Simulation sim(make_standard(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     printf("dt must be smaller than receiver bin width.");

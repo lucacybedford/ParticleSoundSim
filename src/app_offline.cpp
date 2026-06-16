@@ -20,9 +20,10 @@ int main(int argc, char *argv[]) {
   float room_height = 3;
   Material room_material = materials::mSolidWood;
 
-  Simulation sim(make_room(room_width, room_length, room_height, room_material),
-                 cfg, air);
-  // Simulation sim(make_L_room(room_material), cfg, air);
+  // Simulation sim(make_room(room_width, room_length, room_height,
+  // room_material),
+  //                cfg, air);
+  Simulation sim(make_standard(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     std::printf("dt must be smaller than receiver bin width.\n");
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/32-bit-" + r_width + "x" + r_length +
+  std::string output_path = "./output/3D/standard-" + r_width + "x" + r_length +
                             "x" + r_height + "_" + r_material + "_room_" +
                             r_particles + ".wav";
 

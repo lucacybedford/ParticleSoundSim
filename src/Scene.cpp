@@ -1,7 +1,43 @@
 #include "Scene.hpp"
+#include "Bands.hpp"
+#include "Emitter.hpp"
 #include "Materials.hpp"
 #include "Receiver.hpp"
 #include <cmath>
+
+Scene make_standard() {
+  Scene scene;
+
+  double Lx = 3.432;
+  double Ly = 5.148;
+  double Lz = 4.29;
+
+  Material mat_floor{
+      "floor", BandEnergies{0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51}};
+  Material mat_wall{
+      "wall", BandEnergies{0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19}};
+
+  dvec3 a{0, Ly / 2, Lz / 2};
+  dvec3 b{Lx / 2, 0, Lz / 2};
+  dvec3 c{Lx, Ly / 2, Lz / 2};
+  dvec3 d{Lx / 2, Ly, Lz / 2};
+
+  dvec3 floor{Lx / 2, Ly / 2, 0};
+  dvec3 ceiling{Lx / 2, Ly / 2, Lz};
+
+  scene.planes.emplace_back(Plane{{0, 0, 1}, floor, Lx, Ly, mat_floor});
+  scene.planes.emplace_back(Plane{{0, 0, -1}, ceiling, Lx, Ly, mat_floor});
+
+  scene.planes.emplace_back(Plane{{1, 0, 0}, a, Ly, Lz, mat_wall});
+  scene.planes.emplace_back(Plane({0, 1, 0}, b, Lx, Lz, mat_wall));
+  scene.planes.emplace_back(Plane({-1, 0, 0}, c, Ly, Lz, mat_wall));
+  scene.planes.emplace_back(Plane({0, -1, 0}, d, Lx, Lz, mat_wall));
+
+  scene.emitters.emplace_back(Emitter{{2.145, 0.429, 2.574}});
+  scene.receivers.emplace_back(Receiver{{1.287, 4.29, 1.716}, 0.3});
+
+  return scene;
+}
 
 Scene make_room(float width, float length, float height, Material &material) {
   Scene scene;
@@ -23,7 +59,7 @@ Scene make_room(float width, float length, float height, Material &material) {
 
   scene.emitters.emplace_back(dvec3{0, -3, 1.7}, 1 * M_PI / 4, 3 * M_PI / 4,
                               -M_PI / 2, M_PI / 2);
-  scene.receivers.emplace_back(Receiver{{0, 3, 1.7}, 0.3});
+  scene.receivers.emplace_back(Receiver{{0, 3, 1.7}, 0.1});
 
   return scene;
 }
