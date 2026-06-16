@@ -27,11 +27,11 @@ int main() {
   cfg.fidelity = SimConfig::Fidelity::Realtime;
   cfg.playback_speed = 0.05; // 20x slow-motion
 
-  Material room_material = materials::mSolidWood;
+  Material room_material = materials::mConcrete;
 
   Atmosphere air;
-  // Simulation sim(make_room(5, 7, 3, room_material), cfg, air);
-  Simulation sim(make_standard(), cfg, air);
+  Simulation sim(make_room(5, 10, 3, room_material), cfg, air);
+  // Simulation sim(make_standard(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     printf("dt must be smaller than receiver bin width.");

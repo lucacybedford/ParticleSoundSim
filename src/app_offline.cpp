@@ -15,15 +15,14 @@ int main(int argc, char *argv[]) {
 
   cfg.num_particles = 100000;
 
-  float room_width = 5;
-  float room_length = 10;
+  float room_width = 10;
+  float room_length = 30;
   float room_height = 3;
-  Material room_material = materials::mSolidWood;
+  Material room_material = materials::mConcrete;
 
-  // Simulation sim(make_room(room_width, room_length, room_height,
-  // room_material),
-  //                cfg, air);
-  Simulation sim(make_standard(), cfg, air);
+  Simulation sim(make_room(room_width, room_length, room_height, room_material),
+                 cfg, air);
+  // Simulation sim(make_standard(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     std::printf("dt must be smaller than receiver bin width.\n");

@@ -83,7 +83,7 @@ Scene make_L_room(Material &mat) {
 
   scene.emitters.emplace_back(Emitter{{-3, 4.5, 1.7}});
 
-  scene.receivers.emplace_back(Receiver{{0.0, 1.5, 1.7}, 0.3});
+  scene.receivers.emplace_back(Receiver{{0.0, 1.5, 1.7}, 0.1});
 
   return scene;
 }
@@ -114,7 +114,7 @@ Scene make_diamond_scene(double room_radius) {
   scene.emitters.emplace_back(centre + dvec3{0, 0.5, 1.7}, 1 * M_PI / 4,
                               3 * M_PI / 4, -M_PI / 2, M_PI / 2);
 
-  scene.receivers.emplace_back(dvec3{3.3, 3.3, 1.7}, 0.2);
+  scene.receivers.emplace_back(dvec3{3.3, 3.3, 1.7}, 0.1);
 
   return scene;
 }
