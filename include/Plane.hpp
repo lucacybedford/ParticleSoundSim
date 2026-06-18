@@ -3,16 +3,19 @@
 #include <array>
 #include <glm/glm.hpp>
 
-using glm::dvec2;
+using glm::dvec3;
 
 struct Plane {
-  dvec2 n;
-  dvec2 p;
+  dvec3 n;
+  dvec3 p;
   double l;
-  dvec2 tangent;
-  dvec2 end_a;
-  dvec2 end_b;
-  std::array<double, 8> absorption;
+  double h;
+  dvec3 h_tangent;
+  dvec3 v_tangent;
+  std::array<dvec3, 4> corners; // counter-clockwise when viewed from the front
 
-  Plane(dvec2 normal, dvec2 point, double length, const Material &material);
+  BandEnergies absorption;
+
+  Plane(dvec3 normal, dvec3 point, double length, double height,
+        const Material &material);
 };

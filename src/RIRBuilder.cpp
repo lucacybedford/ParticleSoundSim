@@ -1,45 +1,11 @@
 #include "RIRBuilder.hpp"
+#include <Iir.h>
 #include <algorithm>
 #include <cmath>
 #include <random>
 
-// namespace for helper functions only used in this file
-namespace {
-
-struct Biquad {
-  double b0, b1, b2, a1, a2;
-  double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-
-  double process(double x) {
-    double y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
-    x2 = x1;
-    x1 = x;
-    y2 = y1;
-    y1 = y;
-    return y;
-  }
-};
-
-Biquad make_bandpass(double fc, double fs, double bw) {
-  double w0 = 2.0 * M_PI * fc / fs;
-  double cw = std::cos(w0);
-  double sw = std::sin(w0);
-  double alpha = sw * std::sinh(std::log(2.0) / 2.0 * bw * w0 / sw);
-
-  double a0 = 1.0 + alpha;
-  Biquad bq;
-  bq.b0 = alpha / a0;
-  bq.b1 = 0.0;
-  bq.b2 = -alpha / a0;
-  bq.a1 = (-2.0 * cw) / a0;
-  bq.a2 = (1.0 - alpha) / a0;
-  return bq;
-}
-
-} // namespace
-
 std::vector<float>
-RIRBuilder::build(const std::vector<std::array<double, 8>> &hist) const {
+RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
   const std::size_t n_bins = hist.size();
   if (n_bins == 0)
     return {};
@@ -58,7 +24,7 @@ RIRBuilder::build(const std::vector<std::array<double, 8>> &hist) const {
   std::vector<double> band(L);
 
   // loop over bands of histogram
-  for (int b = 0; b < 8; ++b) {
+  for (int b = 0; b < kNumBands; ++b) {
     double target_energy =
         0.0; // accumulation of all energy in band as reference
     for (std::size_t k = 0; k < n_bins; ++k)
@@ -70,17 +36,16 @@ RIRBuilder::build(const std::vector<std::array<double, 8>> &hist) const {
     for (std::size_t n = 0; n < L; ++n)
       noise[n] = gauss(rng);
 
-    // bandpass the band noise
-    double fc = band_centres[b];       // get frequency of band centre
-    fc = std::min(fc, 0.99 * nyquist); // keep the top band below Nyquist
-    // restrict the noise to the band's frequency centre
-    Biquad bp1 = make_bandpass(fc, sample_rate, 1.0);
-    Biquad bp2 = make_bandpass(fc, sample_rate, 1.0);
+    // bandpass the noise to this octave band
+    const double fc = kBandCentres[b];
+    const double lo = fc / std::sqrt(2.0);
+    const double hi = std::min(fc * std::sqrt(2.0), 0.95 * nyquist);
+    Iir::Butterworth::BandPass<4> bp;
+    bp.setup(sample_rate, 0.5 * (lo + hi), hi - lo);
     for (std::size_t n = 0; n < L; ++n)
-      noise[n] = bp2.process(bp1.process(noise[n]));
+      noise[n] = bp.filter(noise[n]);
 
-    // 3. Shape by the pressure-amplitude envelope = sqrt(energy), linearly
-    //    interpolating the coarse 1 ms histogram up to audio rate.
+    // linearly interpolating energy values between bins
     double synth_energy = 0.0;
     for (std::size_t n = 0; n < L; ++n) {              // for each sample
       double t_bin = n / samples_per_bin;              // get bin currently in

@@ -48,9 +48,7 @@ std::vector<float> convolve(const std::vector<float> &x,
   if (N == 0 || M == 0)
     return {};
 
-  // FFT length: comfortably larger than the IR so each block carries a useful
-  // chunk of input. Each block convolves B input samples with the full IR
-  // without circular wraparound, which requires nfft >= B + M - 1.
+  // FFT length must be comfortably larger than the IR
   std::size_t nfft = std::max<std::size_t>(2048, next_pow2(2 * M));
   const std::size_t B = nfft - M + 1; // input samples consumed per block
   const std::size_t ncplx = nfft / 2 + 1;

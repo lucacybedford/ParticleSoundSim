@@ -1,8 +1,8 @@
 #pragma once
-#include <array>
+#include "Bands.hpp"
 #include <string>
 
 struct Material {
   std::string name;
-  std::array<double, 8> absorption;
+  BandEnergies absorption;
 };

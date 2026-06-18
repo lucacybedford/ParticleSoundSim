@@ -1,123 +1,80 @@
 #include "Wav.hpp"
 #include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <fstream>
-#include <iterator>
+#include <cstdio>
+#include <samplerate.h>
 
-// namespace for helper functions only used in this file
-namespace {
-
-uint16_t rd_u16(const unsigned char *p) {
-  return static_cast<uint16_t>(p[0] | (p[1] << 8));
-}
-uint32_t rd_u32(const unsigned char *p) {
-  return static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) |
-         (static_cast<uint32_t>(p[2]) << 16) |
-         (static_cast<uint32_t>(p[3]) << 24);
-}
-
-} // namespace
+#define DR_WAV_IMPLEMENTATION
+#include <dr_wav.h>
 
 bool wav_read(const std::string &path, Audio &out) {
-  std::ifstream f(path, std::ios::binary);
-  if (!f)
-    return false;
-  std::vector<unsigned char> d((std::istreambuf_iterator<char>(f)),
-                               std::istreambuf_iterator<char>());
-  if (d.size() < 44)
-    return false;
-  if (std::memcmp(d.data(), "RIFF", 4) != 0 ||
-      std::memcmp(d.data() + 8, "WAVE", 4) != 0)
+  drwav wav;
+  if (!drwav_init_file(&wav, path.c_str(), nullptr))
     return false;
 
-  uint16_t channels = 0, bits = 0;
-  uint32_t rate = 0;
-  const unsigned char *data_ptr = nullptr;
-  uint32_t data_len = 0;
-
-  // Walk the RIFF chunks looking for "fmt " and "data".
-  std::size_t pos = 12;
-  while (pos + 8 <= d.size()) {
-    const unsigned char *c = d.data() + pos;
-    uint32_t sz = rd_u32(c + 4);
-    if (std::memcmp(c, "fmt ", 4) == 0 && pos + 8 + 16 <= d.size()) {
-      channels = rd_u16(c + 8 + 2);
-      rate = rd_u32(c + 8 + 4);
-      bits = rd_u16(c + 8 + 14);
-    } else if (std::memcmp(c, "data", 4) == 0) {
-      data_ptr = c + 8;
-      data_len = sz;
-    }
-    pos += 8 + sz + (sz & 1); // chunks are word-aligned
-  }
-
-  if (!data_ptr || bits != 16 || channels < 1)
+  const drwav_uint64 frames = wav.totalPCMFrameCount;
+  const unsigned channels = wav.channels;
+  // dr_wav converts any supported format (8/16/24/32-bit PCM, float, ADPCM)
+  // to float in [-1, 1]
+  std::vector<float> interleaved(frames * channels);
+  drwav_uint64 got =
+      drwav_read_pcm_frames_f32(&wav, frames, interleaved.data());
+  out.sample_rate = static_cast<int>(wav.sampleRate);
+  drwav_uninit(&wav);
+  if (got == 0)
     return false;
 
-  out.sample_rate = static_cast<int>(rate);
-  std::size_t total = data_len / 2; // int16 samples
-  std::size_t frames = total / channels;
-  out.samples.resize(frames);
-  for (std::size_t i = 0; i < frames; ++i) {
-    int acc = 0;
-    for (int ch = 0; ch < channels; ++ch) {
-      int16_t s;
-      std::memcpy(&s, data_ptr + (i * channels + ch) * 2, 2);
-      acc += s;
-    }
-    out.samples[i] = static_cast<float>(acc) / (channels * 32768.0f);
+  out.samples.resize(got);
+  for (drwav_uint64 i = 0; i < got; ++i) {
+    float acc = 0.0f;
+    for (unsigned ch = 0; ch < channels; ++ch)
+      acc += interleaved[i * channels + ch];
+    out.samples[i] = acc / channels;
   }
   return true;
 }
 
 bool wav_write(const std::string &path, const Audio &in) {
-  std::ofstream f(path, std::ios::binary);
-  if (!f)
+  drwav_data_format fmt{};
+  fmt.container = drwav_container_riff;
+  fmt.format = DR_WAVE_FORMAT_IEEE_FLOAT;
+  fmt.channels = 1;
+  fmt.sampleRate = static_cast<drwav_uint32>(in.sample_rate);
+  fmt.bitsPerSample = 32;
+
+  drwav wav;
+  if (!drwav_init_file_write(&wav, path.c_str(), &fmt, nullptr))
     return false;
 
-  const uint16_t channels = 1, bits = 16;
-  const uint32_t rate = static_cast<uint32_t>(in.sample_rate);
-  const uint32_t block_align = channels * bits / 8;
-  const uint32_t byte_rate = rate * block_align;
-  const uint32_t data_len = static_cast<uint32_t>(in.samples.size() * 2);
+  drwav_uint64 written =
+      drwav_write_pcm_frames(&wav, in.samples.size(), in.samples.data());
+  drwav_uninit(&wav);
+  return written == in.samples.size();
+}
 
-  auto w16 = [&](uint16_t v) {
-    unsigned char b[2] = {static_cast<unsigned char>(v),
-                          static_cast<unsigned char>(v >> 8)};
-    f.write(reinterpret_cast<char *>(b), 2);
-  };
-  auto w32 = [&](uint32_t v) {
-    unsigned char b[4] = {static_cast<unsigned char>(v),
-                          static_cast<unsigned char>(v >> 8),
-                          static_cast<unsigned char>(v >> 16),
-                          static_cast<unsigned char>(v >> 24)};
-    f.write(reinterpret_cast<char *>(b), 4);
-  };
+std::vector<float> resample(const std::vector<float> &in, int in_rate,
+                            int out_rate) {
+  if (in_rate == out_rate || in.empty())
+    return in;
 
-  f.write("RIFF", 4);
-  w32(36 + data_len);
-  f.write("WAVE", 4);
-  f.write("fmt ", 4);
-  w32(16); // PCM fmt chunk size
-  w16(1);  // audio format = PCM
-  w16(channels);
-  w32(rate);
-  w32(byte_rate);
-  w16(static_cast<uint16_t>(block_align));
-  w16(bits);
-  f.write("data", 4);
-  w32(data_len);
+  const double ratio = static_cast<double>(out_rate) / in_rate;
+  // +1 guards against the rounded estimate being one frame short
+  std::vector<float> out(static_cast<std::size_t>(in.size() * ratio) + 1);
 
-  for (float v : in.samples) {
-    long s = std::lround(v * 32767.0f);
-    if (s > 32767)
-      s = 32767;
-    if (s < -32768)
-      s = -32768;
-    w16(static_cast<uint16_t>(static_cast<int16_t>(s)));
+  SRC_DATA d{};
+  d.data_in = in.data();
+  d.input_frames = static_cast<long>(in.size());
+  d.data_out = out.data();
+  d.output_frames = static_cast<long>(out.size());
+  d.src_ratio = ratio;
+
+  int err = src_simple(&d, SRC_SINC_BEST_QUALITY, /*channels=*/1);
+  if (err != 0) {
+    std::fprintf(stderr, "resample failed: %s\n", src_strerror(err));
+    return {};
   }
-  return static_cast<bool>(f);
+
+  out.resize(static_cast<std::size_t>(d.output_frames_gen));
+  return out;
 }
 
 void normalize_peak(std::vector<float> &samples, float peak) {

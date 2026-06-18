@@ -8,26 +8,22 @@
 
 ## This week
 
-- [ ] Fix a reproducible test suite of rooms with known absorption coefficients
-- [ ] Turn input into 44.1kHz sample rate to make sure to get correct pitch
 - [ ] Visualise histogram accumulation
 - [ ] Compare to Allen1979 image-source method results
+- [ ] Implement angle-dependent absorption coefficient (per band)
+- [ ] Implement diffusion reflection
 
 ---
 
 ## Backlog – Issues
 
 - [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
-- [ ] Look into Linkwitz-Riley to fix the octave biquads overlap/gap normalisation
 
 ---
 
 ## Backlog — Core Physics
 
-- [ ] Implement angle-dependent absorption coefficient (per band)
-- [ ] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
-- [ ] Implement transmission through surfaces (partial pass-through, per band)
-- [ ] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
+- [ ] Implement transmission through surfaces
 
 ---
 
@@ -89,3 +85,10 @@
 - [x] Enable passing input file as main argument
 - [x] Implement per-surface IIR filters for frequency-dependent absorption at reflection
 - [x] Implement material property model (absorption coefficient per surface, per band)
+- [x] Implement check for time bin >= dt
+- [x] Extend geometry from 2D half-planes to 3D enclosed rooms (triangulated surfaces)
+- [x] Turn input into 44.1kHz sample rate to make sure to get correct pitch
+- [x] Get visual app to work with 3D graphics
+- [x] Implement rotating camera
+- [x] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
+- [x] Fix a reproducible test suite of rooms with known absorption coefficients
