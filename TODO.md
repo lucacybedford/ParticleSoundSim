@@ -4,8 +4,6 @@
 
 ## In Progress
 
-- [ ] Fix a reproducible test suite of rooms with known absorption coefficients
-
 ---
 
 ## This week
@@ -93,3 +91,4 @@
 - [x] Get visual app to work with 3D graphics
 - [x] Implement rotating camera
 - [x] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
+- [x] Fix a reproducible test suite of rooms with known absorption coefficients
