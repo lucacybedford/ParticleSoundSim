@@ -4,11 +4,12 @@
 
 ## In Progress
 
+- [ ] Visualise histogram accumulation – using python to make histogram plots from data
+
 ---
 
 ## This week
 
-- [ ] Visualise histogram accumulation
 - [ ] Compare to Allen1979 image-source method results
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement diffusion reflection
