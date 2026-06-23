@@ -8,10 +8,13 @@
 
 ## This week
 
-- [ ] Visualise histogram accumulation
 - [ ] Compare to Allen1979 image-source method results
+- [ ] Compare RT60 against Sabine and Eyring closed-form predictions
+- [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
+- [ ] Compare clarity metrics C50 and D50 against ISM baseline
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement diffusion reflection
+- [ ] Add method for performing purely convolution (no simulation)
 
 ---
 
@@ -34,10 +37,6 @@
 ---
 
 ## Backlog — Validation
-
-- [ ] Compare RT60 against Sabine and Eyring closed-form predictions
-- [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
-- [ ] Compare clarity metrics C50 and D50 against ISM baseline
 
 ---
 
@@ -92,3 +91,4 @@
 - [x] Implement rotating camera
 - [x] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
 - [x] Fix a reproducible test suite of rooms with known absorption coefficients
+- [x] Visualise histogram accumulation
