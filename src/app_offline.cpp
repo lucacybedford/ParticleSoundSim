@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   SimConfig cfg;
   Atmosphere air;
 
-  cfg.num_particles = 100000;
+  cfg.num_particles = 1000000;
 
   float room_width = 10;
   float room_length = 30;
@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
+
+  std::printf("Particles: %i\n", cfg.num_particles);
 
   sim.run_offline();
 
@@ -105,9 +107,11 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/standard-" + r_width + "x" + r_length +
-                            "x" + r_height + "_" + r_material + "_room_" +
-                            r_particles + ".wav";
+  std::string output_path = "./output/3D/standard-room-1-000-000.wav";
+  // std::string output_path = "./output/3D/standard-" + r_width + "x" +
+  // r_length +
+  //                           "x" + r_height + "_" + r_material + "_room_" +
+  //                           r_particles + ".wav";
 
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
