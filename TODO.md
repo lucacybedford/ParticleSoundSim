@@ -4,14 +4,15 @@
 
 ## In Progress
 
----
-
-## This week
-
 - [ ] Compare to Allen1979 image-source method results
 - [ ] Compare RT60 against Sabine and Eyring closed-form predictions
 - [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
 - [ ] Compare clarity metrics C50 and D50 against ISM baseline
+
+---
+
+## This week
+
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement diffusion reflection
 - [ ] Add method for performing purely convolution (no simulation)
