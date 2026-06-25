@@ -4,13 +4,16 @@
 
 ## In Progress
 
+- [ ] Compare to Allen1979 image-source method results
 - [ ] Visualise histogram accumulation – using python to make histogram plots from data
+- [ ] Compare RT60 against Sabine and Eyring closed-form predictions
+- [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
+- [ ] Compare clarity metrics C50 and D50 against ISM baseline
 
 ---
 
 ## This week
 
-- [ ] Compare to Allen1979 image-source method results
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement diffusion reflection
 
@@ -35,10 +38,6 @@
 ---
 
 ## Backlog — Validation
-
-- [ ] Compare RT60 against Sabine and Eyring closed-form predictions
-- [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
-- [ ] Compare clarity metrics C50 and D50 against ISM baseline
 
 ---
 
