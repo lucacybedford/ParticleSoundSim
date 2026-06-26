@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-// Write a receiver's time-energy histogram to CSV for plotting in Python.
-// Columns: time_ms, band0..band7 (ISO octave bands), total
 static bool write_histogram_csv(const std::string &path,
                                 const std::vector<std::array<double, 8>> &hist,
                                 double bin_width) {
