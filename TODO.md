@@ -10,8 +10,13 @@
 
 ## This week
 
-- [ ] Implement angle-dependent absorption coefficient (per band)
-- [ ] Implement diffusion reflection
+> Implementation plan: `docs/angle_absorption_and_scattering.md`
+
+- [ ] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
+- [ ] Part B — diffuse scattering (Lambert cosine sampling, broadband `s`)
+- [ ] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
+- [ ] Wire `s` and impedance into `Materials.hpp` per material
+- [ ] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
 
 ---
 
