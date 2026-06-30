@@ -3,3 +3,8 @@ build/
 *.a
 *~
 .DS_Store
+
+# Python
+.venv/
+__pycache__/
+*.pyc

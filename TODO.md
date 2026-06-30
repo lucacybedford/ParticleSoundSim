@@ -4,9 +4,6 @@
 
 ## In Progress
 
-- [ ] Compare to Allen1979 image-source method results
-- [ ] Compare RT60 against Sabine and Eyring closed-form predictions
-- [ ] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
 - [ ] Compare clarity metrics C50 and D50 against ISM baseline
 
 ---
@@ -16,6 +13,14 @@
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement diffusion reflection
 - [ ] Add method for performing purely convolution (no simulation)
+
+> Implementation plan: `docs/angle_absorption_and_scattering.md`
+
+- [ ] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
+- [ ] Part B — diffuse scattering (Lambert cosine sampling, broadband `s`)
+- [ ] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
+- [ ] Wire `s` and impedance into `Materials.hpp` per material
+- [ ] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
 
 ---
 
@@ -92,4 +97,7 @@
 - [x] Implement rotating camera
 - [x] The result is peak normalised. This is not the industry standard (LUFS + limiter: takes into account perceptual frequency weighting). Third option is to use absolute calibration where starting energy represents real loudness -> output is actual loudness too
 - [x] Fix a reproducible test suite of rooms with known absorption coefficients
-- [x] Visualise histogram accumulation
+- [x] Compare to Allen1979 image-source method results
+- [x] Visualise histogram accumulation – using python to make histogram plots from data
+- [x] Compare RT60 against Sabine and Eyring closed-form predictions
+- [x] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline

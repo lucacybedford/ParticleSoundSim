@@ -7,22 +7,49 @@
 #include "Wav.hpp"
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <string>
+#include <vector>
+
+static bool write_histogram_csv(const std::string &path,
+                                const std::vector<std::array<double, 8>> &hist,
+                                double bin_width) {
+  std::ofstream out(path);
+  if (!out)
+    return false;
+
+  out << "time_ms";
+  for (int b = 0; b < 8; ++b)
+    out << ",band" << b;
+  out << ",total\n";
+
+  for (std::size_t i = 0; i < hist.size(); ++i) {
+    double t_ms = i * bin_width * 1e3;
+    out << t_ms;
+    double total = 0;
+    for (double e : hist[i]) {
+      out << "," << e;
+      total += e;
+    }
+    out << "," << total << "\n";
+  }
+  return static_cast<bool>(out);
+}
 
 int main(int argc, char *argv[]) {
   SimConfig cfg;
   Atmosphere air;
 
-  cfg.num_particles = 100000;
+  cfg.num_particles = 1000000;
 
   float room_width = 10;
   float room_length = 30;
   float room_height = 3;
   Material room_material = materials::mConcrete;
 
-  Simulation sim(make_room(room_width, room_length, room_height, room_material),
-                 cfg, air);
-  // Simulation sim(make_standard(), cfg, air);
+  // Simulation sim(make_room(room_width, room_length, room_height,
+  // room_material), cfg, air);
+  Simulation sim(make_standard(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     std::printf("dt must be smaller than receiver bin width.\n");
@@ -31,6 +58,8 @@ int main(int argc, char *argv[]) {
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
+
+  std::printf("Particles: %i\n", cfg.num_particles);
 
   sim.run_offline();
 
@@ -58,6 +87,12 @@ int main(int argc, char *argv[]) {
     std::printf("Receiver %zu: %zu time bins, first arrival = %.1f ms, total "
                 "energy = %g\n",
                 i, hist.size(), first_ms, total);
+
+    std::string csv_path = "histogram_receiver" + std::to_string(i) + ".csv";
+    if (write_histogram_csv(csv_path, hist, Receiver::bin_width))
+      std::printf("Wrote %s\n", csv_path.c_str());
+    else
+      std::printf("Failed to write %s\n", csv_path.c_str());
   }
 
   std::string r_width = std::to_string(static_cast<int>(room_width));
@@ -70,9 +105,11 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/standard-" + r_width + "x" + r_length +
-                            "x" + r_height + "_" + r_material + "_room_" +
-                            r_particles + ".wav";
+  std::string output_path = "./output/3D/standard-room-1-000-000.wav";
+  // std::string output_path = "./output/3D/standard-" + r_width + "x" +
+  // r_length +
+  //                           "x" + r_height + "_" + r_material + "_room_" +
+  //                           r_particles + ".wav";
 
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
