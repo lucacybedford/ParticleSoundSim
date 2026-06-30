@@ -10,31 +10,17 @@
 
 ## This week
 
-> Implementation plan: `docs/angle_absorption_and_scattering.md`
-
-- [ ] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
-- [ ] Part B — diffuse scattering (Lambert cosine sampling, broadband `s`)
-- [ ] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
-- [ ] Wire `s` and impedance into `Materials.hpp` per material
-- [ ] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
-
 ---
 
 ## Backlog – Issues
-
-- [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
 
 ---
 
 ## Backlog — Core Physics
 
-- [ ] Implement transmission through surfaces
-
 ---
 
 ## Backlog — Receiver & RIR
-
-- [ ] Implement virtual microphone accumulation with direction
 
 ---
 
@@ -43,10 +29,6 @@
 ---
 
 ## Backlog — Visualisation & UI
-
-- [ ] Integrate Dear ImGui
-- [ ] Implement Dear ImGui sidebar (particle count, material sliders, play/pause, waveform)
-- [ ] Add waveform display in ImGui panel (reconstructed signal at microphone)
 
 ---
 
