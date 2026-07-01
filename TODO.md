@@ -12,6 +12,8 @@
 
 - [ ] Implement angle-dependent absorption coefficient (per band)
 - [ ] Implement diffusion reflection
+- [ ] Add particle count over time
+- [ ] Add limit to total amount of particles allowed
 - [ ] Add method for performing purely convolution (no simulation)
 
 > Implementation plan: `docs/angle_absorption_and_scattering.md`
