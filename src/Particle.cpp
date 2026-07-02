@@ -60,7 +60,7 @@ static double sphere_hit(const dvec3 &x, const dvec3 &d, const dvec3 &c,
 
 void Particle::move(double time, double dt, std::vector<Plane> &planes,
                     std::vector<Receiver> &receivers,
-                    const AirAbsorption *summation) {
+                    const AirAbsorption *summation, std::mt19937 &rng) {
   double remaining_dt = dt;
 
   // uses max iterations for calculating particle position after wall

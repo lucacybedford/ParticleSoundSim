@@ -23,7 +23,8 @@ struct Particle {
   // summation is only defined for offline mode to employ accurate absorption
   // calculations
   void move(double time, double dt, std::vector<Plane> &planes,
-            std::vector<Receiver> &receivers, const AirAbsorption *summation);
+            std::vector<Receiver> &receivers, const AirAbsorption *summation,
+            std::mt19937 &rng);
   void absorb();
   double check_energy();
 };
