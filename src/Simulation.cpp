@@ -5,7 +5,7 @@
 Simulation::Simulation(Scene scene_in, SimConfig cfg_in,
                        Atmosphere atmosphere_in)
     : scene(std::move(scene_in)), cfg(cfg_in), atmosphere(atmosphere_in),
-      air(atmosphere) {
+      air(atmosphere), rng(std::random_device{}()) {
   const double c = atmosphere.sound_speed();
 
   for (Emitter &em : scene.emitters) {
@@ -18,8 +18,8 @@ void Simulation::step(double dt) {
   const bool offline = cfg.fidelity == SimConfig::Fidelity::Offline;
 
   for (Particle &p : particles) {
-    p.move(time, dt, scene.planes, scene.receivers,
-           offline ? &air : nullptr);
+    p.move(time, dt, scene.planes, scene.receivers, offline ? &air : nullptr,
+           rng);
 
     // only applies the simple air absorption for offline running
     if (!offline)

@@ -4,6 +4,7 @@
 #include "Particle.hpp"
 #include "Scene.hpp"
 #include "SimConfig.hpp"
+#include <random>
 #include <vector>
 
 // Simulation defines state and rules for updating
@@ -13,6 +14,7 @@ struct Simulation {
   Atmosphere atmosphere;
   AirAbsorption air; // precomputed absorption coefficients
   std::vector<Particle> particles;
+  std::mt19937 rng;
   double time = 0;
 
   Simulation(Scene scene, SimConfig cfg, Atmosphere atmosphere);
