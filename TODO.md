@@ -58,6 +58,8 @@
 
 ## Backlog — Performance
 
+- [ ] Time pure convolution -> can it be real-time?
+
 - [ ] Profile and identify bottlenecks
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
 - [ ] CPU parallelisation (multithreading, SIMD)
