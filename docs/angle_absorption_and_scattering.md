@@ -5,6 +5,7 @@ Scope: `src/Particle.cpp`, `include/Material.hpp`, `include/Plane.hpp`, `src/Pla
 `include/Materials.hpp`, `include/Simulation.hpp`, `src/Simulation.cpp`
 
 Both features modify the same bounce site:
+
 - `Particle::hit()` — applies absorption (`Particle.cpp:46-48`)
 - the reflection block in `Particle::move()` — specular mirror at `Particle.cpp:117-127`
 
@@ -24,6 +25,7 @@ Both features modify the same bounce site:
 
 **0.1 Thread an RNG into the bounce.**
 `move()` is called per-particle in `Simulation::step` (`Simulation.cpp:21`).
+
 - Add a `std::mt19937` member to `Simulation`.
 - Add a `std::mt19937& rng` parameter to `Particle::move()` and pass it through.
 - Note for later: the Performance TODO lists multithreading — when that lands, use per-thread
@@ -31,6 +33,7 @@ Both features modify the same bounce site:
 
 **0.2 Extend `Material` / `Plane`.**
 In `Material.hpp` add:
+
 - `BandEnergies scattering;` — scattering coefficient *s* per band (Part B)
 - `BandEnergies impedance;` — real normalised surface impedance ξ per band (Part A), precomputed
 
@@ -67,6 +70,7 @@ consistent with current results while adding angle dependence on top.
 
 **A.3 Apply at the bounce.**
 In `move()`, incidence cosine is `cosθ = |dot(normalize(v), plane.n)|`.
+
 - Change signature to `hit(Plane&, double cos_theta)`.
 - Replace the loop at `Particle.cpp:46-48` with the energy reflection factor `|R(θ)|²` per band
   instead of `(1 − α)`.
@@ -84,6 +88,7 @@ fraction of reflected energy going diffuse vs specular.
 **B.1 Per-particle stochastic decision.**
 At the bounce, draw `u ~ U(0,1)`. A particle can only go one direction, so use a single broadband
 *s* (e.g. the mid-band value) for the directional decision.
+
 - `u > s` → keep current specular reflection (`Particle.cpp:124`).
 - `u ≤ s` → diffuse: resample direction by Lambert's cosine law about the normal.
 
