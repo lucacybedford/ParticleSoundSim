@@ -36,7 +36,7 @@ void Particle::hit(Plane &plane) {
   v = glm::normalize(v) * vel;
   // applies the material's absorption coefficients for each frequency band
   for (size_t i = 0; i < energies.size(); i++) {
-    energies[i] *= (1 - plane.absorption[i]);
+    energies[i] *= (1 - plane.material.absorption[i]);
   }
 }
 

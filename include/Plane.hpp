@@ -14,7 +14,7 @@ struct Plane {
   dvec3 v_tangent;
   std::array<dvec3, 4> corners; // counter-clockwise when viewed from the front
 
-  BandEnergies absorption;
+  Material material;
 
   Plane(dvec3 normal, dvec3 point, double length, double height,
         const Material &material);

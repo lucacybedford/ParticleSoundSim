@@ -5,7 +5,7 @@
 Plane::Plane(dvec3 normal, dvec3 point, double length, double height,
              const Material &material)
     : n(glm::normalize(normal)), p(point), l(length), h(height),
-      absorption(material.absorption) {
+      material(material) {
   if (std::abs(n[2]) > 0.999) {
     h_tangent = {1, 0, 0};
   } else {
