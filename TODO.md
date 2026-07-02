@@ -4,18 +4,6 @@
 
 ## In Progress
 
-- [ ] Compare clarity metrics C50 and D50 against ISM baseline
-
----
-
-## This week
-
-- [ ] Implement angle-dependent absorption coefficient (per band)
-- [ ] Implement diffusion reflection
-- [ ] Add particle count over time
-- [ ] Add limit to total amount of particles allowed
-- [ ] Add method for performing purely convolution (no simulation)
-
 > Implementation plan: `docs/angle_absorption_and_scattering.md`
 
 - [ ] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
@@ -23,6 +11,18 @@
 - [ ] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
 - [ ] Wire `s` and impedance into `Materials.hpp` per material
 - [ ] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
+
+- [ ] Implement angle-dependent absorption coefficient (per band)
+- [ ] Implement diffusion reflection
+- [ ] Compare clarity metrics C50 and D50 against ISM baseline
+
+---
+
+## This week
+
+- [ ] Add particle count over time
+- [ ] Add limit to total amount of particles allowed
+- [ ] Add method for performing purely convolution (no simulation)
 
 ---
 
