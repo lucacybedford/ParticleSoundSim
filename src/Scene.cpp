@@ -1,5 +1,4 @@
 #include "Scene.hpp"
-#include "Bands.hpp"
 #include "Emitter.hpp"
 #include "Materials.hpp"
 #include "Receiver.hpp"
@@ -12,10 +11,10 @@ Scene make_standard() {
   double Ly = 5.148;
   double Lz = 4.29;
 
-  Material mat_floor{
-      "floor", BandEnergies{0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51}};
-  Material mat_wall{
-      "wall", BandEnergies{0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19}};
+  Material mat_floor = materials::make(
+      "floor", {0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51});
+  Material mat_wall = materials::make(
+      "wall", {0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19});
 
   dvec3 a{0, Ly / 2, Lz / 2};
   dvec3 b{Lx / 2, 0, Lz / 2};

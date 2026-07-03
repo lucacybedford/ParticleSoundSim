@@ -61,6 +61,7 @@ find_package(OpenGL REQUIRED)
 
 add_library(core
   src/Plane.cpp
+  src/Impedance.cpp
   src/Particle.cpp
   src/Receiver.cpp
   src/Emitter.cpp
