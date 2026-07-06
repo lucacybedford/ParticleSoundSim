@@ -19,7 +19,7 @@ struct Particle {
            std::uniform_real_distribution<double> &v_angDist, dvec3 &position,
            double speed);
 
-  void hit(Plane &plane);
+  void hit(Plane &plane, double cos_theta);
   // summation is only defined for offline mode to employ accurate absorption
   // calculations
   void move(double time, double dt, std::vector<Plane> &planes,

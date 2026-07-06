@@ -32,11 +32,15 @@ double Particle::check_energy() {
   return energy_sum;
 }
 
-void Particle::hit(Plane &plane) {
+void Particle::hit(Plane &plane, double cos_theta) {
   v = glm::normalize(v) * vel;
   // applies the material's absorption coefficients for each frequency band
   for (size_t i = 0; i < energies.size(); i++) {
-    energies[i] *= (1 - plane.material.absorption[i]);
+    double xi = plane.material.impedance[i];
+    // pressure reflection coefficient
+    double R = (xi * cos_theta - 1) / (xi * cos_theta + 1);
+    // turns into reflection coefficient and applies it
+    energies[i] *= glm::pow(R, 2);
   }
 }
 
@@ -116,7 +120,8 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       // reposition particle just off the wall surface
       dvec3 x_hit = x + minT * (x_new - x);
       x = x_hit + closestPlane->n * 0.00001;
-      hit(*closestPlane);
+      double cos_theta = std::abs(glm::dot(glm::normalize(v), closestPlane->n));
+      hit(*closestPlane, cos_theta);
       // adjust velocity
       dvec3 v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       remaining_dt = remaining_dt * (1 - minT);
