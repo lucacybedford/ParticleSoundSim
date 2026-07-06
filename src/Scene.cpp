@@ -12,9 +12,9 @@ Scene make_standard() {
   double Lz = 4.29;
 
   Material mat_floor = materials::make(
-      "floor", {0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51});
+      "floor", {0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51}, 0.3);
   Material mat_wall = materials::make(
-      "wall", {0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19});
+      "wall", {0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19, 0.19}, 0.2);
 
   dvec3 a{0, Ly / 2, Lz / 2};
   dvec3 b{Lx / 2, 0, Lz / 2};
