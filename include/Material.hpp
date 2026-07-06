@@ -5,6 +5,6 @@
 struct Material {
   std::string name;
   BandEnergies absorption;
-  BandEnergies scattering;
   BandEnergies impedance;
+  BandEnergies scattering;
 };

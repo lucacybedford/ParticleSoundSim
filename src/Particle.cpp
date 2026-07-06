@@ -1,7 +1,6 @@
 #include "Particle.hpp"
 #include "AirAbsorption.hpp"
 #include "Receiver.hpp"
-#include "glm/ext/vector_float3.hpp"
 #include <cmath>
 #include <glm/geometric.hpp>
 #include <limits>
@@ -128,7 +127,8 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       std::uniform_real_distribution<double> dist(0, 1);
       double u = dist(rng);
       dvec3 v_new;
-      if (u > closestPlane->material.scattering[4]) {
+      // setting scattering coefficient to [0] pos for now
+      if (u > closestPlane->material.scattering[0]) {
         v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       } else {
         // TODO: maybe make particles split into individual frequencies
