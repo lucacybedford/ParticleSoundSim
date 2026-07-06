@@ -1,6 +1,7 @@
 #include "Particle.hpp"
 #include "AirAbsorption.hpp"
 #include "Receiver.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include <cmath>
 #include <glm/geometric.hpp>
 #include <limits>
@@ -120,8 +121,9 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       // reposition particle just off the wall surface
       dvec3 x_hit = x + minT * (x_new - x);
       x = x_hit + closestPlane->n * 0.00001;
-      double cos_theta = std::abs(glm::dot(glm::normalize(v), closestPlane->n));
-      hit(*closestPlane, cos_theta); // energy updated
+      double incident_ang =
+          std::abs(glm::dot(glm::normalize(v), closestPlane->n));
+      hit(*closestPlane, incident_ang); // energy updated
       // adjust velocity
       std::uniform_real_distribution<double> dist(0, 1);
       double u = dist(rng);
@@ -129,7 +131,16 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       if (u > closestPlane->material.scattering[4]) {
         v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       } else {
-        // TODO: apply diffuse scattering
+        // TODO: maybe make particles split into individual frequencies
+        double r1 = dist(rng);
+        double r2 = dist(rng);
+        double cos_theta = sqrt(r1);
+        double sin_theta = sqrt(1 - r1);
+        double phi = 2 * M_PI * r2;
+        glm::dvec3 dir = sin_theta * cos(phi) * closestPlane->h_tangent +
+                         sin_theta * sin(phi) * closestPlane->v_tangent +
+                         cos_theta * closestPlane->n;
+        v_new = glm::normalize(dir) * vel;
       }
       remaining_dt = remaining_dt * (1 - minT);
       v = v_new;
