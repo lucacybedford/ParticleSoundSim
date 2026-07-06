@@ -4,24 +4,15 @@
 
 ## In Progress
 
-> Implementation plan: `docs/angle_absorption_and_scattering.md`
-
-- [ ] Part B — diffuse scattering (Lambert cosine sampling, broadband `s`)
-- [ ] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
-- [ ] Wire `s` and impedance into `Materials.hpp` per material
-- [ ] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
-
-- [ ] Implement angle-dependent absorption coefficient (per band)
-- [ ] Implement diffusion reflection
 - [ ] Compare clarity metrics C50 and D50 against ISM baseline
 
 ---
 
 ## This week
 
+- [ ] Add method for performing purely convolution (no simulation)
 - [ ] Add particle count over time
 - [ ] Add limit to total amount of particles allowed
-- [ ] Add method for performing purely convolution (no simulation)
 
 ---
 
@@ -48,10 +39,6 @@
 ---
 
 ## Backlog — Visualisation & UI
-
-- [ ] Integrate Dear ImGui
-- [ ] Implement Dear ImGui sidebar (particle count, material sliders, play/pause, waveform)
-- [ ] Add waveform display in ImGui panel (reconstructed signal at microphone)
 
 ---
 
@@ -105,3 +92,9 @@
 - [x] Compare RT60 against Sabine and Eyring closed-form predictions
 - [x] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
 - [x] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
+- [x] Part B — diffuse scattering (Lambert cosine sampling, broadband `s`)
+- [x] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
+- [x] Wire `s` and impedance into `Materials.hpp` per material
+- [x] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
+- [x] Implement angle-dependent absorption coefficient (per band)
+- [x] Implement diffusion reflection
