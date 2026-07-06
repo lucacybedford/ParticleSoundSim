@@ -6,7 +6,6 @@
 
 > Implementation plan: `docs/angle_absorption_and_scattering.md`
 
-- [ ] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
 - [ ] Part B — diffuse scattering (Lambert cosine sampling, broadband `s`)
 - [ ] Part A — angle-dependent absorption (locally-reacting impedance, Paris-formula calibration)
 - [ ] Wire `s` and impedance into `Materials.hpp` per material
@@ -105,3 +104,4 @@
 - [x] Visualise histogram accumulation – using python to make histogram plots from data
 - [x] Compare RT60 against Sabine and Eyring closed-form predictions
 - [x] Compare broadband IR shape and early-decay curve (EDC) against ISM baseline
+- [x] Part 0 — plumbing: thread RNG into `Particle::move()`; add `scattering` + `impedance` to `Material`/`Plane`
