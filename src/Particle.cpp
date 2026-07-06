@@ -121,8 +121,15 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       dvec3 x_hit = x + minT * (x_new - x);
       x = x_hit + closestPlane->n * 0.00001;
       double cos_theta = std::abs(glm::dot(glm::normalize(v), closestPlane->n));
-      hit(*closestPlane, cos_theta);
+      hit(*closestPlane, cos_theta); // energy updated
       // adjust velocity
+      std::uniform_real_distribution<double> dist(0, 1);
+      double u = dist(rng);
+      if (u > closestPlane->material.scattering[4]) {
+        // TODO: normal specular
+      } else {
+        // TODO: apply diffuse scattering
+      }
       dvec3 v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       remaining_dt = remaining_dt * (1 - minT);
       v = v_new;
