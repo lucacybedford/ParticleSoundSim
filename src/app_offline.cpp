@@ -1,4 +1,4 @@
-#include "Convolver.hpp"
+#include "ConvolveInput.hpp"
 #include "Materials.hpp"
 #include "RIRBuilder.hpp"
 #include "Scene.hpp"
@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
   std::printf("Offline run finished at t = %.3f s, %zu particles still alive\n",
               sim.time, sim.particles.size());
 
+  // save receiver information to csv file
   for (std::size_t i = 0; i < sim.scene.receivers.size(); ++i) {
     const auto &hist = sim.scene.receivers[i].histogram;
 
@@ -111,6 +112,7 @@ int main(int argc, char *argv[]) {
   //                           "x" + r_height + "_" + r_material + "_room_" +
   //                           r_particles + ".wav";
 
+  // receiver converted to rir then convolved with input
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
     builder.bin_width = Receiver::bin_width;
@@ -134,33 +136,10 @@ int main(int argc, char *argv[]) {
     std::printf("Wrote rir.wav (%zu samples, %.3f s)\n", rir.size(),
                 rir.size() / static_cast<double>(builder.sample_rate));
 
-    Audio dry;
-    if (wav_read(input_path, dry)) {
-      if (dry.sample_rate != builder.sample_rate) {
-        std::printf("Resampling %s from %d Hz to %d Hz\n", input_path.c_str(),
-                    dry.sample_rate, builder.sample_rate);
-        dry.samples =
-            resample(dry.samples, dry.sample_rate, builder.sample_rate);
-        dry.sample_rate = builder.sample_rate;
-        if (dry.samples.empty()) {
-          std::printf("Resampling failed – skipping convolution.\n");
-          return 1;
-        }
-      }
-      std::vector<float> wet = convolve(dry.samples, rir);
-      float peak = 0.0f;
-      for (float v : wet)
-        peak = std::max(peak, std::fabs(v));
-      if (!wav_write(output_path, Audio{dry.sample_rate, wet})) {
-        std::printf("Failed to write %s (directory must exist)\n",
-                    output_path.c_str());
-        return 1;
-      }
-      std::printf("Convolved %s -> %s (%zu samples, peak %.3g = %.1f dBFS)\n",
-                  input_path.c_str(), output_path.c_str(), wet.size(), peak,
-                  20.0 * std::log10(peak));
-    } else {
-      std::printf("No %s found – skipping convolution.\n", input_path.c_str());
+    // reading and convolving with input
+    if (!convolve_input_file(input_path, rir, builder.sample_rate,
+                             output_path)) {
+      return 1;
     }
   }
 
