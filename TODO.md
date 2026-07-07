@@ -11,8 +11,6 @@
 ## This week
 
 - [ ] Add method for performing purely convolution (no simulation)
-- [ ] Add particle count over time
-- [ ] Add limit to total amount of particles allowed
 
 ---
 
