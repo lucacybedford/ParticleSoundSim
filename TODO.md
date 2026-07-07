@@ -10,8 +10,6 @@
 
 ## This week
 
-- [ ] Add method for performing purely convolution (no simulation)
-
 ---
 
 ## Backlog – Issues
@@ -41,8 +39,6 @@
 ---
 
 ## Backlog — Performance
-
-- [ ] Time pure convolution -> can it be real-time?
 
 - [ ] Profile and identify bottlenecks
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
@@ -96,3 +92,5 @@
 - [x] Validation: `s=0` RIR regression guard; RT60 vs Sabine; scattering sweep
 - [x] Implement angle-dependent absorption coefficient (per band)
 - [x] Implement diffusion reflection
+- [x] Add method for performing purely convolution (no simulation)
+- [x] Time pure convolution -> can it be real-time?
