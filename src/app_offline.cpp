@@ -40,16 +40,27 @@ int main(int argc, char *argv[]) {
   SimConfig cfg;
   Atmosphere air;
 
-  cfg.num_particles = 1000000;
+  /*
+  Configuration
+  */
+
+  bool standard = true;
+
+  cfg.num_particles = 1000;
 
   float room_width = 10;
   float room_length = 30;
   float room_height = 3;
   Material room_material = materials::mConcrete;
 
-  // Simulation sim(make_room(room_width, room_length, room_height,
-  // room_material), cfg, air);
-  Simulation sim(make_standard(), cfg, air);
+  Scene room;
+  if (standard) {
+    room = make_standard();
+  } else {
+    room = make_room(room_width, room_length, room_height, room_material);
+  }
+
+  Simulation sim(room, cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     std::printf("dt must be smaller than receiver bin width.\n");
@@ -106,11 +117,14 @@ int main(int argc, char *argv[]) {
   if (argc == 2) {
     input_path = argv[1];
   }
-  std::string output_path = "./output/3D/standard-room-1-000-000.wav";
-  // std::string output_path = "./output/3D/standard-" + r_width + "x" +
-  // r_length +
-  //                           "x" + r_height + "_" + r_material + "_room_" +
-  //                           r_particles + ".wav";
+
+  std::string output_path;
+  if (standard) {
+    output_path = "../output/standard/standard-room-" + r_particles + ".wav";
+  } else {
+    output_path = "../output/" + r_particles + "_" + r_width + "x" + r_length +
+                  "x" + r_height + "_" + r_material + "_room_" + ".wav";
+  }
 
   // receiver converted to rir then convolved with input
   if (!sim.scene.receivers.empty()) {
