@@ -116,7 +116,11 @@ def main() -> None:
             continue
         positional.append(arg)
 
-    path = positional[0] if positional else "histogram_receiver0.csv"
+    path = (
+        positional[0]
+        if positional
+        else "./output/standard/histogram_receiver_[0]_1000000.csv"
+    )
     cutoff_ms = float(positional[1]) if len(positional) > 1 else None
     data = np.genfromtxt(path, delimiter=",", names=True)
 

@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
   bool standard = true;
 
-  cfg.num_particles = 1000;
+  cfg.num_particles = 1000000;
 
   float room_width = 10;
   float room_length = 30;
@@ -100,7 +100,14 @@ int main(int argc, char *argv[]) {
                 "energy = %g\n",
                 i, hist.size(), first_ms, total);
 
-    std::string csv_path = "histogram_receiver" + std::to_string(i) + ".csv";
+    std::string csv_path;
+    if (standard) {
+      csv_path = "../output/standard/histogram_receiver_[" + std::to_string(i) +
+                 "]_" + std::to_string(cfg.num_particles) + ".csv";
+    } else {
+      csv_path = "../output/histogram_receiver_[" + std::to_string(i) + "]_" +
+                 std::to_string(cfg.num_particles) + ".csv";
+    }
     if (write_histogram_csv(csv_path, hist, Receiver::bin_width))
       std::printf("Wrote %s\n", csv_path.c_str());
     else
