@@ -10,6 +10,8 @@
 
 ## This week
 
+- [ ] Make single frequency band particles
+
 ---
 
 ## Backlog – Issues
