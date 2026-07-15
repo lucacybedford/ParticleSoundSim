@@ -14,33 +14,11 @@
 
 ---
 
-## Backlog – Issues
-
-- [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
-
----
-
-## Backlog — Core Physics
-
-- [ ] Implement transmission through surfaces
-
----
-
-## Backlog — Receiver & RIR
+## Not Done
 
 - [ ] Implement virtual microphone accumulation with direction
-
----
-
-## Backlog — Validation
-
----
-
-## Backlog — Visualisation & UI
-
----
-
-## Backlog — Performance
+- [ ] Implement transmission through surfaces
+- [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
 
 - [ ] Profile and identify bottlenecks
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
