@@ -41,8 +41,6 @@ bool convolve_input_file(const std::string &input_path,
     return false;
   }
 
-  std::printf("Convolved %s -> %s (%zu samples, peak %.3g = %.1f dBFS)\n",
-              input_path.c_str(), output_path.c_str(), wet.size(), peak,
-              20.0 * std::log10(peak));
+  std::printf("Convolved %s -> %s\n", input_path.c_str(), output_path.c_str());
   return true;
 }
