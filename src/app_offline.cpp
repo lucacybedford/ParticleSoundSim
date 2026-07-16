@@ -44,9 +44,9 @@ int main(int argc, char *argv[]) {
   Configuration
   */
 
-  bool standard = true;
+  bool standard = false;
 
-  cfg.num_particles = 1000000;
+  cfg.num_particles = 100000;
 
   float room_width = 10;
   float room_length = 30;
