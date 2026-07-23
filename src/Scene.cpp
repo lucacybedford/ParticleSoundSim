@@ -33,7 +33,7 @@ Scene make_standard() {
   scene.planes.emplace_back(Plane({0, -1, 0}, d, Lx, Lz, mat_wall));
 
   scene.emitters.emplace_back(Emitter{{2.145, 0.429, 2.574}});
-  scene.receivers.emplace_back(Receiver{{1.287, 4.29, 1.716}, 0.3});
+  scene.receivers.emplace_back(Receiver{{1.287, 4.29, 1.716}, 0.1});
 
   return scene;
 }
