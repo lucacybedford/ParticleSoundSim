@@ -5,11 +5,13 @@
 Simulation::Simulation(Scene scene_in, SimConfig cfg_in,
                        Atmosphere atmosphere_in)
     : scene(std::move(scene_in)), cfg(cfg_in), atmosphere(atmosphere_in),
-      air(atmosphere), rng(std::random_device{}()) {
+      air(atmosphere) {
+  rng.seed(cfg.deterministic ? cfg.seed : std::random_device{}());
+
   const double c = atmosphere.sound_speed();
 
   for (Emitter &em : scene.emitters) {
-    auto emitted = em.emit(cfg.num_particles, c);
+    auto emitted = em.emit(cfg.num_particles, c, rng);
     particles.insert(particles.end(), emitted.begin(), emitted.end());
   }
 }

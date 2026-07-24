@@ -88,3 +88,7 @@ target_link_libraries(ParticleSoundSimOffline PRIVATE core)
 # Standalone convolver: convolve a pre-computed RIR with a dry input, timed
 add_executable(ParticleSoundSimConvolve src/app_convolve.cpp)
 target_link_libraries(ParticleSoundSimConvolve PRIVATE core)
+
+# Experiment driver: seed sweeps + RT60/C50/EDC metrics for convergence studies
+add_executable(ParticleSoundSimExperiments src/app_experiments.cpp)
+target_link_libraries(ParticleSoundSimExperiments PRIVATE core)

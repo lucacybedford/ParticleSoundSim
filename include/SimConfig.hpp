@@ -11,4 +11,7 @@ struct SimConfig {
   double playback_speed = 1.0;
 
   Fidelity fidelity = Fidelity::Offline;
+
+  bool deterministic = false;
+  unsigned int seed = 0;
 };

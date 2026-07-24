@@ -1,6 +1,7 @@
 #pragma once
 #include "Particle.hpp"
 #include <glm/glm.hpp>
+#include <random>
 #include <vector>
 
 using glm::dvec3;
@@ -14,5 +15,6 @@ struct Emitter {
   Emitter(const dvec3 &x);
   Emitter(const dvec3 &x, float h_start, float h_end, float v_start,
           float v_end);
-  std::vector<Particle> emit(int particle_num, double speed);
+  std::vector<Particle> emit(int particle_num, double speed,
+                             std::mt19937 &gen);
 };
