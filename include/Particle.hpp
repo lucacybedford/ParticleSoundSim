@@ -7,7 +7,7 @@ struct Receiver;
 struct AirAbsorption;
 
 struct Particle {
-  static constexpr int MAX_ITERATIONS = 5;
+  static constexpr int MAX_ITERATIONS = 15;
   static constexpr double energy_threshold = 1e-6;
   double vel;
   dvec3 x;

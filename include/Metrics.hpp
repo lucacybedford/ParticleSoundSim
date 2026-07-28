@@ -18,6 +18,15 @@ broadband_energy(const std::vector<BandEnergies> &hist) {
   return e;
 }
 
+// pull a single octave band out of a histogram as its own energy curve
+inline std::vector<double> band_energy(const std::vector<BandEnergies> &hist,
+                                       int band) {
+  std::vector<double> e(hist.size(), 0.0);
+  for (std::size_t i = 0; i < hist.size(); ++i)
+    e[i] = hist[i][band];
+  return e;
+}
+
 // Schroeder backward integrated energy decay curve
 inline std::vector<double>
 energy_decay_curve(const std::vector<double> &energy) {
@@ -49,11 +58,12 @@ inline std::vector<double> edc_db(const std::vector<double> &edc,
 
 // Reverberation time (seconds) from the decay slope. A least-squares line is
 // fitted to the dB decay curve between upper_db and lower_db (defaults give
-// T20: -5 dB to -25 dB) and extrapolated to a 60 dB drop. Returns -1 if the
-// curve never spans the requested range (e.g. too few particles / too short a
-// run to decay that far).
+// T30: -5 dB to -35 dB, the ISO 3382-1 evaluation range, matching the T30 fit
+// in plot_rir.py) and extrapolated to a 60 dB drop. Returns -1 if the curve
+// never spans the requested range (e.g. too few particles / too short a run to
+// decay that far).
 inline double rt60(const std::vector<double> &edc_curve_db, double bin_width,
-                   double upper_db = -5.0, double lower_db = -25.0) {
+                   double upper_db = -5.0, double lower_db = -35.0) {
   // Collect (time, level) samples inside the fit window.
   double sx = 0, sy = 0, sxx = 0, sxy = 0;
   std::size_t count = 0;

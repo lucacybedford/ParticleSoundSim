@@ -62,10 +62,9 @@ int main(int argc, char *argv[]) {
 
   Simulation sim(room, cfg, air);
 
-  if (cfg.dt > Receiver::bin_width) {
-    std::printf("dt must be smaller than receiver bin width.\n");
-    return 1;
-  }
+  // No dt <= bin_width guard: Particle::move records arrivals at their
+  // sub-step time, so histogram resolution stays at bin_width whatever dt is.
+  // See the dt ablation in TODO.md — accuracy is invariant up to 100 ms.
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);

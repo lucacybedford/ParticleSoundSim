@@ -131,7 +131,6 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       if (u > closestPlane->material.scattering[0]) {
         v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       } else {
-        // TODO: maybe make particles split into individual frequencies
         double r1 = dist(rng);
         double r2 = dist(rng);
         double cos_theta = sqrt(r1);
