@@ -18,7 +18,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plot_rir import BANDS_HZ, eyring_norris_rt60
+from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
 # The ISM paper figures stop at 256 ms; matching that makes the visual
 # comparison direct. Set to None to plot the full decay.
@@ -36,8 +36,7 @@ def load_curve(path):
 
 
 def main() -> None:
-    directory = sys.argv[1] if len(sys.argv) > 1 else "./output/experiments"
-    out_dir = "./output/figures"
+    directory, out_dir = resolve_dirs(sys.argv[1] if len(sys.argv) > 1 else None)
     os.makedirs(out_dir, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(9, 5))
@@ -51,11 +50,12 @@ def main() -> None:
         ax.plot(time_ms, edc_db, color=color, linewidth=1.2, label=label)
         plotted += 1
 
-        # decay rate over the T20 window, for the caption
-        window = (edc_db <= -5.0) & (edc_db >= -25.0)
+        # decay rate over the T30 window (-5 to -35 dB, ISO 3382-1), matching
+        # metrics::rt60 and plot_rir.rt60_t30 so numbers are comparable
+        window = (edc_db <= -5.0) & (edc_db >= -35.0)
         if window.sum() >= 2:
             slope = np.polyfit(time_ms[window] / 1e3, edc_db[window], 1)[0]
-            print(f"{label}: RT60 from T20 slope = {-60.0 / slope:.4f} s")
+            print(f"{label}: RT60 from T30 slope = {-60.0 / slope:.4f} s")
 
     if plotted == 0:
         raise SystemExit(

@@ -19,6 +19,8 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plot_rir import resolve_dirs
+
 FNAME_RE = re.compile(r"variance_(\d+)\.csv$")
 
 
@@ -57,7 +59,7 @@ def load_sets(directory: str, metric: str):
 def main() -> None:
     args = [a for a in sys.argv[1:]]
     metric = args[0] if args else "rt60"
-    directory = args[1] if len(args) > 1 else "./output/experiments"
+    directory, figure_dir = resolve_dirs(args[1] if len(args) > 1 else None)
 
     if metric not in ("rt60", "c50"):
         raise SystemExit(f"metric must be 'rt60' or 'c50', got '{metric}'")
@@ -96,7 +98,7 @@ def main() -> None:
     for n, vals in zip(run_counts, value_arrays):
         print(f"{n:>6}  {len(vals):>4}  {np.mean(vals):>10.4f}  {np.std(vals):>10.4f}")
 
-    out_dir = "./output/figures"
+    out_dir = figure_dir
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"variance_boxplot_{metric}.png")
     fig.tight_layout()

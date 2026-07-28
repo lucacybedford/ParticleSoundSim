@@ -6,16 +6,77 @@ from matplotlib.ticker import MultipleLocator
 
 BANDS_HZ = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
 
-ROOM_LX, ROOM_LY, ROOM_LZ = 3.432, 5.148, 4.29  # room dimensions (m)
+# Must match kRoom in src/app_experiments.cpp. "standard" is the flat-
+# absorption ISM comparison room (make_standard); "real" is the single-material
+# room (make_room) whose absorption varies with frequency. Changing this
+# switches the room constants below, and therefore every Eyring-Norris
+# reference derived from them.
+ROOM = "real"
 
-ROOM_SURFACES = [
-    (ROOM_LX * ROOM_LY, [0.51] * 8),  # floor
-    (ROOM_LX * ROOM_LY, [0.51] * 8),  # ceiling
-    (
-        2 * ROOM_LY * ROOM_LZ + 2 * ROOM_LX * ROOM_LZ,  # four walls combined
-        [0.19] * 8,
-    ),
-]
+_STANDARD_LX, _STANDARD_LY, _STANDARD_LZ = 3.432, 5.148, 4.29
+_REAL_LX, _REAL_LY, _REAL_LZ = 4.0, 7.0, 3.0
+_WOOD = [0.19, 0.19, 0.23, 0.25, 0.30, 0.37, 0.42, 0.42]  # materials::mSolidWood
+
+
+def _room_geometry(room: str):
+    """Return (dimensions, surfaces) for the selected room.
+
+    Surfaces are (area m^2, per-band absorption) pairs. Grouping identical
+    surfaces is safe because only the area-weighted mean absorption is used.
+    """
+    if room == "standard":
+        lx, ly, lz = _STANDARD_LX, _STANDARD_LY, _STANDARD_LZ
+        surfaces = [
+            (lx * ly, [0.51] * 8),  # floor
+            (lx * ly, [0.51] * 8),  # ceiling
+            (2 * ly * lz + 2 * lx * lz, [0.19] * 8),  # four walls combined
+        ]
+    elif room == "real":
+        lx, ly, lz = _REAL_LX, _REAL_LY, _REAL_LZ
+        # make_room applies one material to all six surfaces
+        surfaces = [(2 * (lx * ly + ly * lz + lx * lz), _WOOD)]
+    else:
+        raise ValueError(f"unknown ROOM {room!r}; expected 'standard' or 'real'")
+    return (lx, ly, lz), surfaces
+
+
+(ROOM_LX, ROOM_LY, ROOM_LZ), ROOM_SURFACES = _room_geometry(ROOM)
+
+# Default input/output directories for the selected room, mirroring kOutDir.
+# Figures are separated too, so a run in one room cannot overwrite the other's.
+EXPERIMENT_DIR = (
+    "./output/experiments" if ROOM == "standard" else "./output/experiments/real-room"
+)
+FIGURE_DIR = "./output/figures" if ROOM == "standard" else "./output/figures/real-room"
+
+
+def resolve_dirs(directory=None):
+    """Return (experiment_dir, figure_dir) for an optional explicit directory.
+
+    Passing a directory overrides where data is read from, but the Eyring-Norris
+    reference always follows ROOM — so reading one room's data while ROOM names
+    the other silently produces a plot with the wrong reference line. Warn
+    loudly and send the figure somewhere that matches the data.
+    """
+    import os
+
+    if directory is None:
+        return EXPERIMENT_DIR, FIGURE_DIR
+    if os.path.abspath(directory) == os.path.abspath(EXPERIMENT_DIR):
+        return directory, FIGURE_DIR
+
+    is_real = os.path.basename(os.path.normpath(directory)) == "real-room"
+    figure_dir = "./output/figures/real-room" if is_real else "./output/figures"
+    named = "real" if is_real else "standard"
+    if named != ROOM:
+        print(
+            f"WARNING: reading {directory} (looks like the {named!r} room) but "
+            f"ROOM={ROOM!r} in plot_rir.py. The Eyring-Norris reference "
+            f"describes the {ROOM!r} room and will be WRONG for this data. "
+            f"Set ROOM={named!r} and re-run."
+        )
+    return directory, figure_dir
+
 
 ATM_TEMPERATURE_C = 20.0
 ATM_HUMIDITY = 50.0  # % relative humidity

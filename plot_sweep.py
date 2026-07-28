@@ -29,10 +29,10 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plot_rir import BANDS_HZ, eyring_norris_rt60
+from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
 # "particles" or "dt" — must match kSweepAxis in src/app_experiments.cpp
-SWEEP_AXIS = "particles"
+SWEEP_AXIS = "dt"
 
 # The per-point EDC overlay is off by default: with accuracy invariant to both
 # N and dt the curves lie on top of each other, and the ISM comparison in
@@ -212,7 +212,7 @@ def plot_runtime(directory, out_path, axis):
     )
     ax.set_yscale("log")
     ax.set_xlabel(axis["xlabel"])
-    ax.set_ylabel("Simulation stage runtime (s)")
+    ax.set_ylabel("Simulation runtime (s)")
     ax.set_title(f"Runtime {axis['title_suffix']}")
     ax.set_xticks(positions)
     ax.set_xticklabels([axis["tick"](v) for v in axis_values], rotation=45, ha="right")
@@ -245,8 +245,7 @@ def load_edc_curves(directory: str, axis: dict):
 
 
 def main() -> None:
-    directory = sys.argv[1] if len(sys.argv) > 1 else "./output/experiments"
-    out_dir = "./output/figures"
+    directory, out_dir = resolve_dirs(sys.argv[1] if len(sys.argv) > 1 else None)
     os.makedirs(out_dir, exist_ok=True)
 
     axis = AXES[SWEEP_AXIS]

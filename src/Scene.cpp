@@ -56,9 +56,15 @@ Scene make_room(float width, float length, float height, Material &material) {
   scene.planes.emplace_back(Plane({-1, 0, 0}, c, length, height, material));
   scene.planes.emplace_back(Plane({0, -1, 0}, d, width, height, material));
 
-  scene.emitters.emplace_back(dvec3{0, -3, 1.7}, 1 * M_PI / 4, 3 * M_PI / 4,
-                              -M_PI / 2, M_PI / 2);
-  scene.receivers.emplace_back(Receiver{{0, 3, 1.7}, 0.1});
+  // Source and receiver are placed as fractions of the room extents so they
+  // stay inside the geometry whatever its size (the room spans x, y about the
+  // origin and z from 0 to height). The offsets are asymmetric in all three
+  // axes, mirroring make_standard, so that neither sits on a symmetry plane
+  // where degenerate reflection paths would pile up.
+  scene.emitters.emplace_back(
+      dvec3{0.125 * width, -0.40 * length, 0.60 * height});
+  scene.receivers.emplace_back(
+      Receiver{{-0.125 * width, 0.35 * length, 0.40 * height}, 0.1});
 
   return scene;
 }

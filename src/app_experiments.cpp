@@ -1,16 +1,41 @@
+#include "Convolver.hpp"
 #include "Materials.hpp"
 #include "Metrics.hpp"
 #include "Scene.hpp"
 #include "SimConfig.hpp"
 #include "Simulation.hpp"
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <random>
 #include <string>
 #include <vector>
+
+// Which room every experiment runs in. Standard is the flat-absorption ISM
+// comparison room; Real is a single-material room whose absorption varies with
+// frequency. Switching this also switches the output directory, so the two
+// datasets cannot overwrite each other. The matching toggle on the plotting
+// side is ROOM in plot_rir.py — change both together, or the Eyring reference
+// lines will describe the wrong room.
+enum class RoomChoice { Standard, Real };
+static constexpr RoomChoice kRoom = RoomChoice::Real;
+
+// geometry and material of the Real room (Standard is fixed in make_standard)
+static constexpr float kRealWidth = 4.0f;
+static constexpr float kRealLength = 7.0f;
+static constexpr float kRealHeight = 3.0f;
+static const Material &kRealMaterial = materials::mSolidWood;
+
+static Scene build_room() {
+  if (kRoom == RoomChoice::Standard)
+    return make_standard();
+  Material material = kRealMaterial;
+  return make_room(kRealWidth, kRealLength, kRealHeight, material);
+}
 
 // config mode: the two rows of the reference-vs-optimised comparison. The
 // optimised values come from the sweeps; the other modes key off them.
@@ -51,9 +76,55 @@ static constexpr unsigned int kNumRuns = 10;
 static constexpr unsigned int kEdcParticles = kOptimisedParticles;
 static constexpr unsigned int kEdcDtMs = kOptimisedDtMs;
 
+// Sentinel meaning "leave each surface's own scattering coefficient alone".
+// Any value in [0,1] passed to simulate() overrides every surface instead.
+static constexpr double kSceneScattering = -1.0;
+
+// scatter mode: per-band RT60 at the optimised config across scattering
+// settings. The residual in the per-band Eyring comparison grows with
+// absorption; if it is caused by the field being insufficiently diffuse (so
+// that the incidence-angle distribution departs from random incidence, and
+// Eyring's own diffuse-field assumption weakens), forcing s upward should
+// shrink it. If it is unchanged, the cause lies elsewhere.
+static const std::vector<std::pair<std::string, double>> kScatterSettings = {
+    {"s000", 0.0}, {"scene", kSceneScattering}, {"s050", 0.5}, {"s100", 1.0}};
+
+// convolve mode: cost of the convolution stage against dry-input length, at a
+// standardised RIR length. This is a pure DSP benchmark with no simulation in
+// it, so it is room-independent and always writes to the top-level experiment
+// directory whatever kRoom is set to.
+static constexpr int kConvSampleRate = 44100; // RIRBuilder's rate
+static constexpr unsigned int kConvSeed = 1;
+static constexpr unsigned int kConvWarmups = 1;
+static constexpr unsigned int kConvRepeats = 10;
+
+// Standardised RIR length for the input sweep. 0.5 s covers the measured decay
+// of both rooms (0.33 s and 0.49 s) with margin, and is a stated constant
+// rather than whatever the last simulation happened to produce.
+static constexpr double kConvRirSeconds = 0.5;
+
+// Input lengths. The short end matters: overlap-add consumes the input in
+// blocks of nfft - M + 1 samples (~0.99 s at a 0.5 s RIR), so everything below
+// one block costs the same and the curve is a staircase, not a line. Sampling
+// only the long end would hide that.
+static const std::vector<double> kConvInputSeconds = {0.25, 0.5,  1.0,  2.0, 5.0,
+                                                      10.0, 20.0, 30.0, 60.0};
+
+// Secondary sweep: RIR length at a fixed input, to show that the standardised
+// 0.5 s is not a special operating point. nfft doubles with the RIR, but so
+// does the block advance, so cost per second of audio moves far less than the
+// RIR length does.
+static constexpr double kConvRirSweepInputSeconds = 10.0;
+static const std::vector<double> kConvRirSweepSeconds = {0.25, 0.5, 1.0, 2.0};
+
 static constexpr unsigned int kSeedStart = 1;
 
-static const std::string kOutDir = "../output/experiments";
+static const std::string kOutDir = kRoom == RoomChoice::Standard
+                                       ? "../output/experiments"
+                                       : "../output/experiments/real-room";
+
+// convolve mode only — see kConvRirSeconds for why this ignores kRoom
+static const std::string kConvOutDir = "../output/experiments";
 
 // one run for a given seed
 struct RunResult {
@@ -67,7 +138,7 @@ struct RunResult {
 
 static RunResult simulate(double max_time, double dt,
                           unsigned int num_particles, unsigned int seed,
-                          bool zero_scattering = false) {
+                          double scattering_override = kSceneScattering) {
   SimConfig cfg;
   cfg.num_particles = num_particles;
   cfg.dt = dt;
@@ -75,12 +146,10 @@ static RunResult simulate(double max_time, double dt,
   cfg.deterministic = true;
   cfg.seed = seed;
 
-  // Scene room = make_standard();
-  Material room_material = materials::mSolidWood;
-  Scene room = make_room(3, 4, 3, room_material);
-  if (zero_scattering)
+  Scene room = build_room();
+  if (scattering_override != kSceneScattering)
     for (Plane &plane : room.planes)
-      plane.material.scattering.fill(0.0);
+      plane.material.scattering.fill(scattering_override);
 
   Atmosphere air;
 
@@ -287,19 +356,25 @@ static void mean_std(const std::vector<double> &v, double &mean, double &sd) {
   sd = std::sqrt(sd / (v.size() - 1));
 }
 
-// One row of the reference-vs-optimised comparison table.
+// One row of the reference-vs-optimised comparison table, and the same routine
+// reused for one setting of the scatter sweep.
 static void run_config(double max_time, const std::string &label,
                        unsigned int num_particles, unsigned int dt_ms,
-                       std::ofstream &summary) {
+                       std::ofstream &summary,
+                       double scattering = kSceneScattering) {
   std::vector<double> rt60s, c50s, runtimes;
   std::array<std::vector<double>, kNumBands> band_rt60s;
 
-  std::printf("Config '%s': %u particles, dt=%u ms, %u runs\n", label.c_str(),
+  std::printf("Config '%s': %u particles, dt=%u ms, %u runs, s=", label.c_str(),
               num_particles, dt_ms, kNumRuns);
+  if (scattering == kSceneScattering)
+    std::printf("scene\n");
+  else
+    std::printf("%.2f\n", scattering);
 
   for (unsigned int i = 0; i < kNumRuns; ++i) {
-    RunResult r =
-        simulate(max_time, dt_ms * 1e-3, num_particles, kSeedStart + i);
+    RunResult r = simulate(max_time, dt_ms * 1e-3, num_particles,
+                           kSeedStart + i, scattering);
     if (r.rt60 > 0.0)
       rt60s.push_back(r.rt60);
     c50s.push_back(r.c50);
@@ -323,8 +398,7 @@ static void run_config(double max_time, const std::string &label,
   summary.flush();
 
   // per-band RT60 for this config, to sit next to Eyring-Norris per band
-  const std::string bands_path =
-      kOutDir + "/real-room/config_bands_" + label + ".csv";
+  const std::string bands_path = kOutDir + "/config_bands_" + label + ".csv";
   std::ofstream bands(bands_path);
   if (bands) {
     bands << "band_index,rt60_mean,rt60_std,valid_runs\n";
@@ -342,8 +416,29 @@ static void run_config(double max_time, const std::string &label,
               rt_sd);
 }
 
+// Per-band RT60 at the optimised config across a range of scattering
+// settings, to test whether the frequency-dependent residual against
+// Eyring-Norris is driven by how diffuse the field is.
+static int run_scatter(double max_time) {
+  const std::string summary_path = kOutDir + "/scatter_summary.csv";
+  std::ofstream summary(summary_path);
+  if (!summary) {
+    std::printf("Failed to open %s\n", summary_path.c_str());
+    return 1;
+  }
+  summary << "label,num_particles,dt_ms,rt60_mean,rt60_std,c50_mean,c50_std,"
+             "runtime_ms_mean,runtime_ms_std,valid_rt60_runs\n";
+
+  for (const auto &setting : kScatterSettings)
+    run_config(max_time, setting.first, kOptimisedParticles, kOptimisedDtMs,
+               summary, setting.second);
+
+  std::printf("Wrote %s\n", summary_path.c_str());
+  return 0;
+}
+
 static int run_configs(double max_time) {
-  const std::string summary_path = kOutDir + "/real-room/config_summary.csv";
+  const std::string summary_path = kOutDir + "/config_summary.csv";
   std::ofstream summary(summary_path);
   if (!summary) {
     std::printf("Failed to open %s\n", summary_path.c_str());
@@ -363,15 +458,15 @@ static int run_configs(double max_time) {
 
 // Averaged EDC at one scattering setting, written as a dB curve.
 static int write_edc(double max_time, const std::string &label,
-                     bool zero_scattering) {
+                     double scattering) {
   std::vector<double> edc_acc;
   std::printf("EDC '%s': %u particles, dt=%u ms, %u runs, s=%s\n",
               label.c_str(), kEdcParticles, kEdcDtMs, kNumRuns,
-              zero_scattering ? "0" : "scene");
+              scattering == kSceneScattering ? "scene" : "0");
 
   for (unsigned int i = 0; i < kNumRuns; ++i) {
     RunResult r = simulate(max_time, kEdcDtMs * 1e-3, kEdcParticles,
-                           kSeedStart + i, zero_scattering);
+                           kSeedStart + i, scattering);
     if (r.edc_norm.size() > edc_acc.size())
       edc_acc.resize(r.edc_norm.size(), 0.0);
     for (std::size_t k = 0; k < r.edc_norm.size(); ++k)
@@ -397,9 +492,139 @@ static int write_edc(double max_time, const std::string &label,
 }
 
 static int run_edc(double max_time) {
-  if (int rc = write_edc(max_time, "specular", true))
+  if (int rc = write_edc(max_time, "specular", 0.0))
     return rc;
-  return write_edc(max_time, "scattering", false);
+  return write_edc(max_time, "scattering", kSceneScattering);
+}
+
+// ---------------------------------------------------------------- convolve
+
+// White noise in [-1, 1], deterministic. The convolver's cost is independent
+// of signal content (pocketfft has no data-dependent branches), but silence
+// would risk denormal handling in the spectral multiply, so noise is the
+// honest choice of filler.
+static std::vector<float> conv_noise(std::size_t n, unsigned int seed) {
+  std::mt19937 rng(seed);
+  std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+  std::vector<float> x(n);
+  for (float &v : x)
+    v = dist(rng);
+  return x;
+}
+
+// Synthetic RIR: noise under an envelope decaying 60 dB across its own length.
+// Used rather than a simulated rir.wav so the benchmark reproduces without a
+// prior run — cost depends on the RIR's length alone, not its contents.
+static std::vector<float> conv_rir(double seconds, unsigned int seed) {
+  const std::size_t n =
+      static_cast<std::size_t>(seconds * kConvSampleRate + 0.5);
+  std::vector<float> h = conv_noise(n, seed);
+  for (std::size_t i = 0; i < n; ++i)
+    h[i] *= static_cast<float>(
+        std::exp(-6.907755 * static_cast<double>(i) / static_cast<double>(n)));
+  return h;
+}
+
+static double conv_median(std::vector<double> v) {
+  std::sort(v.begin(), v.end());
+  const std::size_t n = v.size();
+  if (n == 0)
+    return 0.0;
+  return n % 2 ? v[n / 2] : 0.5 * (v[n / 2 - 1] + v[n / 2]);
+}
+
+// One sweep: each point is (input seconds, RIR seconds). Times convolve()
+// alone — signals are built and resident in memory first, and no WAV read,
+// resample or write is inside the timed region. That is the whole point of
+// running this here rather than through ParticleSoundSimConvolve, which times
+// file I/O along with the arithmetic.
+static int run_convolve_points(const std::string &path,
+                               const std::vector<std::pair<double, double>> &points) {
+  std::ofstream out(path);
+  if (!out) {
+    std::printf("Failed to open %s\n", path.c_str());
+    return 1;
+  }
+  // One row per point: the median over the repeats, and the two normalised
+  // forms of it. The individual repeat times are not kept — they exist only
+  // to make the median robust to a scheduler hiccup in any one call.
+  out << "input_seconds,rir_seconds,median_ms,ms_per_second_audio,rtf\n";
+
+  std::printf("%12s %10s %10s %12s %8s\n", "input (s)", "rir (s)", "med (ms)",
+              "ms/s audio", "RTF");
+
+  // Keeps the compiler from discarding the convolution as dead work.
+  double sink = 0.0;
+
+  for (const auto &pt : points) {
+    const double in_secs = pt.first;
+    const double rir_secs = pt.second;
+    const std::size_t in_n =
+        static_cast<std::size_t>(in_secs * kConvSampleRate + 0.5);
+
+    const std::vector<float> x = conv_noise(in_n, kConvSeed);
+    const std::vector<float> h = conv_rir(rir_secs, kConvSeed + 1);
+
+    for (unsigned int w = 0; w < kConvWarmups; ++w) {
+      std::vector<float> y = convolve(x, h);
+      sink += y.empty() ? 0.0 : y[y.size() / 2];
+    }
+
+    std::vector<double> times;
+    times.reserve(kConvRepeats);
+    for (unsigned int i = 0; i < kConvRepeats; ++i) {
+      const auto t0 = std::chrono::steady_clock::now();
+      std::vector<float> y = convolve(x, h);
+      const auto t1 = std::chrono::steady_clock::now();
+      sink += y.empty() ? 0.0 : y[y.size() / 2];
+
+      times.push_back(
+          std::chrono::duration<double, std::milli>(t1 - t0).count());
+    }
+
+    const double med = conv_median(times);
+    const double per_second = med / in_secs;
+    const double rtf = in_secs * 1e3 / med; // seconds of audio per second
+
+    out << in_secs << "," << rir_secs << "," << med << "," << per_second << ","
+        << rtf << "\n";
+    out.flush();
+
+    std::printf("%12.2f %10.2f %10.2f %12.2f %8.0f\n", in_secs, rir_secs, med,
+                per_second, rtf);
+  }
+
+  std::printf("Wrote %s (checksum %.6f)\n", path.c_str(), sink);
+  return 0;
+}
+
+static int run_convolve() {
+  std::error_code ec;
+  std::filesystem::create_directories(kConvOutDir, ec);
+  if (ec) {
+    std::printf("Could not create %s: %s\n", kConvOutDir.c_str(),
+                ec.message().c_str());
+    return 1;
+  }
+
+  std::printf("Convolution timing: %u repeats after %u warm-up, %d Hz\n\n",
+              kConvRepeats, kConvWarmups, kConvSampleRate);
+
+  std::printf("Input-length sweep at a %.2f s RIR\n", kConvRirSeconds);
+  std::vector<std::pair<double, double>> input_sweep;
+  for (double s : kConvInputSeconds)
+    input_sweep.emplace_back(s, kConvRirSeconds);
+  if (int rc = run_convolve_points(kConvOutDir + "/convolve_input_sweep.csv",
+                                   input_sweep))
+    return rc;
+
+  std::printf("\nRIR-length sweep at a %.2f s input\n",
+              kConvRirSweepInputSeconds);
+  std::vector<std::pair<double, double>> rir_sweep;
+  for (double s : kConvRirSweepSeconds)
+    rir_sweep.emplace_back(kConvRirSweepInputSeconds, s);
+  return run_convolve_points(kConvOutDir + "/convolve_rir_sweep.csv",
+                             rir_sweep);
 }
 
 int main(int argc, char *argv[]) {
@@ -421,9 +646,14 @@ int main(int argc, char *argv[]) {
     return run_configs(20);
   if (mode == "edc")
     return run_edc(20);
+  if (mode == "scatter")
+    return run_scatter(20);
+  if (mode == "convolve")
+    return run_convolve();
 
   std::printf(
-      "Unknown mode '%s' (expected 'variance', 'sweep', 'config' or 'edc')\n",
+      "Unknown mode '%s' (expected 'variance', 'sweep', 'config', 'edc', "
+      "'scatter' or 'convolve')\n",
       mode.c_str());
   return 1;
 }
