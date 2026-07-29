@@ -50,8 +50,8 @@ int main(int argc, char *argv[]) {
   cfg.dt = 0.020;
 
   float room_width = 10;
-  float room_length = 30;
-  float room_height = 7;
+  float room_length = 100;
+  float room_height = 25;
   Material room_material = materials::mConcrete;
 
   Scene room;

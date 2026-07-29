@@ -28,7 +28,7 @@ int main() {
   cfg.fidelity = SimConfig::Fidelity::Realtime;
   cfg.playback_speed = 0.05; // 20x slow-motion
 
-  Material room_material = materials::mConcrete;
+  Material room_material = materials::mSolidWood;
 
   Atmosphere air;
   Simulation sim(make_room(10, 30, 7, room_material), cfg, air);
