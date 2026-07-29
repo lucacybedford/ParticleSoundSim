@@ -41,10 +41,10 @@ Scene make_standard() {
 Scene make_room(float width, float length, float height, Material &material) {
   Scene scene;
 
-  dvec3 a{-(width / 2), 0, 1.5};
-  dvec3 b{0, 0 - (length / 2), 1.5};
-  dvec3 c{(width / 2), 0, 1.5};
-  dvec3 d{0, (length / 2), 1.5};
+  dvec3 a{-(width / 2), 0, height / 2};
+  dvec3 b{0, 0 - (length / 2), height / 2};
+  dvec3 c{(width / 2), 0, height / 2};
+  dvec3 d{0, (length / 2), height / 2};
 
   scene.planes.emplace_back(
       Plane({0, 0, 1}, {0, 0, 0}, width, length, material));

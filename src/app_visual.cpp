@@ -24,13 +24,14 @@ int main() {
 
   SimConfig cfg;
   cfg.num_particles = 1000;
+  cfg.dt = 0.001;
   cfg.fidelity = SimConfig::Fidelity::Realtime;
   cfg.playback_speed = 0.05; // 20x slow-motion
 
   Material room_material = materials::mConcrete;
 
   Atmosphere air;
-  Simulation sim(make_room(5, 10, 3, room_material), cfg, air);
+  Simulation sim(make_room(10, 30, 7, room_material), cfg, air);
   // Simulation sim(make_standard(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {

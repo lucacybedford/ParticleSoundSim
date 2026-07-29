@@ -46,11 +46,12 @@ int main(int argc, char *argv[]) {
 
   bool standard = false;
 
-  cfg.num_particles = 100000;
+  cfg.num_particles = 200000;
+  cfg.dt = 0.020;
 
   float room_width = 10;
   float room_length = 30;
-  float room_height = 3;
+  float room_height = 7;
   Material room_material = materials::mConcrete;
 
   Scene room;
