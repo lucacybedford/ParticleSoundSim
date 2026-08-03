@@ -44,28 +44,55 @@ int main(int argc, char *argv[]) {
   Configuration
   */
 
-  bool standard = false;
+  enum class Room { Box, Cathedral, LivingRoom, CoupledRooms, Standard };
+  const Room which = Room::CoupledRooms;
+  const bool standard = which == Room::Standard;
 
   cfg.num_particles = 200000;
   cfg.dt = 0.020;
 
-  float room_width = 10;
-  float room_length = 100;
+  float room_width = 30;
+  float room_length = 80;
   float room_height = 25;
-  Material room_material = materials::mConcrete;
-
+  // Build custom materials through materials::make, never by assigning to
+  // .absorption on a copy: Particle::hit reflects off material.impedance, and
+  // only make() runs impedance::calibrate() to derive it from the absorption
+  // coefficients. Editing .absorption alone changes nothing the sim reads.
+  Material room_material = materials::mStone;
+  // Geometry tag for the output filenames, so cathedral runs do not overwrite
+  // the shoebox ones.
+  std::string geometry;
   Scene room;
-  if (standard) {
+  switch (which) {
+  case Room::Standard:
     room = make_standard();
-  } else {
+    geometry = "standard";
+    break;
+  case Room::Cathedral:
+    room = make_cathedral(room_material);
+    geometry = "cathedral_" + room_material.name;
+    break;
+  case Room::LivingRoom:
+    // Picks its own per-surface materials, so room_material is unused here.
+    room = make_common_room();
+    geometry = "living_room";
+    break;
+  case Room::CoupledRooms:
+    // Also self-materialled. Two receivers: [0] in the small room (the RIR
+    // this app renders, and where the two-slope decay shows), [1] in the hall.
+    room = make_coupled_rooms();
+    geometry = "coupled_rooms";
+    break;
+  case Room::Box:
     room = make_room(room_width, room_length, room_height, room_material);
+    geometry = std::to_string(static_cast<int>(room_width)) + "x" +
+               std::to_string(static_cast<int>(room_length)) + "x" +
+               std::to_string(static_cast<int>(room_height)) + "_" +
+               room_material.name + "_room";
+    break;
   }
 
   Simulation sim(room, cfg, air);
-
-  // No dt <= bin_width guard: Particle::move records arrivals at their
-  // sub-step time, so histogram resolution stays at bin_width whatever dt is.
-  // See the dt ablation in TODO.md — accuracy is invariant up to 100 ms.
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
               air.temperature_c);
@@ -104,6 +131,9 @@ int main(int argc, char *argv[]) {
     if (standard) {
       csv_path = "../output/standard/histogram_receiver_[" + std::to_string(i) +
                  "]_" + std::to_string(cfg.num_particles) + ".csv";
+    } else if (which != Room::Box) {
+      csv_path = "../output/histogram_receiver_[" + std::to_string(i) + "]_" +
+                 geometry + "_" + std::to_string(cfg.num_particles) + ".csv";
     } else {
       csv_path = "../output/histogram_receiver_[" + std::to_string(i) + "]_" +
                  std::to_string(cfg.num_particles) + ".csv";
@@ -114,10 +144,6 @@ int main(int argc, char *argv[]) {
       std::printf("Failed to write %s\n", csv_path.c_str());
   }
 
-  std::string r_width = std::to_string(static_cast<int>(room_width));
-  std::string r_length = std::to_string(static_cast<int>(room_length));
-  std::string r_height = std::to_string(static_cast<int>(room_height));
-  std::string r_material = room_material.name;
   std::string r_particles = std::to_string(cfg.num_particles);
 
   std::string input_path = "dry.wav";
@@ -125,13 +151,19 @@ int main(int argc, char *argv[]) {
     input_path = argv[1];
   }
 
-  std::string output_path;
+  // Shared stem so the wet render and the RIR that produced it sit next to each
+  // other in output/ under matching names. Without this the RIR is written to
+  // the CWD as a fixed "rir.wav" and every room in a demo run clobbers the
+  // last.
+  std::string stem;
   if (standard) {
-    output_path = "../output/standard/standard-room-" + r_particles + ".wav";
+    stem = "standard/standard-room-" + r_particles;
   } else {
-    output_path = "../output/" + r_particles + "_" + r_width + "x" + r_length +
-                  "x" + r_height + "_" + r_material + "_room_" + ".wav";
+    stem = r_particles + "_" + geometry;
   }
+
+  std::string output_path = "../output/" + stem + ".wav";
+  std::string rir_path = "../output/" + stem + "_rir.wav";
 
   // receiver converted to rir then convolved with input
   if (!sim.scene.receivers.empty()) {
@@ -146,16 +178,34 @@ int main(int argc, char *argv[]) {
 
     // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
     const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
+
+    // The pipeline has no absolute SPL reference (no source power, no 1/r^2
+    // calibration), so the overall scale is arbitrary and only the ratios
+    // between rooms carry meaning. kDemoGain lifts every render into audible
+    // range while leaving those ratios untouched.
+    //
+    // It MUST stay identical across every room in a comparison: retuning it
+    // per room silently destroys the loudness differences the demo exists to
+    // show. Change it once, then re-render the whole set.
+    constexpr float kDemoGain = 4.0f; // +12 dB
+
     for (float &v : rir)
-      v *= cal;
+      v *= cal * kDemoGain;
 
     Audio rir_audio{builder.sample_rate, rir};
-    if (!wav_write("rir.wav", rir_audio)) {
-      std::printf("Failed to write rir.wav\n");
+    if (!wav_write(rir_path, rir_audio)) {
+      std::printf("Failed to write %s (directory must exist)\n",
+                  rir_path.c_str());
       return 1;
     }
-    std::printf("Wrote rir.wav (%zu samples, %.3f s)\n", rir.size(),
+    std::printf("Wrote %s (%zu samples, %.3f s)\n", rir_path.c_str(),
+                rir.size(),
                 rir.size() / static_cast<double>(builder.sample_rate));
+
+    // Also keep the fixed-name copy in the CWD: app_convolve reads "rir.wav"
+    // from there by default, so this preserves that workflow.
+    if (!wav_write("rir.wav", rir_audio))
+      std::printf("Failed to write rir.wav\n");
 
     // reading and convolving with input
     if (!convolve_input_file(input_path, rir, builder.sample_rate,

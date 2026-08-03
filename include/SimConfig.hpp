@@ -6,7 +6,7 @@ struct SimConfig {
 
   unsigned int num_particles = 1000; // particles per emitter
   double dt = 0.02;                  // simulation time step (seconds)
-  double max_time = 30.0;            // offline max run time (s)
+  double max_time = 60.0;            // offline max run time (s)
 
   double playback_speed = 1.0;
 

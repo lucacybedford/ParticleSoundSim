@@ -4,11 +4,11 @@
 #include <cstdio>
 #include <string>
 
-// app_convolve [input.wav] [output.wav]
+// app_convolve [rir.wav] [input.wav] [output.wav]
 int main(int argc, char *argv[]) {
-  std::string rir_path = "rir.wav";
-  std::string input_path = argc > 1 ? argv[1] : "dry.wav";
-  std::string output_path = argc > 2 ? argv[2] : "wet.wav";
+  std::string rir_path = argc > 1 ? argv[1] : "rir.wav";
+  std::string input_path = argc > 2 ? argv[2] : "dry.wav";
+  std::string output_path = argc > 3 ? argv[3] : "wet.wav";
 
   Audio rir;
   if (!wav_read(rir_path, rir)) {

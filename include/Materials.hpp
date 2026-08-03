@@ -11,6 +11,8 @@ inline Material make(std::string name, BandEnergies absorption,
                   mid_scattering};
 }
 
+inline const Material mStone =
+    make("stone", {0.08, 0.08, 0.09, 0.12, 0.16, 0.2, 0.2, 0.2}, 0.3);
 inline const Material mConcrete =
     make("concrete", {0.01, 0.02, 0.03, 0.03, 0.03, 0.04, 0.07, 0.09}, 0.1);
 inline const Material mCarpet =
