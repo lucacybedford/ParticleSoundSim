@@ -31,8 +31,8 @@ int main() {
   Material room_material = materials::mConcrete;
 
   Atmosphere air;
-  // Simulation sim(make_room(30, 80, 25, room_material), cfg, air);
-  Simulation sim(make_coupled_rooms(), cfg, air);
+  // Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
+  Simulation sim(make_common_room(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     printf("dt must be smaller than receiver bin width.");

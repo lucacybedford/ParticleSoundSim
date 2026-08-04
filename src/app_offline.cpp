@@ -36,6 +36,7 @@ static bool write_histogram_csv(const std::string &path,
   return static_cast<bool>(out);
 }
 
+// app_offline [input.wav]
 int main(int argc, char *argv[]) {
   SimConfig cfg;
   Atmosphere air;
@@ -45,19 +46,15 @@ int main(int argc, char *argv[]) {
   */
 
   enum class Room { Box, Cathedral, LivingRoom, CoupledRooms, Standard };
-  const Room which = Room::CoupledRooms;
+  const Room which = Room::Cathedral;
   const bool standard = which == Room::Standard;
 
   cfg.num_particles = 200000;
   cfg.dt = 0.020;
 
-  float room_width = 30;
-  float room_length = 80;
-  float room_height = 25;
-  // Build custom materials through materials::make, never by assigning to
-  // .absorption on a copy: Particle::hit reflects off material.impedance, and
-  // only make() runs impedance::calibrate() to derive it from the absorption
-  // coefficients. Editing .absorption alone changes nothing the sim reads.
+  float room_width = 5;
+  float room_length = 8;
+  float room_height = 3;
   Material room_material = materials::mStone;
   // Geometry tag for the output filenames, so cathedral runs do not overwrite
   // the shoebox ones.
@@ -98,6 +95,8 @@ int main(int argc, char *argv[]) {
               air.temperature_c);
 
   std::printf("Particles: %i\n", cfg.num_particles);
+
+  std::printf("Room type: %s\n", geometry.c_str());
 
   sim.run_offline();
 

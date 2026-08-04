@@ -249,7 +249,7 @@ Scene make_cathedral(Material &material) {
   return scene;
 }
 
-// An ordinary furnished living room, 5.5 x 4.2 x 2.5 m — the small, damped,
+// An ordinary furnished living room, 5 x 8 x 2.5 m — the small, damped,
 // surface-varied counterpart to make_cathedral(). Materials are chosen per
 // surface rather than passed in, because the point of the room is the mix:
 // carpet underfoot, plaster walls and ceiling, a glazed window with the
@@ -261,18 +261,30 @@ Scene make_cathedral(Material &material) {
 // what Particle::move needs, since it nudges a hit particle to the normal's
 // side and picks the first plane found when two are equidistant.
 //
-// Predicted Sabine RT60 is a little over half a second, in the normal domestic
-// range and roughly an order of magnitude below the cathedral.
+// Measured broadband T20 is about 0.54 s, in the normal domestic range and
+// roughly an order of magnitude below the cathedral.
+//
+// Plan (x across the short walls, y along the long walls, z up):
+//
+//        y = +4   +-----------------+
+//                 |    bookcase     |
+//                 |                 |
+//        door <---|                 |---> window (x = +2.5, long wall)
+//                 |                 |
+//                 |  table  sofa    |
+//        y = -4   +-----------------+
+//                x = -2.5         x = +2.5
 Scene make_common_room() {
   Scene scene;
 
-  const double w = 5.5;  // x, wall to wall
-  const double d = 4.2;  // y, wall to wall
-  const double h = 2.5;  // ceiling height
+  const double w = 5.0; // x, wall to wall
+  const double d = 8.0; // y, wall to wall
+  const double h = 2.5; // ceiling height
   const double hw = w / 2;
   const double hd = d / 2;
 
-  const Material &plaster = materials::mPlaster;
+  // Stud walls, not masonry — see mPlasterboard.
+  const Material &plaster = materials::mPlasterboard;
   const Material &carpet = materials::mCarpet;
   const Material &glass = materials::mGlass;
   const Material &wood = materials::mSolidWood;
@@ -280,64 +292,69 @@ Scene make_common_room() {
 
   // --- Shell --------------------------------------------------------------
   scene.planes.emplace_back(Plane({0, 0, 1}, {0, 0, 0}, w, d, carpet));
-  scene.planes.emplace_back(Plane({0, 0, -1}, {0, 0, h}, w, d, plaster));
-  scene.planes.emplace_back(Plane({0, 1, 0}, {0, -hd, h / 2}, w, h, plaster));
-  scene.planes.emplace_back(Plane({0, -1, 0}, {0, hd, h / 2}, w, h, plaster));
+  scene.planes.emplace_back(Plane({0, 0, -1}, {0, 0, h}, w, d, wood));
+  scene.planes.emplace_back(Plane({0, 1, 0}, {0, -hd, h / 2}, w, h, wood));
+  scene.planes.emplace_back(Plane({0, -1, 0}, {0, hd, h / 2}, w, h, wood));
 
   // --- Window wall (x = +hw), tiled around the glazing ---------------------
   // Tiled rather than overlaid: a patch laid on top of a full wall shares the
   // wall's plane, and which of the two the intersection loop reaches first at
   // an identical t is down to rounding.
-  const double win_w = 1.8, win_sill = 0.9, win_head = 2.1;
+  const double win_w = 2.4, win_sill = 0.9, win_head = 2.1;
   const double win_h = win_head - win_sill;
-  scene.planes.emplace_back(Plane({-1, 0, 0}, {hw, 0, win_sill / 2}, d, win_sill,
-                                  plaster));
-  scene.planes.emplace_back(Plane({-1, 0, 0}, {hw, 0, (win_head + h) / 2}, d,
-                                  h - win_head, plaster));
-  scene.planes.emplace_back(Plane({-1, 0, 0}, {hw, 0, (win_sill + win_head) / 2},
-                                  win_w, win_h, glass));
+  scene.planes.emplace_back(
+      Plane({-1, 0, 0}, {hw, 0, win_sill / 2}, d, win_sill, plaster));
+  scene.planes.emplace_back(
+      Plane({-1, 0, 0}, {hw, 0, (win_head + h) / 2}, d, h - win_head, plaster));
+  scene.planes.emplace_back(Plane(
+      {-1, 0, 0}, {hw, 0, (win_sill + win_head) / 2}, win_w, win_h, glass));
   // Curtains, drawn back to either side of the glazing. Hung flat against the
   // reveal instead of floating in front of it, so there is no thin cavity for
-  // particles to get trapped in.
-  const double curtain_w = (d - win_w) / 2;
+  // particles to get trapped in. On a wall this long the curtains no longer
+  // reach the corners, so the rest of the window band is plain plaster.
+  const double curtain_w = 0.7;
   const double curtain_y = (win_w + curtain_w) / 2;
-  for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({-1, 0, 0},
-                                    {hw, side * curtain_y,
-                                     (win_sill + win_head) / 2},
-                                    curtain_w, win_h, carpet));
+  const double win_infill_w = (d - win_w) / 2 - curtain_w;
+  const double win_infill_y = win_w / 2 + curtain_w + win_infill_w / 2;
+  for (double side : {1.0, -1.0}) {
+    scene.planes.emplace_back(
+        Plane({-1, 0, 0}, {hw, side * curtain_y, (win_sill + win_head) / 2},
+              curtain_w, win_h, carpet));
+    scene.planes.emplace_back(
+        Plane({-1, 0, 0}, {hw, side * win_infill_y, (win_sill + win_head) / 2},
+              win_infill_w, win_h, plaster));
+  }
 
   // --- Door wall (x = -hw), tiled around the door -------------------------
   const double door_w = 0.9, door_h = 2.0;
   const double jamb_w = (d - door_w) / 2;
   const double jamb_y = (door_w + jamb_w) / 2;
-  scene.planes.emplace_back(Plane({1, 0, 0}, {-hw, 0, door_h / 2}, door_w,
-                                  door_h, wood));
+  scene.planes.emplace_back(
+      Plane({1, 0, 0}, {-hw, 0, door_h / 2}, door_w, door_h, wood));
   scene.planes.emplace_back(Plane({1, 0, 0}, {-hw, 0, (door_h + h) / 2}, door_w,
                                   h - door_h, plaster));
   for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({1, 0, 0}, {-hw, side * jamb_y, h / 2},
-                                    jamb_w, h, plaster));
+    scene.planes.emplace_back(
+        Plane({1, 0, 0}, {-hw, side * jamb_y, h / 2}, jamb_w, h, plaster));
 
   // --- Sofa: against the y = -hd wall, closed by that wall and the floor ---
   const double sofa_w = 2.0, sofa_d = 0.9, sofa_h = 0.8;
   const double sofa_front = -hd + sofa_d;
   scene.planes.emplace_back(Plane({0, 0, 1}, {0, -hd + sofa_d / 2, sofa_h},
                                   sofa_w, sofa_d, upholstery));
-  scene.planes.emplace_back(Plane({0, 1, 0}, {0, sofa_front, sofa_h / 2}, sofa_w,
-                                  sofa_h, upholstery));
+  scene.planes.emplace_back(Plane({0, 1, 0}, {0, sofa_front, sofa_h / 2},
+                                  sofa_w, sofa_h, upholstery));
   for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({side, 0, 0},
-                                    {side * sofa_w / 2, -hd + sofa_d / 2,
-                                     sofa_h / 2},
-                                    sofa_d, sofa_h, carpet));
+    scene.planes.emplace_back(
+        Plane({side, 0, 0}, {side * sofa_w / 2, -hd + sofa_d / 2, sofa_h / 2},
+              sofa_d, sofa_h, carpet));
 
   // --- Bookcase: against the y = +hd wall ---------------------------------
   const double bc_w = 1.6, bc_d = 0.35, bc_h = 1.8;
-  scene.planes.emplace_back(Plane({0, 0, 1}, {0, hd - bc_d / 2, bc_h}, bc_w,
-                                  bc_d, wood));
-  scene.planes.emplace_back(Plane({0, -1, 0}, {0, hd - bc_d, bc_h / 2}, bc_w,
-                                  bc_h, wood));
+  scene.planes.emplace_back(
+      Plane({0, 0, 1}, {0, hd - bc_d / 2, bc_h}, bc_w, bc_d, wood));
+  scene.planes.emplace_back(
+      Plane({0, -1, 0}, {0, hd - bc_d, bc_h / 2}, bc_w, bc_h, wood));
   for (double side : {1.0, -1.0})
     scene.planes.emplace_back(Plane({side, 0, 0},
                                     {side * bc_w / 2, hd - bc_d / 2, bc_h / 2},
@@ -345,9 +362,9 @@ Scene make_common_room() {
 
   // --- Coffee table: free-standing, closed by the floor -------------------
   const double t_w = 1.1, t_d = 0.6, t_h = 0.45;
-  const dvec3 t_c{0, -0.5, 0}; // footprint centre
-  scene.planes.emplace_back(Plane({0, 0, 1}, {t_c[0], t_c[1], t_h}, t_w, t_d,
-                                  wood));
+  const dvec3 t_c{0, -2.1, 0}; // footprint centre, ~0.7 m off the sofa front
+  scene.planes.emplace_back(
+      Plane({0, 0, 1}, {t_c[0], t_c[1], t_h}, t_w, t_d, wood));
   for (double side : {1.0, -1.0}) {
     scene.planes.emplace_back(Plane({side, 0, 0},
                                     {t_c[0] + side * t_w / 2, t_c[1], t_h / 2},
@@ -357,10 +374,10 @@ Scene make_common_room() {
                                     t_w, t_h, wood));
   }
 
-  // Someone talking from the middle of the room, heard by a seated listener
-  // in front of the sofa about 2.7 m away.
+  // Someone talking from the far half of the room, heard by a seated listener
+  // in front of the sofa about 4.3 m away.
   scene.emitters.emplace_back(Emitter{{-1.5, 1.0, 1.6}});
-  scene.receivers.emplace_back(Receiver{{0.4, -0.9, 1.1}, 0.1});
+  scene.receivers.emplace_back(Receiver{{0.4, -2.8, 1.1}, 0.1});
 
   return scene;
 }
@@ -402,7 +419,7 @@ Scene make_coupled_rooms() {
   const Material &concrete = materials::mConcrete;
   const Material &plaster = materials::mPlaster;
 
-  const double sw = 5.0, sd = 4.0, sh = 2.8;  // small room
+  const double sw = 5.0, sd = 4.0, sh = 2.8;   // small room
   const double hw = 20.0, hd = 14.0, hh = 9.0; // hall
   const double door_w = 1.0, door_h = 2.1;
   const double leaf = 0.15; // partition thickness
@@ -412,49 +429,51 @@ Scene make_coupled_rooms() {
   const double s_mid = (s_back - leaf) / 2;
   scene.planes.emplace_back(Plane({0, 0, 1}, {0, s_mid, 0}, sw, sd, carpet));
   scene.planes.emplace_back(Plane({0, 0, -1}, {0, s_mid, sh}, sw, sd, tile));
-  scene.planes.emplace_back(Plane({0, 1, 0}, {0, s_back, sh / 2}, sw, sh, panel));
+  scene.planes.emplace_back(
+      Plane({0, 1, 0}, {0, s_back, sh / 2}, sw, sh, panel));
   for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({-side, 0, 0}, {side * sw / 2, s_mid, sh / 2},
-                                    sd, sh, panel));
+    scene.planes.emplace_back(
+        Plane({-side, 0, 0}, {side * sw / 2, s_mid, sh / 2}, sd, sh, panel));
 
   // Small room's leaf of the partition, tiled around the doorway.
   const double s_pier = (sw - door_w) / 2; // wall each side of the door
-  scene.planes.emplace_back(Plane({0, -1, 0}, {0, -leaf, (door_h + sh) / 2}, sw,
-                                  sh - door_h, panel));
+  scene.planes.emplace_back(
+      Plane({0, -1, 0}, {0, -leaf, (door_h + sh) / 2}, sw, sh - door_h, panel));
   for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({0, -1, 0},
-                                    {side * (door_w + s_pier) / 2, -leaf,
-                                     door_h / 2},
-                                    s_pier, door_h, panel));
+    scene.planes.emplace_back(
+        Plane({0, -1, 0}, {side * (door_w + s_pier) / 2, -leaf, door_h / 2},
+              s_pier, door_h, panel));
 
   // --- Hall, y in [0, hd] -------------------------------------------------
   scene.planes.emplace_back(Plane({0, 0, 1}, {0, hd / 2, 0}, hw, hd, concrete));
-  scene.planes.emplace_back(Plane({0, 0, -1}, {0, hd / 2, hh}, hw, hd, plaster));
-  scene.planes.emplace_back(Plane({0, -1, 0}, {0, hd, hh / 2}, hw, hh, plaster));
+  scene.planes.emplace_back(
+      Plane({0, 0, -1}, {0, hd / 2, hh}, hw, hd, plaster));
+  scene.planes.emplace_back(
+      Plane({0, -1, 0}, {0, hd, hh / 2}, hw, hh, plaster));
   for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({-side, 0, 0}, {side * hw / 2, hd / 2, hh / 2},
-                                    hd, hh, concrete));
+    scene.planes.emplace_back(Plane(
+        {-side, 0, 0}, {side * hw / 2, hd / 2, hh / 2}, hd, hh, concrete));
 
   // Hall's leaf of the partition, tiled around the same doorway.
   const double h_pier = (hw - door_w) / 2;
-  scene.planes.emplace_back(Plane({0, 1, 0}, {0, 0, (door_h + hh) / 2}, hw,
-                                  hh - door_h, concrete));
+  scene.planes.emplace_back(
+      Plane({0, 1, 0}, {0, 0, (door_h + hh) / 2}, hw, hh - door_h, concrete));
   for (double side : {1.0, -1.0})
-    scene.planes.emplace_back(Plane({0, 1, 0},
-                                    {side * (door_w + h_pier) / 2, 0, door_h / 2},
-                                    h_pier, door_h, concrete));
+    scene.planes.emplace_back(
+        Plane({0, 1, 0}, {side * (door_w + h_pier) / 2, 0, door_h / 2}, h_pier,
+              door_h, concrete));
 
   // --- Door reveal: seals the passage off from the cavity between leaves ---
-  scene.planes.emplace_back(Plane({0, 0, -1}, {0, -leaf / 2, door_h}, door_w,
-                                  leaf, panel));
+  scene.planes.emplace_back(
+      Plane({0, 0, -1}, {0, -leaf / 2, door_h}, door_w, leaf, panel));
   for (double side : {1.0, -1.0})
     scene.planes.emplace_back(Plane({-side, 0, 0},
                                     {side * door_w / 2, -leaf / 2, door_h / 2},
                                     leaf, door_h, panel));
   // Threshold: the small room's floor already spans up to y = -leaf, so the
   // strip under the passage needs its own slab.
-  scene.planes.emplace_back(Plane({0, 0, 1}, {0, -leaf / 2, 0}, door_w, leaf,
-                                  carpet));
+  scene.planes.emplace_back(
+      Plane({0, 0, 1}, {0, -leaf / 2, 0}, door_w, leaf, carpet));
 
   // Source and both receivers off the doorway axis, so no path is privileged
   // by symmetry. Equal receiver radii keep the two levels comparable; 0.25 m
