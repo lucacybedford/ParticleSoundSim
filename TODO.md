@@ -12,8 +12,6 @@
 
 ## Experiments to run (for Report §4 Results)
 
-- [ ] **Stage timing.** Time simulation stage and convolution stage separately (convolution via the standalone tool) so real-time feasibility of each is reported independently.
-
 ---
 
 ## Not Done
@@ -80,3 +78,4 @@
 - [x] Compare clarity metrics C50 and D50 against ISM baseline
 - [x] **Particle-count sweep (accuracy–cost trade-off).** N over 10 log-spaced values: 1k, 2k, 5k, 10k, 20k, 50k, 100k, 200k, 500k, 1M. 10 independent RNG seeds per N. Record mean ± std across seeds of T60, EDC-vs-ISM error, C50; plus runtime. Plot metric mean±std vs N and runtime vs N (log x). Expect std ∝ 1/√N (slope −½ on log-log) = correct Monte Carlo behaviour. Headline = the "knee" where more particles stop buying accuracy while runtime keeps rising ~linearly.
 - [x] **dt ablation (does swept detection decouple accuracy from step size?).** PREREQ FIRST: raise `MAX_ITERATIONS` in `Particle.hpp` (currently 5 — too low; at large dt a particle needs ~1 iteration per bounce, e.g. ~12 bounces per 100 ms step in the standard room) and relax the `dt > bin_width` guard in `app_offline.cpp`. Then fix room + N and sweep dt from 1 ms upward. Plot T60/RIR error vs dt and runtime vs dt. Expect accuracy invariant (swept + sub-step arrival timing) while runtime drops then plateaus at the bounce-dominated floor. Keep the visual app on small dt regardless. Consider culling energy-threshold particles inside the swept loop, not once per step.
+- [x] **Stage timing.** Time simulation stage and convolution stage separately (convolution via the standalone tool) so real-time feasibility of each is reported independently.
