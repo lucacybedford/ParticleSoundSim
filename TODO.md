@@ -19,7 +19,6 @@
 - [ ] Make single frequency band particles
 - [ ] Implement virtual microphone accumulation with direction
 - [ ] Implement transmission through surfaces
-- [ ] Earliest bin is a direct arrival. For clearer transients, disregard first couple reflections
 
 - [ ] Profile and identify bottlenecks
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
@@ -27,6 +26,9 @@
 - [ ] GPU acceleration
 - [ ] Progressive RIR re-baking as source/listener moves through the scene
 - [ ] Enable movable listener
+- [ ] output sound energy heatmap
+- [ ] waveform display
+- [ ] HRTF implementation
 
 ---
 
