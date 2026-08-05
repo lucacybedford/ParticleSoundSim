@@ -32,6 +32,7 @@ int main() {
 
   Atmosphere air;
   // Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
+  // Simulation sim(make_cathedral(room_material), cfg, air);
   Simulation sim(make_common_room(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
@@ -60,7 +61,7 @@ int main() {
     }
   }
   dvec3 centre = (bb_min + bb_max) / 2.0;
-  double radius = glm::length(bb_max - bb_min) / 2;
+  double radius = glm::length(bb_max - bb_min) / 2 + 3;
 
   glm::dmat4 proj = glm::perspective(glm::radians(45.0), 1.0, 0.1, radius * 10);
   glMatrixMode(GL_PROJECTION);

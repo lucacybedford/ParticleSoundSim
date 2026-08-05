@@ -46,16 +46,16 @@ int main(int argc, char *argv[]) {
   */
 
   enum class Room { Box, Cathedral, LivingRoom, CoupledRooms, Standard };
-  const Room which = Room::Cathedral;
+  const Room which = Room::CoupledRooms;
   const bool standard = which == Room::Standard;
 
   cfg.num_particles = 200000;
   cfg.dt = 0.020;
 
-  float room_width = 5;
-  float room_length = 8;
+  float room_width = 4;
+  float room_length = 7;
   float room_height = 3;
-  Material room_material = materials::mStone;
+  Material room_material = materials::mPlasterboard;
   // Geometry tag for the output filenames, so cathedral runs do not overwrite
   // the shoebox ones.
   std::string geometry;
@@ -161,55 +161,61 @@ int main(int argc, char *argv[]) {
     stem = r_particles + "_" + geometry;
   }
 
-  std::string output_path = "../output/" + stem + ".wav";
-  std::string rir_path = "../output/" + stem + "_rir.wav";
-
   // receiver converted to rir then convolved with input
   if (!sim.scene.receivers.empty()) {
     RIRBuilder builder;
     builder.bin_width = Receiver::bin_width;
 
-    std::vector<float> rir = builder.build(sim.scene.receivers[0].histogram);
-    if (rir.empty()) {
-      std::printf("RIR is empty (no energy reached the receiver).\n");
-      return 0;
-    }
+    int num_receivers = sim.scene.receivers.size();
 
-    // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
-    const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
+    for (int h = 0; h < num_receivers; h++) {
+      std::string rir_path =
+          "../output/" + stem + "_rir_" + std::to_string(h) + ".wav";
+      std::string output_path =
+          "../output/" + stem + "_" + std::to_string(h) + ".wav";
 
-    // The pipeline has no absolute SPL reference (no source power, no 1/r^2
-    // calibration), so the overall scale is arbitrary and only the ratios
-    // between rooms carry meaning. kDemoGain lifts every render into audible
-    // range while leaving those ratios untouched.
-    //
-    // It MUST stay identical across every room in a comparison: retuning it
-    // per room silently destroys the loudness differences the demo exists to
-    // show. Change it once, then re-render the whole set.
-    constexpr float kDemoGain = 4.0f; // +12 dB
+      std::vector<float> rir = builder.build(sim.scene.receivers[h].histogram);
+      if (rir.empty()) {
+        std::printf("RIR is empty (no energy reached the receiver).\n");
+        return 0;
+      }
 
-    for (float &v : rir)
-      v *= cal * kDemoGain;
+      // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
+      const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
 
-    Audio rir_audio{builder.sample_rate, rir};
-    if (!wav_write(rir_path, rir_audio)) {
-      std::printf("Failed to write %s (directory must exist)\n",
-                  rir_path.c_str());
-      return 1;
-    }
-    std::printf("Wrote %s (%zu samples, %.3f s)\n", rir_path.c_str(),
-                rir.size(),
-                rir.size() / static_cast<double>(builder.sample_rate));
+      // The pipeline has no absolute SPL reference (no source power, no 1/r^2
+      // calibration), so the overall scale is arbitrary and only the ratios
+      // between rooms carry meaning. kDemoGain lifts every render into audible
+      // range while leaving those ratios untouched.
+      //
+      // It MUST stay identical across every room in a comparison: retuning it
+      // per room silently destroys the loudness differences the demo exists to
+      // show. Change it once, then re-render the whole set.
+      constexpr float kDemoGain = 4.0f; // +12 dB
 
-    // Also keep the fixed-name copy in the CWD: app_convolve reads "rir.wav"
-    // from there by default, so this preserves that workflow.
-    if (!wav_write("rir.wav", rir_audio))
-      std::printf("Failed to write rir.wav\n");
+      for (float &v : rir)
+        v *= cal * kDemoGain;
 
-    // reading and convolving with input
-    if (!convolve_input_file(input_path, rir, builder.sample_rate,
-                             output_path)) {
-      return 1;
+      Audio rir_audio{builder.sample_rate, rir};
+      if (!wav_write(rir_path, rir_audio)) {
+        std::printf("Failed to write %s (directory must exist)\n",
+                    rir_path.c_str());
+        return 1;
+      }
+      std::printf("Wrote %s (%zu samples, %.3f s)\n", rir_path.c_str(),
+                  rir.size(),
+                  rir.size() / static_cast<double>(builder.sample_rate));
+
+      // Also keep the fixed-name copy in the CWD: app_convolve reads "rir.wav"
+      // from there by default, so this preserves that workflow.
+      if (!wav_write("rir.wav", rir_audio))
+        std::printf("Failed to write rir.wav\n");
+
+      // reading and convolving with input
+      if (!convolve_input_file(input_path, rir, builder.sample_rate,
+                               output_path)) {
+        return 1;
+      }
     }
   }
 
