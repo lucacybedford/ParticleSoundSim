@@ -33,7 +33,7 @@ int main() {
   Atmosphere air;
   // Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
   // Simulation sim(make_cathedral(room_material), cfg, air);
-  Simulation sim(make_common_room(), cfg, air);
+  Simulation sim(make_coupled_rooms(), cfg, air);
 
   if (cfg.dt > Receiver::bin_width) {
     printf("dt must be smaller than receiver bin width.");
