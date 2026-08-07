@@ -15,12 +15,6 @@
 #include <string>
 #include <vector>
 
-// Which room every experiment runs in. Standard is the flat-absorption ISM
-// comparison room; Real is a single-material room whose absorption varies with
-// frequency. Switching this also switches the output directory, so the two
-// datasets cannot overwrite each other. The matching toggle on the plotting
-// side is ROOM in plot_rir.py — change both together, or the Eyring reference
-// lines will describe the wrong room.
 enum class RoomChoice { Standard, Real };
 static constexpr RoomChoice kRoom = RoomChoice::Real;
 
@@ -107,8 +101,8 @@ static constexpr double kConvRirSeconds = 0.5;
 // blocks of nfft - M + 1 samples (~0.99 s at a 0.5 s RIR), so everything below
 // one block costs the same and the curve is a staircase, not a line. Sampling
 // only the long end would hide that.
-static const std::vector<double> kConvInputSeconds = {0.25, 0.5,  1.0,  2.0, 5.0,
-                                                      10.0, 20.0, 30.0, 60.0};
+static const std::vector<double> kConvInputSeconds = {
+    0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 60.0};
 
 // Secondary sweep: RIR length at a fixed input, to show that the standardised
 // 0.5 s is not a special operating point. nfft doubles with the RIR, but so
@@ -538,8 +532,9 @@ static double conv_median(std::vector<double> v) {
 // resample or write is inside the timed region. That is the whole point of
 // running this here rather than through ParticleSoundSimConvolve, which times
 // file I/O along with the arithmetic.
-static int run_convolve_points(const std::string &path,
-                               const std::vector<std::pair<double, double>> &points) {
+static int
+run_convolve_points(const std::string &path,
+                    const std::vector<std::pair<double, double>> &points) {
   std::ofstream out(path);
   if (!out) {
     std::printf("Failed to open %s\n", path.c_str());

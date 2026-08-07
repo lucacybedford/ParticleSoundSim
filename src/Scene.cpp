@@ -67,29 +67,6 @@ Scene make_room(float width, float length, float height, Material &material) {
   return scene;
 }
 
-// A cruciform Gothic cathedral: aisled nave with an open arcade and a
-// clerestory above it, gabled roofs over nave and transept, a crossing, a
-// short choir, and a five-sided apse. Roughly Salisbury-sized: ~50,000 m^3
-// over ~12,000 m^2 of surface.
-//
-// Plan (x across, y along the nave, z up; floor at z = 0):
-//
-//                              y = +41  apse (5 facets, r = 7)
-//                              y = +34  chancel arch
-//        choir                          |x| <= 7, walls to the eaves
-//   x=-25 +-----------+           +-----------+ x=+25   y = +22
-//         |  transept |  crossing |  transept |
-//         +-----------+           +-----------+         y = +8
-//     aisle | nave (|x| <= 7) | aisle                    aisles are open to
-//         x=-13     x=-7   x=+7    x=+13                 the nave below z = 10
-//                              y = -45  west front
-//
-// Every surface is a finite rectangle, so the gable ends are full-height
-// rectangles: the corners that poke out above the roof slopes sit outside the
-// enclosure and no interior particle can reach them. The enclosure is
-// otherwise closed — Particle::move treats planes as two-sided and nudges a
-// hit particle to the normal's side, so a leak would let energy escape and
-// re-enter through the wrong face.
 Scene make_cathedral(Material &material) {
   Scene scene;
 
@@ -111,26 +88,17 @@ Scene make_cathedral(Material &material) {
   const double tr_mid = (y_tr0 + y_tr1) / 2;
   const double aisle_mid = nave_half + aisle_w / 2; // aisle centre-line |x|
 
-  // Slant length of a roof slope: the gables span the nave half-width and the
-  // transept half-depth respectively, and both are 7 m here, but keep them
-  // separate so the dimensions above can be changed independently.
   const double nave_slant = std::hypot(nave_half, rise);
   const double tr_slant = std::hypot(tr_half, rise);
 
-  // One floor slab under the whole footprint. The parts outside the walls are
-  // unreachable, which is cheaper than tiling the cruciform plan exactly.
   scene.planes.emplace_back(
       Plane({0, 0, 1}, {0, (y_west + y_apse + apse_r) / 2, 0}, 2 * arm_x,
             (y_apse + apse_r) - y_west, material));
 
-  // --- Nave vessel -------------------------------------------------------
   const double nave_len = y_apse - y_west;
-  // West front, full height to the ridge so it caps the gable.
   scene.planes.emplace_back(Plane({0, 1, 0}, {0, y_west, ridge_z / 2},
                                   2 * nave_half, ridge_z, material));
 
-  // Clerestory: the nave side walls exist only above the arcade, so the
-  // aisles are acoustically coupled to the nave through the open arcade.
   const double cler_len = y_tr0 - y_west;
   const double cler_mid = (y_west + y_tr0) / 2;
   scene.planes.emplace_back(
@@ -140,8 +108,6 @@ Scene make_cathedral(Material &material) {
       Plane({1, 0, 0}, {-nave_half, cler_mid, (aisle_z + eaves_z) / 2},
             cler_len, eaves_z - aisle_z, material));
 
-  // Choir: east of the crossing there are no aisles, so the walls run the
-  // full height.
   const double choir_len = y_apse - y_tr1;
   const double choir_mid = (y_tr1 + y_apse) / 2;
   scene.planes.emplace_back(Plane({-1, 0, 0},
@@ -151,9 +117,6 @@ Scene make_cathedral(Material &material) {
                                   {-nave_half, choir_mid, eaves_z / 2},
                                   choir_len, eaves_z, material));
 
-  // Nave roof: two slopes from the eaves up to the ridge, running the whole
-  // length including over the crossing. The pitch is what breaks up the
-  // ceiling-floor parallelism a shoebox suffers from.
   const double nave_mid = (y_west + y_apse) / 2;
   scene.planes.emplace_back(
       Plane({-rise, 0, -nave_half},
@@ -164,16 +127,11 @@ Scene make_cathedral(Material &material) {
             {-nave_half / 2, nave_mid, (eaves_z + ridge_z) / 2}, nave_len,
             nave_slant, material));
 
-  // --- Apse --------------------------------------------------------------
-  // Chancel arch: closes the nave gable above the (lower) apse ceiling.
   scene.planes.emplace_back(Plane({0, -1, 0},
                                   {0, y_apse, (eaves_z + ridge_z) / 2},
                                   2 * nave_half, ridge_z - eaves_z, material));
-  // Flat cap standing in for the half-dome.
   scene.planes.emplace_back(Plane({0, 0, -1}, {0, y_apse + apse_r / 2, eaves_z},
                                   2 * nave_half, apse_r, material));
-  // Facets swept from x = -apse_r round to x = +apse_r. Non-parallel walls:
-  // the east end scatters instead of sustaining an axial echo.
   const double facet_arc = M_PI / apse_facets;
   const double facet_w = 2 * apse_r * std::sin(facet_arc / 2);
   const double facet_r = apse_r * std::cos(facet_arc / 2); // centre-to-facet
@@ -186,7 +144,6 @@ Scene make_cathedral(Material &material) {
         Plane(-outward, centre, facet_w, eaves_z, material));
   }
 
-  // --- Side aisles (both sides of the nave, west of the transept) --------
   for (double side : {1.0, -1.0}) {
     const double x_outer = side * (nave_half + aisle_w);
     const double x_mid = side * aisle_mid;
@@ -201,20 +158,12 @@ Scene make_cathedral(Material &material) {
                                     aisle_w, aisle_z, material));
   }
 
-  // --- Transept arms -----------------------------------------------------
-  // Each arm opens into the crossing over its full x = +-nave_half face up to
-  // the eaves; above the eaves the crossing is roofed by the nave gable, so
-  // the arm's own gable is closed off by a rectangle there.
   const double arm_len = arm_x - nave_half;
   for (double side : {1.0, -1.0}) {
     const double x_mid = side * (nave_half + arm_len / 2);
     scene.planes.emplace_back(Plane({-side, 0, 0},
                                     {side * arm_x, tr_mid, ridge_z / 2},
                                     2 * tr_half, ridge_z, material));
-    // West face, in two pieces. The stretch over the aisle stops at the aisle
-    // ceiling so it does not sit back-to-back with the aisle's own end wall:
-    // coplanar planes facing opposite ways are a leak, because whichever the
-    // intersection loop finds first nudges the particle to its own side.
     scene.planes.emplace_back(
         Plane({0, 1, 0}, {side * aisle_mid, y_tr0, (aisle_z + eaves_z) / 2},
               aisle_w, eaves_z - aisle_z, material));
@@ -238,42 +187,12 @@ Scene make_cathedral(Material &material) {
               2 * tr_half, ridge_z - eaves_z, material));
   }
 
-  // Speaker at the crossing steps, listener ~10 m down the nave. The 0.5 m
-  // receiver is deliberately larger than the 0.1 m used in the shoebox tests:
-  // its capture cross-section is 25x bigger, which is what keeps the early
-  // part of the histogram from being a handful of isolated arrivals in a
-  // volume this size. It costs ~1.5 ms of temporal smearing.
   scene.emitters.emplace_back(Emitter{{0.0, y_tr0 - 3.0, 1.7}});
   scene.receivers.emplace_back(Receiver{{1.5, y_tr0 - 13.0, 1.7}, 0.5});
 
   return scene;
 }
 
-// An ordinary furnished living room, 5 x 8 x 2.5 m — the small, damped,
-// surface-varied counterpart to make_cathedral(). Materials are chosen per
-// surface rather than passed in, because the point of the room is the mix:
-// carpet underfoot, plaster walls and ceiling, a glazed window with the
-// curtains drawn back beside it, a wooden door, and furniture.
-//
-// Furniture is modelled as closed boxes with outward normals, standing on the
-// floor and pushed back against a wall. The floor and that wall close the box,
-// so no face is ever hit from behind and no two faces are coplanar — which is
-// what Particle::move needs, since it nudges a hit particle to the normal's
-// side and picks the first plane found when two are equidistant.
-//
-// Measured broadband T20 is about 0.54 s, in the normal domestic range and
-// roughly an order of magnitude below the cathedral.
-//
-// Plan (x across the short walls, y along the long walls, z up):
-//
-//        y = +4   +-----------------+
-//                 |    bookcase     |
-//                 |                 |
-//        door <---|                 |---> window (x = +2.5, long wall)
-//                 |                 |
-//                 |  table  sofa    |
-//        y = -4   +-----------------+
-//                x = -2.5         x = +2.5
 Scene make_common_room() {
   Scene scene;
 

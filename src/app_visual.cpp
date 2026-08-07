@@ -11,7 +11,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Orbit-distance multiplier (in units of scene radius), adjusted by scrolling.
 static double g_zoom = 2.0;
 
 static void scroll_callback(GLFWwindow *, double, double yoffset) {
@@ -72,7 +71,6 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // Orbit camera state (spherical coordinates around the scene centre)
   double yaw = 0.5;   // azimuth, radians
   double pitch = 0.5; // elevation, radians
   bool dragging = false;
@@ -83,7 +81,6 @@ int main() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Left-drag to orbit the camera around the scene centre
     double mx, my;
     glfwGetCursorPos(window, &mx, &my);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {

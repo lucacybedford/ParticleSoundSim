@@ -127,12 +127,6 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       std::uniform_real_distribution<double> dist(0, 1);
       double u = dist(rng);
       dvec3 v_new;
-      // A particle carries all eight bands down a single path, so it gets one
-      // specular-or-diffuse decision per bounce and no per-band direction.
-      // Weighting the surface's scattering curve by the energy still left in
-      // each band is the closest one number can get: a particle that has
-      // already lost its highs goes on scattering like the lows it still
-      // carries, which is what happens to a real wavefront late in the decay.
       double s_num = 0.0, s_den = 0.0;
       for (int i = 0; i < kNumBands; ++i) {
         s_num += energies[i] * closestPlane->material.scattering[i];

@@ -56,8 +56,6 @@ int main(int argc, char *argv[]) {
   float room_length = 7;
   float room_height = 3;
   Material room_material = materials::mPlasterboard;
-  // Geometry tag for the output filenames, so cathedral runs do not overwrite
-  // the shoebox ones.
   std::string geometry;
   Scene room;
   switch (which) {
@@ -70,13 +68,10 @@ int main(int argc, char *argv[]) {
     geometry = "cathedral_" + room_material.name;
     break;
   case Room::LivingRoom:
-    // Picks its own per-surface materials, so room_material is unused here.
     room = make_common_room();
     geometry = "living_room";
     break;
   case Room::CoupledRooms:
-    // Also self-materialled. Two receivers: [0] in the small room (the RIR
-    // this app renders, and where the two-slope decay shows), [1] in the hall.
     room = make_coupled_rooms();
     geometry = "coupled_rooms";
     break;
@@ -150,10 +145,6 @@ int main(int argc, char *argv[]) {
     input_path = argv[1];
   }
 
-  // Shared stem so the wet render and the RIR that produced it sit next to each
-  // other in output/ under matching names. Without this the RIR is written to
-  // the CWD as a fixed "rir.wav" and every room in a demo run clobbers the
-  // last.
   std::string stem;
   if (standard) {
     stem = "standard/standard-room-" + r_particles;
@@ -183,15 +174,7 @@ int main(int argc, char *argv[]) {
       // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
       const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
 
-      // The pipeline has no absolute SPL reference (no source power, no 1/r^2
-      // calibration), so the overall scale is arbitrary and only the ratios
-      // between rooms carry meaning. kDemoGain lifts every render into audible
-      // range while leaving those ratios untouched.
-      //
-      // It MUST stay identical across every room in a comparison: retuning it
-      // per room silently destroys the loudness differences the demo exists to
-      // show. Change it once, then re-render the whole set.
-      constexpr float kDemoGain = 4.0f; // +12 dB
+      constexpr float kDemoGain = 4.0f;
 
       for (float &v : rir)
         v *= cal * kDemoGain;
@@ -206,8 +189,6 @@ int main(int argc, char *argv[]) {
                   rir.size(),
                   rir.size() / static_cast<double>(builder.sample_rate));
 
-      // Also keep the fixed-name copy in the CWD: app_convolve reads "rir.wav"
-      // from there by default, so this preserves that workflow.
       if (!wav_write("rir.wav", rir_audio))
         std::printf("Failed to write rir.wav\n");
 
