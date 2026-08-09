@@ -35,17 +35,48 @@ static Scene build_room() {
 // optimised values come from the sweeps; the other modes key off them.
 static constexpr unsigned int kReferenceParticles = 1000000;
 static constexpr unsigned int kReferenceDtMs = 1;
+// Chosen on a single-run criterion rather than on the convergence of a ten-run
+// mean, because a real-time renderer produces one run and not an average.
+//
+// The sweep alone would have selected 100k, whose ten-sample spread reads 0.77
+// of a just-noticeable difference. The pooling test measured the same
+// configuration over 100 runs and found 1.12 JND, so the ten-sample figure was
+// 1.46x low and 100k is in fact outside the threshold. The crossing lies near
+// 126k. This count puts a single run at 0.79 JND with margin for the estimator
+// uncertainty that misled the sweep.
+//
+// Part of the excess at 100k is not sampling error at all: 5 runs in 100 show a
+// second, shallower decay slope from under-damped grazing paths, worth 1.12 JND
+// including them against 0.87 excluding them. That component is a property of
+// the room's absorption asymmetry rather than of the particle count, so it is
+// counted rather than filtered.
+//
+// As a density this is ~2600 particles per m^3 of the standard room, and it
+// scales across rooms with total absorption A = sum(S_i * alpha_i),
+// equivalently V / T60, rather than with volume alone.
 static constexpr unsigned int kOptimisedParticles = 200000;
 static constexpr unsigned int kOptimisedDtMs = 20;
 
 // variance mode: how many runs per set are needed for a stable spread
-// estimate. Runs at the optimised config, since that is the configuration the
-// reported results use — a run count justified at some other config would not
-// transfer.
-static constexpr unsigned int kVarianceParticles = kOptimisedParticles;
-static constexpr unsigned int kVarianceDtMs = kOptimisedDtMs;
-static const std::vector<unsigned int> kVarianceRuns = {
-    2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 20};
+// estimate. Fixing the run count is the first experiment, so it cannot use the
+// optimised config — that config is selected by sweeps which themselves need a
+// run count. It runs at a provisional 100k instead, deliberately below any
+// count the sweeps are likely to adopt: spread falls as 1/sqrt(N), so a run
+// count sufficient here is more than sufficient at a larger count, and the
+// conclusion transfers in the safe direction. The step stays at the reference
+// 1 ms because 20 ms is what the next experiment selects.
+static constexpr unsigned int kVarianceParticles = 100000;
+static constexpr unsigned int kVarianceDtMs = kReferenceDtMs;
+// Pool of independent runs. This mode only simulates the pool and writes it
+// out; the set sizes are formed afterwards by resampling it in
+// plot_variance.py, which draws many independent sets of k distinct runs for
+// each k and takes the spread of their means. That spread is the quantity the
+// run count is actually chosen from. Nesting the sets instead — set k being the
+// first k runs — would show one trajectory of means and so could not measure
+// how much a set of k would move if it were drawn again, which is the whole
+// question. The pool is sized well above the largest set so the finite
+// population it is drawn from barely deflates that spread.
+static constexpr unsigned int kVarianceMaxRuns = 100;
 
 // sweep mode: pick which variable the sweep walks over. The other one is held
 // at its kSweepFixed* value below.
@@ -60,8 +91,19 @@ static constexpr double kSweepFixedDt = 0.02;
 // swept when kSweepAxis == TimeStep (in milliseconds), fixed at
 // kSweepFixedParticles
 static const std::vector<unsigned int> kSweepDtMs = {1, 2, 5, 10, 20, 50, 100};
-static constexpr unsigned int kSweepFixedParticles = 200000;
+// Held at the reference count, the opposite of the variance test's provisional
+// 100k and for the opposite reason: this sweep concludes that accuracy does not
+// depend on the step, and showing a difference is absent needs the precision to
+// have detected one, so it runs where the run-to-run spread is smallest.
+static constexpr unsigned int kSweepFixedParticles = 1000000;
 
+// Runs averaged at every point of every later experiment, chosen from the
+// pooling test in variance mode. At ten runs the 95% interval on the mean T30
+// is 0.0083 s, about half the 0.016 s just-noticeable difference, so a
+// difference worth reporting would be resolved with margin. Spread falls as
+// 1/sqrt(k), so doubling to twenty would only narrow it to 0.36 of a JND for
+// twice the compute, and every later experiment runs at 200k particles or more
+// where the per-run spread is already smaller than it is in the pool.
 static constexpr unsigned int kNumRuns = 10;
 
 // edc mode: run at the optimised config, the point being that it reproduces
@@ -69,6 +111,20 @@ static constexpr unsigned int kNumRuns = 10;
 // s = 0, which is the only setting comparable to a specular ISM baseline.
 static constexpr unsigned int kEdcParticles = kOptimisedParticles;
 static constexpr unsigned int kEdcDtMs = kOptimisedDtMs;
+
+// This mode averages over more runs than every other, and for a reason that has
+// nothing to do with precision. How far down a decay curve stays smooth is set
+// by the total particle ensemble behind it, runs times particles, because the
+// deep tail is carried by a handful of individual survivors and the mean steps
+// down as each is absorbed. At kNumRuns the ensemble is 1M particles and the
+// stepping begins at -38 dB, inside the 256 ms window the figure plots. A
+// hundred runs makes it 10M and moves the onset to about -48 dB, outside that
+// window. The metrics are unaffected either way, since the T30 range ends at
+// -35 dB; this buys a clean figure, not a better number. Raising the count is
+// four times cheaper than reaching the same ensemble by running at the
+// reference configuration, which would also stop this experiment demonstrating
+// that the optimised configuration reproduces the reference.
+static constexpr unsigned int kEdcRuns = 100;
 
 // Sentinel meaning "leave each surface's own scattering coefficient alone".
 // Any value in [0,1] passed to simulate() overrides every surface instead.
@@ -128,6 +184,15 @@ struct RunResult {
   std::array<double, kNumBands> rt60_bands{};
   std::vector<double> edc_norm; // EDC / EDC[0]
   bool has_receiver = false;
+
+  // Broadband decay diagnostics, written out by variance mode so acceptance
+  // limits can be chosen from the measured distribution rather than assumed.
+  // t30_raw is the unguarded estimate, so a pool records what the guard
+  // rejected as well as what it kept.
+  double t30_raw = -1.0;
+  double t20 = -1.0;
+  double curvature = 0.0;
+  double nonlinearity = 0.0;
 };
 
 static RunResult simulate(double max_time, double dt,
@@ -143,7 +208,7 @@ static RunResult simulate(double max_time, double dt,
   Scene room = build_room();
   if (scattering_override != kSceneScattering)
     for (Plane &plane : room.planes)
-      plane.material.scattering.fill(scattering_override);
+      plane.material.scattering = scattering_override;
 
   Atmosphere air;
 
@@ -169,7 +234,12 @@ static RunResult simulate(double max_time, double dt,
   std::vector<double> energy = metrics::broadband_energy(hist);
   std::vector<double> edc = metrics::energy_decay_curve(energy);
 
-  r.rt60 = metrics::rt60(metrics::edc_db(edc), bw);
+  const metrics::DecayFit fit = metrics::decay_fit(metrics::edc_db(edc), bw);
+  r.rt60 = fit.rt60;
+  r.t30_raw = fit.t30;
+  r.t20 = fit.t20;
+  r.curvature = fit.curvature;
+  r.nonlinearity = fit.nonlinearity;
   r.c50 = metrics::clarity(energy, bw, 50.0);
 
   // per-band RT60, for the band-wise Eyring-Norris comparison
@@ -188,31 +258,90 @@ static RunResult simulate(double max_time, double dt,
   return r;
 }
 
+// Simulates the pool of independent runs and writes it out. Forming the sets
+// and taking the spread of their means is left to plot_variance.py: every set
+// size resamples the same pool, so the sets cost nothing beyond the pool
+// itself, and the analysis can be re-run without re-simulating.
 static int run_variance(double max_time, double dt) {
-  for (unsigned int nRuns : kVarianceRuns) {
-    const std::string path =
-        kOutDir + "/variance_" + std::to_string(nRuns) + ".csv";
-    std::ofstream out(path);
-    if (!out) {
-      std::printf("Failed to open %s\n", path.c_str());
-      return 1;
-    }
-    out << "run_index,seed,rt60,c50,runtime_ms\n";
+  std::printf("Variance test: %u runs at %u particles, dt=%.0f ms\n",
+              kVarianceMaxRuns, kVarianceParticles, dt * 1e3);
 
-    std::printf("Variance test: %u runs at %u particles\n", nRuns,
-                kVarianceParticles);
-
-    for (unsigned int i = 0; i < nRuns; ++i) {
-      unsigned int seed = kSeedStart + i;
-      RunResult r = simulate(max_time, dt, kVarianceParticles, seed);
-      out << i << "," << seed << "," << r.rt60 << "," << r.c50 << ","
-          << r.runtime_ms << "\n";
-      out.flush(); // ensures results are continuosly saved
-      std::printf("| run %3u/%u\n", i + 1, nRuns);
-    }
-
-    std::printf("Wrote %s\n", path.c_str());
+  std::vector<RunResult> runs;
+  runs.reserve(kVarianceMaxRuns);
+  for (unsigned int i = 0; i < kVarianceMaxRuns; ++i) {
+    runs.push_back(simulate(max_time, dt, kVarianceParticles, kSeedStart + i));
+    std::printf("| run %3u/%u  rt60=%.3f  %.0f ms\n", i + 1, kVarianceMaxRuns,
+                runs.back().rt60, runs.back().runtime_ms);
   }
+
+  // The pool itself, for the resampling analysis. The filename carries the
+  // configuration it was produced at, because the pools are not
+  // interchangeable: the run count is argued from a pool at the reference step,
+  // while the gross-failure rate is a property of the operating step. A fixed
+  // filename means re-running one silently destroys the other.
+  const std::string pool_path = kOutDir + "/variance_pool_" +
+                                std::to_string(kVarianceParticles) + "_dt" +
+                                std::to_string(kVarianceDtMs) + ".csv";
+  std::ofstream pool(pool_path);
+  if (!pool) {
+    std::printf("Failed to open %s\n", pool_path.c_str());
+    return 1;
+  }
+  pool << "run_index,seed,rt60,c50,runtime_ms,t30_raw,t20,curvature,"
+          "nonlinearity\n";
+  for (unsigned int i = 0; i < kVarianceMaxRuns; ++i)
+    pool << i << "," << (kSeedStart + i) << "," << runs[i].rt60 << ","
+         << runs[i].c50 << "," << runs[i].runtime_ms << "," << runs[i].t30_raw
+         << "," << runs[i].t20 << "," << runs[i].curvature << ","
+         << runs[i].nonlinearity << "\n";
+  std::printf("Wrote %s\n", pool_path.c_str());
+  return 0;
+}
+
+// Seeds whose decay curves are written out by `decay` mode. The first group
+// are the runs with the most non-linear decay curves at 100k, the second a
+// control group with linear ones. Comparing their curves is what distinguishes
+// the two candidate explanations for the rejected runs: a Schroeder-integration
+// artefact, where a sparse late tail flattens into the floor and drags the
+// regression shallow, or genuinely long-lived energy, where the curve holds a
+// clean second slope because particles really are still arriving. The first is
+// an estimator fault worth guarding against, the second is real and filtering
+// it would bias the result.
+static const std::vector<unsigned int> kDecayNonlinear = {3, 30, 57, 66};
+static const std::vector<unsigned int> kDecayLinear = {1, 2, 4, 5};
+
+static int run_decay(double max_time) {
+  std::printf("Decay curves at %u particles, dt=%u ms\n", kOptimisedParticles,
+              kOptimisedDtMs);
+
+  std::vector<std::pair<std::string, const std::vector<unsigned int> *>>
+      groups = {{"nonlinear", &kDecayNonlinear}, {"linear", &kDecayLinear}};
+
+  for (const auto &group : groups) {
+    for (unsigned int seed : *group.second) {
+      RunResult r =
+          simulate(max_time, kOptimisedDtMs * 1e-3, kOptimisedParticles, seed);
+      std::printf("| %-8s seed %3u: T30 %.4f  T20 %.4f  C %6.2f%%  xi %6.2f\n",
+                  group.first.c_str(), seed, r.t30_raw, r.t20, r.curvature,
+                  r.nonlinearity);
+
+      const std::string path = kOutDir + "/decay_" + group.first + "_seed" +
+                               std::to_string(seed) + ".csv";
+      std::ofstream out(path);
+      if (!out) {
+        std::printf("Failed to open %s\n", path.c_str());
+        return 1;
+      }
+      out << "time_ms,edc_db\n";
+      const double lin_floor = 1e-12;
+      for (std::size_t k = 0; k < r.edc_norm.size(); ++k) {
+        double v = r.edc_norm[k];
+        out << (k * Receiver::bin_width * 1e3) << ","
+            << 10.0 * std::log10(v > lin_floor ? v : lin_floor) << "\n";
+      }
+    }
+  }
+  std::printf("Wrote decay_*.csv to %s\n", kOutDir.c_str());
   return 0;
 }
 
@@ -455,17 +584,17 @@ static int write_edc(double max_time, const std::string &label,
                      double scattering) {
   std::vector<double> edc_acc;
   std::printf("EDC '%s': %u particles, dt=%u ms, %u runs, s=%s\n",
-              label.c_str(), kEdcParticles, kEdcDtMs, kNumRuns,
+              label.c_str(), kEdcParticles, kEdcDtMs, kEdcRuns,
               scattering == kSceneScattering ? "scene" : "0");
 
-  for (unsigned int i = 0; i < kNumRuns; ++i) {
+  for (unsigned int i = 0; i < kEdcRuns; ++i) {
     RunResult r = simulate(max_time, kEdcDtMs * 1e-3, kEdcParticles,
                            kSeedStart + i, scattering);
     if (r.edc_norm.size() > edc_acc.size())
       edc_acc.resize(r.edc_norm.size(), 0.0);
     for (std::size_t k = 0; k < r.edc_norm.size(); ++k)
       edc_acc[k] += r.edc_norm[k];
-    std::printf("| run %2u/%u  rt60=%.3f\n", i + 1, kNumRuns, r.rt60);
+    std::printf("| run %3u/%u  rt60=%.3f\n", i + 1, kEdcRuns, r.rt60);
   }
 
   const std::string path = kOutDir + "/edc_" + label + ".csv";
@@ -477,7 +606,7 @@ static int write_edc(double max_time, const std::string &label,
   out << "time_ms,edc_db\n";
   const double lin_floor = 1e-12;
   for (std::size_t k = 0; k < edc_acc.size(); ++k) {
-    double avg = edc_acc[k] / kNumRuns;
+    double avg = edc_acc[k] / kEdcRuns;
     double db = 10.0 * std::log10(avg > lin_floor ? avg : lin_floor);
     out << (k * Receiver::bin_width * 1e3) << "," << db << "\n";
   }
@@ -645,10 +774,12 @@ int main(int argc, char *argv[]) {
     return run_scatter(20);
   if (mode == "convolve")
     return run_convolve();
+  if (mode == "decay")
+    return run_decay(20);
 
   std::printf(
       "Unknown mode '%s' (expected 'variance', 'sweep', 'config', 'edc', "
-      "'scatter' or 'convolve')\n",
+      "'scatter', 'convolve' or 'decay')\n",
       mode.c_str());
   return 1;
 }

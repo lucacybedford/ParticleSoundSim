@@ -5,33 +5,26 @@
 
 namespace materials {
 
-// Scattering rises with frequency: a surface is smooth to a wavelength much
-// larger than its relief and rough to one much smaller. Materials quote a
-// single 1 kHz figure, and these multipliers spread it across the octave
-// bands, following the shape of published measurements for architectural
-// surfaces (roughly a doubling from 1 kHz to 8 kHz, a fifth of it at 63 Hz).
-inline constexpr std::array<double, kNumBands> kScatterShape{
-    0.20, 0.30, 0.45, 0.70, 1.00, 1.35, 1.70, 2.00};
-
 // A scattering coefficient is the probability that a reflection is diffuse, so
 // it is clamped into (0, 1). The floor keeps even glass from being a perfect
 // mirror — nothing architectural is.
-inline BandEnergies scatter_curve(double mid_scattering) {
-  BandEnergies s{};
-  for (int b = 0; b < kNumBands; ++b) {
-    double v = mid_scattering * kScatterShape[b];
-    s[b] = v < 0.01 ? 0.01 : (v > 0.95 ? 0.95 : v);
-  }
-  return s;
+//
+// Scattering does rise with frequency in reality, since a surface is smooth to
+// a wavelength much larger than its relief and rough to one much smaller, but
+// that is deliberately not modelled. A particle carries all eight bands along
+// one trajectory, so a per-band coefficient cannot reach the reflection
+// decision intact, and published measurements are too sparse to justify a
+// specific curve. The figure below is the quoted 1 kHz value applied across
+// the spectrum, and the omission is reported as a limitation rather than
+// approximated away.
+inline double clamp_scattering(double s) {
+  return s < 0.01 ? 0.01 : (s > 0.95 ? 0.95 : s);
 }
 
-// NB the last argument is the 1 kHz scattering coefficient, not the whole
-// curve: passing a bare double here used to aggregate-initialise scattering[0]
-// and leave bands 1-7 at zero.
 inline Material make(std::string name, BandEnergies absorption,
-                     double mid_scattering) {
+                     double scattering) {
   return Material{std::move(name), absorption, impedance::calibrate(absorption),
-                  scatter_curve(mid_scattering)};
+                  clamp_scattering(scattering)};
 }
 
 // Every surface in a scene is a flat, featureless plane, so the scattering

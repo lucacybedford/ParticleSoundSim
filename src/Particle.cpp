@@ -127,14 +127,7 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       std::uniform_real_distribution<double> dist(0, 1);
       double u = dist(rng);
       dvec3 v_new;
-      double s_num = 0.0, s_den = 0.0;
-      for (int i = 0; i < kNumBands; ++i) {
-        s_num += energies[i] * closestPlane->material.scattering[i];
-        s_den += energies[i];
-      }
-      const double scattering =
-          s_den > 0 ? s_num / s_den
-                    : closestPlane->material.scattering[kNumBands / 2];
+      const double scattering = closestPlane->material.scattering;
       if (u > scattering) {
         v_new = v - 2 * glm::dot(v, closestPlane->n) * closestPlane->n;
       } else {

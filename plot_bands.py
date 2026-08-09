@@ -18,6 +18,7 @@ been run is skipped rather than failing.
                   selected ROOM in plot_rir.py)
 """
 
+import csv
 import glob
 import os
 import re
@@ -30,14 +31,40 @@ from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
 # Display names. s = scene is the physical coefficient of the room's material;
 # the other s values are diagnostics, not configurations anything is reported at.
+#
+# The reference and optimised labels carry a particle count and a step, and
+# those are read from config_summary.csv rather than written here, because the
+# chosen configuration has changed several times and a stale legend is not
+# visible in the figure it is wrong in.
 LABELS = {
-    "reference": "Reference (1M, 1 ms)",
-    "optimised": "Optimised (200k, 20 ms)",
+    "reference": "Reference",
+    "optimised": "Optimised",
     "s000": "s = 0 (specular)",
     "scene": "s = 0.1 (scene value)",
     "s050": "s = 0.5",
     "s100": "s = 1.0",
 }
+
+
+def config_labels(directory: str):
+    """Return LABELS with the reference and optimised rows annotated.
+
+    Reads the particle count and step from config_summary.csv when it is
+    present, so the legend cannot disagree with the data beside it.
+    """
+    labels = dict(LABELS)
+    path = os.path.join(directory, "config_summary.csv")
+    if not os.path.exists(path):
+        return labels
+    with open(path, newline="") as handle:
+        for row in csv.DictReader(handle):
+            tag = row.get("label")
+            if tag not in ("reference", "optimised"):
+                continue
+            n = int(row["num_particles"])
+            count = f"{n // 1000}k" if n < 1_000_000 else f"{n // 1_000_000}M"
+            labels[tag] = f"{labels[tag]} ({count}, {int(row['dt_ms'])} ms)"
+    return labels
 
 # (output filename, title, tags in plotting order)
 FIGURES = [
@@ -66,8 +93,9 @@ def discover(directory: str):
     return found
 
 
-def plot_figure(found, tags, out_path, title, predicted, bands):
+def plot_figure(found, tags, out_path, title, predicted, bands, labels=None):
     """Plot the given tags against the prediction. Returns True if written."""
+    labels = LABELS if labels is None else labels
     present = [t for t in tags if t in found]
     if not present:
         print(f"none of {tags} found; skipping {os.path.basename(out_path)}")
@@ -89,7 +117,7 @@ def plot_figure(found, tags, out_path, title, predicted, bands):
     cmap = plt.get_cmap("tab10")
     print(f"\n=== {title}")
     for i, tag in enumerate(present):
-        label = LABELS.get(tag, tag)
+        label = labels.get(tag, tag)
         data = np.genfromtxt(found[tag], delimiter=",", names=True)
         mean = np.atleast_1d(data["rt60_mean"])
         std = np.atleast_1d(data["rt60_std"])
@@ -143,9 +171,16 @@ def main() -> None:
     predicted = np.array(eyring_norris_rt60())
     bands = np.array(BANDS_HZ, dtype=float)
 
+    labels = config_labels(directory)
     for filename, title, tags in FIGURES:
         plot_figure(
-            found, tags, os.path.join(out_dir, filename), title, predicted, bands
+            found,
+            tags,
+            os.path.join(out_dir, filename),
+            title,
+            predicted,
+            bands,
+            labels,
         )
 
     plt.show()
