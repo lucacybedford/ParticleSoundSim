@@ -153,7 +153,7 @@ def main() -> None:
         else:
             x_max = time_ms[-1]
 
-    fig, (ax_total, ax_bands) = plt.subplots(2, 1, figsize=(6, 10), sharex=True)
+    fig, ax_total = plt.subplots(figsize=(6, 6))
 
     # Broadband RIR energy decay.
     ax_total.bar(
@@ -163,25 +163,18 @@ def main() -> None:
         align="edge",
         color="tab:blue",
     )
+    ax_total.set_xlabel("Time (ms)")
     ax_total.set_ylabel("Energy")
     ax_total.set_title("Room impulse response (broadband)")
 
-    for b, f in enumerate(BANDS_HZ):
-        ax_bands.plot(time_ms, data[f"band{b}"], label=f"{f} Hz", linewidth=0.8)
-    ax_bands.set_xlabel("Time (ms)")
-    ax_bands.set_ylabel("Energy")
-    ax_bands.set_title("Per-octave-band energy")
-    ax_bands.legend(ncol=4, fontsize=8)
-
     # The ISM paper figures all stop at 256 ms, so cap the energy-arrival
-    # plots there for comparison.
+    # plot there for comparison.
     x_limit = min(x_max, 256.0)
-    ax_total.set_xlim(0, x_limit)  # shared axis crops both subplots
-    for ax in (ax_total, ax_bands):
-        ax.set_box_aspect(1)  # force each panel to a square box
-        # 10 equal divisions along x -> 9 interior gridlines.
-        ax.xaxis.set_major_locator(MultipleLocator(x_limit / 10.0))
-        ax.grid(True, axis="x", color="0.8", linewidth=0.5)
+    ax_total.set_xlim(0, x_limit)
+    ax_total.set_box_aspect(1)  # force the panel to a square box
+    # 10 equal divisions along x -> 9 interior gridlines.
+    ax_total.xaxis.set_major_locator(MultipleLocator(x_limit / 10.0))
+    ax_total.grid(True, axis="x", color="0.8", linewidth=0.5)
     fig.tight_layout()
     fig.savefig("rir_plot.png", dpi=150)
 
