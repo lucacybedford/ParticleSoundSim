@@ -36,13 +36,17 @@ from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 # those are read from config_summary.csv rather than written here, because the
 # chosen configuration has changed several times and a stale legend is not
 # visible in the figure it is wrong in.
+# Simulated series are T30, the ISO 3382-1 estimator fitted over -5 to -35 dB
+# and extrapolated to a full 60 dB decay. The Eyring-Norris line is a true T60.
+# Both sit on the same seconds-to-decay-60-dB scale, which is why the axis is
+# generic and the estimator is carried in the legend instead.
 LABELS = {
-    "reference": "Reference",
-    "optimised": "Optimised",
-    "s000": "s = 0 (specular)",
-    "scene": "s = 0.1 (scene value)",
-    "s050": "s = 0.5",
-    "s100": "s = 1.0",
+    "reference": r"Reference $T_{30}$",
+    "optimised": r"Optimised $T_{30}$",
+    "s000": r"$s = 0$ (specular), $T_{30}$",
+    "scene": r"$s = 0.1$ (scene value), $T_{30}$",
+    "s050": r"$s = 0.5$, $T_{30}$",
+    "s100": r"$s = 1.0$, $T_{30}$",
 }
 
 
@@ -70,12 +74,12 @@ def config_labels(directory: str):
 FIGURES = [
     (
         "config_bands_rt60.png",
-        "Per-band RT60 against Eyring-Norris",
+        "Per-band reverberation time against Eyring-Norris",
         ["reference", "optimised"],
     ),
     (
         "scatter_bands_rt60.png",
-        "Per-band RT60 against Eyring-Norris, per scattering coefficient",
+        "Per-band reverberation time against Eyring-Norris, per scattering coefficient",
         ["s000", "scene", "s050", "s100"],
     ),
 ]
@@ -110,7 +114,7 @@ def plot_figure(found, tags, out_path, title, predicted, bands, labels=None):
         color="black",
         linestyle="--",
         linewidth=1.4,
-        label="Eyring-Norris",
+        label=r"Eyring-Norris $T_{60}$",
         zorder=3,
     )
 
@@ -149,7 +153,7 @@ def plot_figure(found, tags, out_path, title, predicted, bands, labels=None):
     ax.set_xticklabels([f"{int(f)}" for f in bands])
     ax.minorticks_off()
     ax.set_xlabel("Octave band centre frequency (Hz)")
-    ax.set_ylabel("RT60 (s)")
+    ax.set_ylabel("Reverberation time (s)")
     ax.set_title(title)
     ax.grid(True, color="0.9", linewidth=0.5)
     ax.legend(fontsize=9)

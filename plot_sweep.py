@@ -54,7 +54,7 @@ def eyring_reference():
     per_band = eyring_norris_rt60()
     indices = [BANDS_HZ.index(f) for f in EYRING_BANDS_HZ]
     value = float(np.mean([per_band[i] for i in indices]))
-    return value, "Eyring-Norris (mid)"
+    return value, r"Eyring-Norris $T_{60}$ (mid)"
 
 
 AXES = {
@@ -254,7 +254,9 @@ def main() -> None:
     boxplot_metric(
         directory,
         "rt60",
-        "RT60 (s)",
+        # Boxes are T30 (ISO 3382-1, fitted -5 to -35 dB, extrapolated to 60 dB);
+        # the reference line is a true T60, named as such in the legend.
+        r"$T_{30}$ (s)",
         os.path.join(out_dir, prefix + "rt60.png"),
         axis,
         reference=eyring_reference(),
@@ -262,7 +264,7 @@ def main() -> None:
     boxplot_metric(
         directory,
         "c50",
-        "C50 (dB)",
+        r"$C_{50}$ (dB)",
         os.path.join(out_dir, prefix + "c50.png"),
         axis,
     )

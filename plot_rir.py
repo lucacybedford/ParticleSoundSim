@@ -11,7 +11,7 @@ BANDS_HZ = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
 # room (make_room) whose absorption varies with frequency. Changing this
 # switches the room constants below, and therefore every Eyring-Norris
 # reference derived from them.
-ROOM = "real"
+ROOM = "standard"
 
 _STANDARD_LX, _STANDARD_LY, _STANDARD_LZ = 3.432, 5.148, 4.29
 _REAL_LX, _REAL_LY, _REAL_LZ = 4.0, 7.0, 3.0

@@ -129,7 +129,8 @@ def main() -> None:
     rng = np.random.default_rng(RNG_SEED)
     value_arrays = pooled_means(pool, set_sizes, NUM_SETS, rng)
 
-    ylabel = "Mean RT60 (s)" if metric == "rt60" else "Mean C50 (dB)"
+    # T30 per ISO 3382-1: fitted over -5 to -35 dB, extrapolated to a full 60 dB.
+    ylabel = r"Mean $T_{30}$ (s)" if metric == "rt60" else r"Mean $C_{50}$ (dB)"
 
     fig, ax = plt.subplots(figsize=(9, 5))
     ax.boxplot(
