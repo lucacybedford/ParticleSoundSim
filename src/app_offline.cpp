@@ -1,3 +1,4 @@
+#include "AirAbsorption.hpp"
 #include "ConvolveInput.hpp"
 #include "Materials.hpp"
 #include "RIRBuilder.hpp"
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]) {
   */
 
   enum class Room { Box, Cathedral, LivingRoom, CoupledRooms, Standard };
-  const Room which = Room::CoupledRooms;
+  const Room which = Room::Box;
   const bool standard = which == Room::Standard;
 
   cfg.num_particles = 200000;
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
   float room_width = 4;
   float room_length = 7;
   float room_height = 3;
-  Material room_material = materials::mPlasterboard;
+  Material room_material = materials::mSolidWood;
   std::string geometry;
   Scene room;
   switch (which) {

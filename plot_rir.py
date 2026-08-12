@@ -189,6 +189,7 @@ def main() -> None:
     total = data["total"]
 
     predicted = eyring_norris_rt60()
+    print(f"Predicted: {predicted}")
     print(f"{'Band':>9}  {'measured':>10}  {'slope':>10}  {'Eyring':>10}  {'error':>8}")
     for b, f in enumerate(BANDS_HZ):
         rt60, _ = rt60_t30(time_ms, data[f"band{b}"])
