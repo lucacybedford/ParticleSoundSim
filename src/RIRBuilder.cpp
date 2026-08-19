@@ -36,12 +36,15 @@ RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
     for (std::size_t n = 0; n < L; ++n)
       noise[n] = gauss(rng);
 
-    // bandpass the noise to this octave band
+    // bandpass the noise to this octave band. iir1 wants a centre frequency,
+    // and an octave band is centred geometrically, not arithmetically: the
+    // arithmetic midpoint of [fc/sqrt2, fc*sqrt2] sits ~6% above fc. Taking
+    // sqrt(lo*hi) also stays correct when hi is clamped by the Nyquist limit.
     const double fc = kBandCentres[b];
     const double lo = fc / std::sqrt(2.0);
     const double hi = std::min(fc * std::sqrt(2.0), 0.95 * nyquist);
     Iir::Butterworth::BandPass<4> bp;
-    bp.setup(sample_rate, 0.5 * (lo + hi), hi - lo);
+    bp.setup(sample_rate, std::sqrt(lo * hi), hi - lo);
     for (std::size_t n = 0; n < L; ++n)
       noise[n] = bp.filter(noise[n]);
 
@@ -61,6 +64,8 @@ RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
     }
 
     // normalise each band's total energy
+    if (synth_energy <= 0.0)
+      continue; // the band-passed noise carried no energy here
     double g = std::sqrt(target_energy / synth_energy);
     for (std::size_t n = 0; n < L; ++n)
       rir[n] += band[n] * g;

@@ -4,7 +4,16 @@ project(ParticleSoundSim)
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Without this a plain `cmake -S . -B build` leaves CMAKE_BUILD_TYPE empty on
+# single-config generators, which compiles with no optimisation at all (-O0).
+# The simulation is ~16x slower that way, so any reported runtime would be
+# measuring the unoptimised build. Override with -DCMAKE_BUILD_TYPE=Debug.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
 FetchContent_Declare(glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git

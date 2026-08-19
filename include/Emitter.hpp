@@ -8,6 +8,9 @@ using glm::dvec3;
 
 struct Emitter {
   dvec3 x;
+  // float, not double, only to keep results bit-reproducible against the
+  // published result set: widening these defaults shifts every launch
+  // direction by ~1e-7 rad, which is enough to decorrelate a run.
   float h_ang_start = 0;
   float h_ang_end = M_PI * 2;
   float v_ang_start = -M_PI / 2;

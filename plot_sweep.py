@@ -33,7 +33,7 @@ import numpy as np
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
 # "particles" or "dt" — must match kSweepAxis in src/app_experiments.cpp
-SWEEP_AXIS = "particles"
+SWEEP_AXIS = "dt"
 
 # The per-point EDC overlay is off by default: with accuracy invariant to both
 # N and dt the curves lie on top of each other, and the ISM comparison in

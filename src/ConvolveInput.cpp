@@ -1,8 +1,6 @@
 #include "ConvolveInput.hpp"
 #include "Convolver.hpp"
 #include "Wav.hpp"
-#include <algorithm>
-#include <cmath>
 #include <cstdio>
 
 bool convolve_input_file(const std::string &input_path,
@@ -31,9 +29,6 @@ bool convolve_input_file(const std::string &input_path,
   }
 
   std::vector<float> wet = convolve(dry.samples, rir);
-  float peak = 0.0f;
-  for (float v : wet)
-    peak = std::max(peak, std::fabs(v));
 
   if (!wav_write(output_path, Audio{dry.sample_rate, wet})) {
     std::printf("Failed to write %s (directory must exist)\n",

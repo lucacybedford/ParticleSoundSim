@@ -24,7 +24,7 @@ The simulation accounts for:
 Headers live in `include/`, sources in `src/`. Core types each have a `.hpp` + `.cpp` pair:
 
 - **`Plane`** — a finite wall segment (normal, anchor, length, height); pre-computes tangents and corners. Carries a `Material`.
-- **`Material` / `Materials`** — per-band absorption, impedance (calibrated from absorption) and scattering. `Materials.hpp` defines the stock materials.
+- **`Material` / `Materials`** — per-band absorption and impedance (calibrated from absorption), plus a single broadband scattering coefficient. `Materials.hpp` defines the stock materials.
 - **`Particle`** — position, velocity and an 8-band energy vector. `move()` runs a sub-step collision loop: nearest-plane ray intersection, specular or diffuse reflection, per-band absorption, and air attenuation. Particles below an energy threshold are absorbed and erased.
 - **`Emitter`** — emits a burst of particles from a point over a configurable angular range.
 - **`Receiver`** — a point with a capture radius that accumulates arriving particle energy into a per-band, 1 ms-binned time-energy histogram.
@@ -43,6 +43,7 @@ Headers live in `include/`, sources in `src/`. Core types each have a `.hpp` + `
 | `ParticleSoundSim` | `app_visual.cpp` | Real-time 3D OpenGL visualisation of particle tracing (orbiting camera, scroll to zoom) |
 | `ParticleSoundSimOffline` | `app_offline.cpp` | Headless run: simulate → histogram CSV → RIR → convolve with a dry input |
 | `ParticleSoundSimConvolve` | `app_convolve.cpp` | Standalone, timed convolution of a pre-computed `rir.wav` with a dry input (no simulation) |
+| `ParticleSoundSimExperiments` | `app_experiments.cpp` | Measurement harness: RT60/C50 variance, particle-count and time-step sweeps, decay curves, scattering comparison, convolution timing |
 
 ---
 
@@ -52,6 +53,8 @@ Headers live in `include/`, sources in `src/`. Core types each have a `.hpp` + `
 cmake -S . -B build
 cmake --build build
 ```
+
+The build defaults to `Release` (`-O3 -DNDEBUG`); pass `-DCMAKE_BUILD_TYPE=Debug` to override. This matters for any reported timing — an unoptimised build runs the simulation roughly 16x slower for bit-identical results.
 
 `compile_commands.json` is emitted to `build/` automatically — point your LSP there.
 
@@ -75,10 +78,18 @@ Dependencies are fetched via `FetchContent`: **GLM**, **GLFW**, **pocketfft**, *
 
 The dry input defaults to `dry.wav`; pass a path to override. Scene, particle count and room material are set at the top of `app_offline.cpp`.
 
-**Standalone convolution** (times just the read + convolve step, reusing a previously written `rir.wav`):
+**Standalone convolution** (times the read + convolve + write, reusing a previously written `rir.wav`):
 
 ```bash
-./build/ParticleSoundSimConvolve [dry.wav] [output.wav]
+./build/ParticleSoundSimConvolve [rir.wav] [dry.wav] [output.wav]
+```
+
+The three arguments default to `rir.wav`, `dry.wav` and `wet.wav`. Note the RIR comes first.
+
+**Experiments** (writes CSVs under `output/experiments/`; run from `build/`, since output paths are relative to it):
+
+```bash
+./build/ParticleSoundSimExperiments <variance|sweep|config|edc|scatter|convolve|decay>
 ```
 
 ---
@@ -89,7 +100,7 @@ The core method is **stochastic particle tracing** (analogous to Monte Carlo ray
 
 1. A burst of particles is emitted from the source in random directions, each carrying a frequency-resolved energy vector.
 2. At each surface intersection the particle energy is updated: a fraction is absorbed (frequency- and angle-dependent), the remainder is reflected either specularly or diffusely (scattering coefficient), and air absorption is applied over the path.
-3. When a particle passes through the receiver volume it deposits its remaining energy into the time-energy histogram at the correct arrival time.
+3. When a particle enters the receiver sphere it deposits its remaining energy into the time-energy histogram at the exact crossing time (resolved within the step, so binning does not depend on the time step) and is then removed from the simulation — the receiver acts as a perfect absorber.
 4. The process repeats until particles fall below an energy threshold or the run reaches its maximum time.
 
 This trades wave-equation accuracy at low frequencies for speed and scalability, making it well suited to mid/high-frequency acoustics and large or complex geometries where full wave solvers are prohibitively expensive.

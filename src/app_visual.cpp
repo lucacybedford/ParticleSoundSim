@@ -34,10 +34,9 @@ int main() {
   // Simulation sim(make_cathedral(room_material), cfg, air);
   Simulation sim(make_coupled_rooms(), cfg, air);
 
-  if (cfg.dt > Receiver::bin_width) {
-    printf("dt must be smaller than receiver bin width.");
-    return 1;
-  }
+  // dt is not tied to Receiver::bin_width: Particle::move resolves the exact
+  // crossing time within a step, so arrivals land in the right 1 ms bin even
+  // when dt is much larger.
 
   GLFWwindow *window;
   if (!glfwInit())

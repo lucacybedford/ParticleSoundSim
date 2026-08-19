@@ -9,17 +9,23 @@ cmake -S . -B build
 cmake --build build
 ```
 
-This produces three executables in `build/`:
+This produces four executables in `build/`:
 
 - `ParticleSoundSim` (`src/app_visual.cpp`) — real-time 3D OpenGL visualisation of particle tracing.
 - `ParticleSoundSimOffline` (`src/app_offline.cpp`) — headless run: simulate → histogram CSV → RIR → convolve with a dry input.
 - `ParticleSoundSimConvolve` (`src/app_convolve.cpp`) — standalone, timed convolution of a pre-computed `rir.wav` with a dry input (no simulation).
+- `ParticleSoundSimExperiments` (`src/app_experiments.cpp`) — the measurement harness that produces everything under `output/experiments/`. Takes a mode argument.
 
 ```bash
 ./build/ParticleSoundSim
 ./build/ParticleSoundSimOffline [dry.wav]
-./build/ParticleSoundSimConvolve [dry.wav] [output.wav]
+./build/ParticleSoundSimConvolve [rir.wav] [dry.wav] [output.wav]
+./build/ParticleSoundSimExperiments <variance|sweep|config|edc|scatter|convolve|decay>
 ```
+
+The experiment and offline apps write to paths relative to `build/`, so run them from there.
+
+`CMAKE_BUILD_TYPE` defaults to `Release` (`-O3 -DNDEBUG`). This matters for any reported timing: an unoptimised build runs the simulation roughly 16x slower for identical results.
 
 `compile_commands.json` is emitted to `build/` automatically (`CMAKE_EXPORT_COMPILE_COMMANDS ON`) — point your LSP there.
 
@@ -46,11 +52,11 @@ Everything frequency-dependent is sized from `kNumBands` (8) in `Bands.hpp`, cov
 **Core types (each has a `.hpp` + `.cpp` pair unless noted):**
 
 - `Plane` — a finite wall segment (normal `n`, anchor `p`, length `l`, height `h`); pre-computes tangents and the four corners. Carries a `Material`.
-- `Material` (header-only) / `Materials` (header-only) — per-band `absorption`, `impedance`, and `scattering`. `Materials.hpp` defines the stock materials (concrete, carpet, glass, plaster, wood, absorber); `impedance` is calibrated from `absorption` via `Impedance`.
-- `Particle` — position, velocity, and a `BandEnergies` vector (initialised to 1.0/band). `move()` runs a sub-step collision loop (`MAX_ITERATIONS = 5`): nearest-plane ray intersection, specular **or** Lambert-cosine diffuse reflection (per-surface scattering coefficient), angle- and frequency-dependent absorption, and air attenuation. Particles below `energy_threshold` are flagged `alive = false` by `absorb()` and erased via erase-remove in the sim loop.
+- `Material` (header-only) / `Materials` (header-only) — per-band `absorption` and `impedance`, plus a single broadband `scattering` coefficient. `Materials.hpp` defines the stock materials (stone, concrete, carpet, glass, plaster, plasterboard, wood, absorber); `impedance` is calibrated from `absorption` via `Impedance`.
+- `Particle` — position, velocity, and a `BandEnergies` vector (initialised to 1.0/band). `move()` runs a sub-step collision loop (`MAX_ITERATIONS = 15`): nearest-plane ray intersection, specular **or** Lambert-cosine diffuse reflection (per-surface scattering coefficient), angle- and frequency-dependent absorption, and air attenuation. Particles below `energy_threshold` are flagged `alive = false` by `absorb()` and erased via erase-remove in the sim loop. A particle that reaches a receiver deposits its energy and is then absorbed, so the receiver is a perfect absorber.
 - `Emitter` — emits a burst of particles from a point over a configurable spherical angular range.
 - `Receiver` — a point with a capture radius. Accumulates arriving particle energy into a per-band, 1 ms-binned time-energy histogram (`std::vector<BandEnergies>`). No arrival direction is stored yet (directional receiver is a planned feature).
-- `Scene` — holds `planes`, `emitters`, `receivers`; factory functions (`make_room`, `make_standard`, `make_L_room`, and the fixed test rooms) build scenes.
+- `Scene` — holds `planes`, `emitters`, `receivers`; factory functions build scenes: `make_room` (shoebox), `make_standard` (the ISM validation room), `make_L_room`, `make_cathedral`, `make_common_room`, `make_coupled_rooms`, `make_diamond_scene`.
 - `Atmosphere` / `AirAbsorption` — sound speed and ISO 9613-1 atmospheric absorption. `AirAbsorption` precomputes per-band coefficients (with sub-frequencies); `attenuate_total` is the offline path, `decay_step` the real-time path.
 - `Simulation` — owns the `Scene`, `SimConfig`, `Atmosphere`, `AirAbsorption`, particle list, and RNG. `run_offline()` drives the headless run; `step()` advances one frame.
 - `RIRBuilder` — synthesises a broadband RIR from a histogram: per octave band it band-passes white noise (Butterworth, iir1) and scales it to match that band's total arrival energy.
@@ -62,7 +68,7 @@ Everything frequency-dependent is sized from `kNumBands` (8) in `Bands.hpp`, cov
 
 **Offline loop (`app_offline.cpp`):** configure scene / particle count / material at the top of `main()`, then `sim.run_offline()`. Afterwards each receiver's histogram is written to CSV, the first receiver's histogram is turned into an RIR (calibrated by `1/√N` so the level is independent of particle count), written to `rir.wav`, and convolved with the dry input via `convolve_input_file`.
 
-**Config (`SimConfig`):** `num_particles`, `dt`, `max_time`, `playback_speed`, and a `Fidelity` flag (`Offline` uses accurate summed absorption; `Realtime` uses per-step approximations). Note `dt` must be ≤ `Receiver::bin_width` (1 ms).
+**Config (`SimConfig`):** `num_particles` (per emitter), `dt`, `max_time`, `playback_speed`, and a `Fidelity` flag (`Offline` uses accurate summed absorption; `Realtime` uses per-step approximations). `dt` is independent of `Receiver::bin_width`: `Particle::move` resolves the exact crossing time within a step, so arrivals are binned at 1 ms regardless of step size.
 
 ## Status
 

@@ -11,24 +11,24 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <random>
 #include <string>
 #include <vector>
 
 enum class RoomChoice { Standard, Real };
-static constexpr RoomChoice kRoom = RoomChoice::Real;
+static constexpr RoomChoice kRoom = RoomChoice::Standard;
 
 // geometry and material of the Real room
-static constexpr float kRealWidth = 4.0f;
-static constexpr float kRealLength = 7.0f;
-static constexpr float kRealHeight = 3.0f;
+static constexpr double kRealWidth = 4.0;
+static constexpr double kRealLength = 7.0;
+static constexpr double kRealHeight = 3.0;
 static const Material &kRealMaterial = materials::mSolidWood;
 
 static Scene build_room() {
   if (kRoom == RoomChoice::Standard)
     return make_standard();
-  Material material = kRealMaterial;
-  return make_room(kRealWidth, kRealLength, kRealHeight, material);
+  return make_room(kRealWidth, kRealLength, kRealHeight, kRealMaterial);
 }
 
 // config mode
@@ -88,6 +88,15 @@ static const std::string kOutDir = kRoom == RoomChoice::Standard
                                        : "../output/experiments/real-room";
 
 static const std::string kConvOutDir = "../output/experiments";
+
+// Streams default to 6 significant figures, which is too coarse for RT60
+// differences in the third decimal. Every CSV in this app is opened through
+// here so they all carry the same precision.
+static std::ofstream open_csv(const std::string &path) {
+  std::ofstream out(path);
+  out << std::setprecision(10);
+  return out;
+}
 
 // one run for a given seed
 struct RunResult {
@@ -175,7 +184,7 @@ static int run_variance(double max_time, double dt) {
   const std::string pool_path = kOutDir + "/variance_pool_" +
                                 std::to_string(kVarianceParticles) + "_dt" +
                                 std::to_string(kVarianceDtMs) + ".csv";
-  std::ofstream pool(pool_path);
+  std::ofstream pool = open_csv(pool_path);
   if (!pool) {
     std::printf("Failed to open %s\n", pool_path.c_str());
     return 1;
@@ -189,7 +198,8 @@ static int run_variance(double max_time, double dt) {
   return 0;
 }
 
-static const std::vector<unsigned int> kDecaySeeds = {1, 2, 3, 4, 5, 30, 57, 66};
+static const std::vector<unsigned int> kDecaySeeds = {1, 2,  3,  4,
+                                                      5, 30, 57, 66};
 
 static int run_decay(double max_time) {
   std::printf("Decay curves at %u particles, dt=%u ms\n", kOptimisedParticles,
@@ -202,7 +212,7 @@ static int run_decay(double max_time) {
 
     const std::string path =
         kOutDir + "/decay_seed" + std::to_string(seed) + ".csv";
-    std::ofstream out(path);
+    std::ofstream out = open_csv(path);
     if (!out) {
       std::printf("Failed to open %s\n", path.c_str());
       return 1;
@@ -245,7 +255,7 @@ static int run_sweep(double max_time) {
 
   const std::string summary_path =
       kOutDir + (by_count ? "/sweep_summary.csv" : "/sweep_dt_summary.csv");
-  std::ofstream summary(summary_path);
+  std::ofstream summary = open_csv(summary_path);
   if (!summary) {
     std::printf("Failed to open %s\n", summary_path.c_str());
     return 1;
@@ -270,7 +280,7 @@ static int run_sweep(double max_time) {
     // per-run scores for this sweep point
     // so RT60/C50 spread per point can be shown as box plots
     const std::string runs_path = kOutDir + "/sweep_runs_" + pt.tag + ".csv";
-    std::ofstream runs(runs_path);
+    std::ofstream runs = open_csv(runs_path);
     if (!runs) {
       std::printf("Failed to open %s\n", runs_path.c_str());
       return 1;
@@ -313,7 +323,7 @@ static int run_sweep(double max_time) {
 
     // averaged EDC curve for this sweep point
     const std::string edc_path = kOutDir + "/edc_" + pt.tag + ".csv";
-    std::ofstream edc_out(edc_path);
+    std::ofstream edc_out = open_csv(edc_path);
     if (edc_out) {
       edc_out << "time_ms,edc_db\n";
       const double lin_floor = 1e-12;
@@ -391,7 +401,7 @@ static void run_config(double max_time, const std::string &label,
 
   // per-band RT60 for this config
   const std::string bands_path = kOutDir + "/config_bands_" + label + ".csv";
-  std::ofstream bands(bands_path);
+  std::ofstream bands = open_csv(bands_path);
   if (bands) {
     bands << "band_index,rt60_mean,rt60_std,valid_runs\n";
     for (int b = 0; b < kNumBands; ++b) {
@@ -412,7 +422,7 @@ static void run_config(double max_time, const std::string &label,
 // settings
 static int run_scatter(double max_time) {
   const std::string summary_path = kOutDir + "/scatter_summary.csv";
-  std::ofstream summary(summary_path);
+  std::ofstream summary = open_csv(summary_path);
   if (!summary) {
     std::printf("Failed to open %s\n", summary_path.c_str());
     return 1;
@@ -430,7 +440,7 @@ static int run_scatter(double max_time) {
 
 static int run_configs(double max_time) {
   const std::string summary_path = kOutDir + "/config_summary.csv";
-  std::ofstream summary(summary_path);
+  std::ofstream summary = open_csv(summary_path);
   if (!summary) {
     std::printf("Failed to open %s\n", summary_path.c_str());
     return 1;
@@ -466,7 +476,7 @@ static int write_edc(double max_time, const std::string &label,
   }
 
   const std::string path = kOutDir + "/edc_" + label + ".csv";
-  std::ofstream out(path);
+  std::ofstream out = open_csv(path);
   if (!out) {
     std::printf("Failed to open %s\n", path.c_str());
     return 1;
@@ -522,7 +532,7 @@ static double conv_median(std::vector<double> v) {
 static int
 run_convolve_points(const std::string &path,
                     const std::vector<std::pair<double, double>> &points) {
-  std::ofstream out(path);
+  std::ofstream out = open_csv(path);
   if (!out) {
     std::printf("Failed to open %s\n", path.c_str());
     return 1;

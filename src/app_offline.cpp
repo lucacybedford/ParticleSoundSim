@@ -1,3 +1,4 @@
+#include "Bands.hpp"
 #include "ConvolveInput.hpp"
 #include "Materials.hpp"
 #include "RIRBuilder.hpp"
@@ -8,18 +9,22 @@
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <iomanip>
 #include <string>
 #include <vector>
 
 static bool write_histogram_csv(const std::string &path,
-                                const std::vector<std::array<double, 8>> &hist,
+                                const std::vector<BandEnergies> &hist,
                                 double bin_width) {
   std::ofstream out(path);
   if (!out)
     return false;
 
+  // enough digits to round-trip the analysis in the plotting scripts
+  out << std::setprecision(10);
+
   out << "time_ms";
-  for (int b = 0; b < 8; ++b)
+  for (int b = 0; b < kNumBands; ++b)
     out << ",band" << b;
   out << ",total\n";
 
@@ -52,10 +57,10 @@ int main(int argc, char *argv[]) {
   cfg.num_particles = 200000;
   cfg.dt = 0.020;
 
-  float room_width = 4;
-  float room_length = 7;
-  float room_height = 3;
-  Material room_material = materials::mSolidWood;
+  double room_width = 4;
+  double room_length = 7;
+  double room_height = 3;
+  const Material &room_material = materials::mSolidWood;
   std::string geometry;
   Scene room;
   switch (which) {
@@ -157,9 +162,9 @@ int main(int argc, char *argv[]) {
     RIRBuilder builder;
     builder.bin_width = Receiver::bin_width;
 
-    int num_receivers = sim.scene.receivers.size();
+    const std::size_t num_receivers = sim.scene.receivers.size();
 
-    for (int h = 0; h < num_receivers; h++) {
+    for (std::size_t h = 0; h < num_receivers; h++) {
       std::string rir_path =
           "../output/" + stem + "_rir_" + std::to_string(h) + ".wav";
       std::string output_path =
@@ -167,17 +172,15 @@ int main(int argc, char *argv[]) {
 
       std::vector<float> rir = builder.build(sim.scene.receivers[h].histogram);
       if (rir.empty()) {
-        std::printf("RIR is empty (no energy reached the receiver).\n");
-        return 0;
+        std::printf("Receiver %zu: RIR is empty (no energy reached it).\n", h);
+        continue;
       }
 
       // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
       const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
 
-      constexpr float kDemoGain = 4.0f;
-
       for (float &v : rir)
-        v *= cal * kDemoGain;
+        v *= cal;
 
       Audio rir_audio{builder.sample_rate, rir};
       if (!wav_write(rir_path, rir_audio)) {

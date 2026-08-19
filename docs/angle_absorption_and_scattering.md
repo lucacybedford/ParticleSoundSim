@@ -1,6 +1,13 @@
 # Implementation Note — Angle-Dependent Absorption & Diffuse Scattering
 
-Status: planned (not yet implemented)
+Status: **implemented**. This is the original design note, kept as a record of the plan; the
+sections below describe the code as it was *before* the change, not as it stands now.
+
+One deliberate divergence from the plan: `Material::scattering` shipped as a single broadband
+`double`, not the `BandEnergies` proposed in 0.2. A particle can only go one direction per bounce,
+so the directional decision needs one number anyway (as §B.1 itself notes) — the per-band array was
+carried for a while and then reverted.
+
 Scope: `src/Particle.cpp`, `include/Material.hpp`, `include/Plane.hpp`, `src/Plane.cpp`,
 `include/Materials.hpp`, `include/Simulation.hpp`, `src/Simulation.cpp`
 
