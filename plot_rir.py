@@ -1,6 +1,7 @@
 import sys
 
 import matplotlib.pyplot as plt
+import plot_style
 import numpy as np
 from matplotlib.ticker import MultipleLocator
 
@@ -249,7 +250,7 @@ def main() -> None:
         ax.xaxis.set_major_locator(MultipleLocator(x_limit / 10.0))
         ax.grid(True, axis="x", color="0.8", linewidth=0.5)
     fig.tight_layout()
-    fig.savefig("./output/figures/rir_plot.png", dpi=150)
+    fig.savefig("./output/figures/rir_plot.png", dpi=300)
 
     fig_edc, ax_edc = plt.subplots(figsize=(10, 5))
     decay_db = schroeder_db(total)
@@ -266,7 +267,7 @@ def main() -> None:
     ax_edc.set_title("Schroeder energy decay curve (broadband)")
     ax_edc.legend(fontsize=8)
     fig_edc.tight_layout()
-    fig_edc.savefig("./output/figures/edc_plot.png", dpi=150)
+    fig_edc.savefig("./output/figures/edc_plot.png", dpi=300)
 
     if paper_mode:
         if paper_band is None:
@@ -305,7 +306,7 @@ def main() -> None:
         ax_paper.set_title("Decay curve (image-source paper comparison)")
         ax_paper.legend(fontsize=8, loc="upper right")
         fig_paper.tight_layout()
-        fig_paper.savefig("./output/figures/edc_paper_comparison.png", dpi=150)
+        fig_paper.savefig("./output/figures/edc_paper_comparison.png", dpi=300)
 
     plt.show()
 

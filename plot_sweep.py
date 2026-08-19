@@ -27,6 +27,7 @@ import re
 import sys
 
 import matplotlib.pyplot as plt
+import plot_style
 import numpy as np
 
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
@@ -132,7 +133,7 @@ def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
         print(f"no {axis['runs_glob']} with valid {metric} in {directory}; skipping")
         return
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.FULL)
     # Evenly spaced positions (the axis spans orders of magnitude, so real
     # values would bunch the boxes); real values go on the tick labels instead.
     positions = np.arange(1, len(axis_values) + 1)
@@ -164,7 +165,8 @@ def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
 
     ax.set_xlabel(axis["xlabel"])
     ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    # title suppressed: the LaTeX caption carries it (see plot_style)
+    # ax.set_title(title)
     ax.set_xticks(positions)
     ax.set_xticklabels([axis["tick"](v) for v in axis_values], rotation=45, ha="right")
     ax.grid(True, axis="y", color="0.85", linewidth=0.5)
@@ -180,7 +182,7 @@ def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
         print(row)
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"Wrote {out_path}")
 
 
@@ -198,7 +200,7 @@ def plot_runtime(directory, out_path, axis):
     means = np.array([np.mean(v) for v in value_arrays]) / 1e3  # seconds
     stds = np.array([np.std(v) for v in value_arrays]) / 1e3
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.FULL)
     positions = np.arange(1, len(axis_values) + 1)
     ax.errorbar(
         positions,
@@ -213,7 +215,8 @@ def plot_runtime(directory, out_path, axis):
     ax.set_yscale("log")
     ax.set_xlabel(axis["xlabel"])
     ax.set_ylabel("Simulation runtime (s)")
-    ax.set_title(f"Runtime {axis['title_suffix']}")
+    # title suppressed: the LaTeX caption carries it (see plot_style)
+    # ax.set_title(f"Runtime {axis['title_suffix']}")
     ax.set_xticks(positions)
     ax.set_xticklabels([axis["tick"](v) for v in axis_values], rotation=45, ha="right")
     ax.grid(True, which="both", color="0.9", linewidth=0.5)
@@ -224,7 +227,7 @@ def plot_runtime(directory, out_path, axis):
         print(f"{v:>10}  {m:>10.3f}  {s:>10.3f}")
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"Wrote {out_path}")
 
 
@@ -274,7 +277,7 @@ def main() -> None:
     # All averaged EDC curves superimposed.
     curves = load_edc_curves(directory, axis) if PLOT_EDC else []
     if curves:
-        fig, ax = plt.subplots(figsize=(9, 5))
+        fig, ax = plt.subplots(figsize=plot_style.FULL)
         cmap = plt.get_cmap("viridis")
         for i, (value, time_ms, edc_db) in enumerate(curves):
             color = cmap(i / max(1, len(curves) - 1))
@@ -287,13 +290,14 @@ def main() -> None:
             )
         ax.set_xlabel("Time (ms)")
         ax.set_ylabel("Energy decay (dB)")
-        ax.set_title(f"Averaged EDC curves {axis['title_suffix']}")
+        # title suppressed: the LaTeX caption carries it (see plot_style)
+        # ax.set_title(f"Averaged EDC curves {axis['title_suffix']}")
         ax.set_ylim(top=1)
         ax.grid(True, color="0.9", linewidth=0.5)
         ax.legend(title=axis["legend_title"], fontsize=8, ncol=2)
         out_path = os.path.join(out_dir, prefix + "edc.png")
         fig.tight_layout()
-        fig.savefig(out_path, dpi=150)
+        fig.savefig(out_path, dpi=300)
         print(f"Wrote {out_path}")
     elif not PLOT_EDC:
         print("PLOT_EDC is off; skipping per-point EDC overlay")

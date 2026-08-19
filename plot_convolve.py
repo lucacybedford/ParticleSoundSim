@@ -22,6 +22,7 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+import plot_style
 import numpy as np
 
 EXPERIMENT_DIR = "./output/experiments"
@@ -59,7 +60,7 @@ def plot_time(cols, out_path):
     finding: overlap-add consumes the input a block at a time, so every input
     shorter than one block costs the same.
     """
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.FULL)
     ax.plot(
         cols["input_seconds"],
         cols["median_ms"],
@@ -72,13 +73,14 @@ def plot_time(cols, out_path):
     ax.set_yscale("log")
     ax.set_xlabel("Dry input length (s)")
     ax.set_ylabel("Convolution time (ms)")
-    ax.set_title(
-        f"Convolution cost vs input length ({cols['rir_seconds'][0]:.2f} s RIR)"
-    )
+    # title suppressed: the LaTeX caption carries it
+#    ax.set_title(
+#        f"Convolution cost vs input length ({cols['rir_seconds'][0]:.2f} s RIR)"
+#    )
     ax.grid(True, which="both", color="0.9", linewidth=0.5)
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"Wrote {out_path}")
 
 
@@ -89,7 +91,7 @@ def plot_rtf(cols, out_path):
     far above real time the convolution stage runs, and the RTF = 1 line makes
     the margin readable without arithmetic.
     """
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.FULL)
     ax.plot(
         cols["input_seconds"],
         cols["rtf"],
@@ -109,12 +111,13 @@ def plot_rtf(cols, out_path):
     ax.set_yscale("log")
     ax.set_xlabel("Dry input length (s)")
     ax.set_ylabel("Real-time factor (x)")
-    ax.set_title("Convolution speed relative to real time")
+    # title suppressed: the LaTeX caption carries it (see plot_style)
+    # ax.set_title("Convolution speed relative to real time")
     ax.grid(True, which="both", color="0.9", linewidth=0.5)
     ax.legend(fontsize=8, loc="best")
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"Wrote {out_path}")
 
 
@@ -128,7 +131,7 @@ def plot_rir(cols, out_path):
     x = cols["rir_seconds"]
     y = cols["ms_per_second_audio"]
 
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    fig, ax = plt.subplots(figsize=plot_style.FULL)
     ax.plot(x, y, marker="o", markersize=5, color="tab:purple", linewidth=1.2)
 
     # Only the measured RIR lengths get ticks — the default log minor labels
@@ -139,15 +142,16 @@ def plot_rir(cols, out_path):
     ax.set_xticks([], minor=True)
     ax.set_xmargin(0.12)
     ax.set_xlabel("RIR length (s)")
-    ax.set_ylabel("Convolution time per second of audio (ms)")
-    ax.set_title(
-        f"Convolution cost vs RIR length ({cols['input_seconds'][0]:.0f} s input)"
-    )
+    ax.set_ylabel("ms per second of audio")
+    # title suppressed: the LaTeX caption carries it
+#    ax.set_title(
+#        f"Convolution cost vs RIR length ({cols['input_seconds'][0]:.0f} s input)"
+#    )
     ax.set_ylim(0, y.max() * 1.25)
     ax.grid(True, color="0.9", linewidth=0.5)
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"Wrote {out_path}")
 
 

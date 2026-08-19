@@ -25,6 +25,7 @@ import re
 import sys
 
 import matplotlib.pyplot as plt
+import plot_style
 import numpy as np
 
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
@@ -41,12 +42,12 @@ from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 # Both sit on the same seconds-to-decay-60-dB scale, which is why the axis is
 # generic and the estimator is carried in the legend instead.
 LABELS = {
-    "reference": r"Reference $T_{30}$",
-    "optimised": r"Optimised $T_{30}$",
-    "s000": r"$s = 0$ (specular), $T_{30}$",
-    "scene": r"$s = 0.1$ (scene value), $T_{30}$",
-    "s050": r"$s = 0.5$, $T_{30}$",
-    "s100": r"$s = 1.0$, $T_{30}$",
+    "reference": r"Reference",
+    "optimised": r"Optimised",
+    "s000": r"$s = 0$ (specular)",
+    "scene": r"$s = 0.1$ (scene)",
+    "s050": r"$s = 0.5$",
+    "s100": r"$s = 1.0$",
 }
 
 
@@ -105,7 +106,7 @@ def plot_figure(found, tags, out_path, title, predicted, bands, labels=None):
         print(f"none of {tags} found; skipping {os.path.basename(out_path)}")
         return False
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.PANEL_LEGEND)
     # Black dashed so the prediction reads as a reference rather than as
     # another series, and cannot collide with a tab10 colour.
     ax.plot(
@@ -150,16 +151,35 @@ def plot_figure(found, tags, out_path, title, predicted, bands, labels=None):
 
     ax.set_xscale("log")
     ax.set_xticks(bands)
-    ax.set_xticklabels([f"{int(f)}" for f in bands])
+    ax.set_xticklabels(
+        [f"{int(f) // 1000}k" if f >= 1000 else f"{int(f)}" for f in bands]
+    )
     ax.minorticks_off()
-    ax.set_xlabel("Octave band centre frequency (Hz)")
-    ax.set_ylabel("Reverberation time (s)")
-    ax.set_title(title)
+    ax.set_xlabel("Octave band centre (Hz)")
+    ax.set_ylabel(r"$T_{30}$ (s)")
+    # title suppressed: the LaTeX caption carries it (see plot_style)
+    # ax.set_title(title)
     ax.grid(True, color="0.9", linewidth=0.5)
-    ax.legend(fontsize=9)
+    # Legend inside the axes in a floating box. Below the axes it took about a
+    # third of the figure height, which is height the plot itself can use. The
+    # y-limit is opened up first so the box lands in empty space rather than on
+    # the curves.
+    low, high = ax.get_ylim()
+    ax.set_ylim(low, high + 0.58 * (high - low))
+    ax.legend(
+        loc="upper left",
+        ncol=2,
+        frameon=True,
+        framealpha=0.9,
+        edgecolor="0.8",
+        borderpad=0.4,
+        handlelength=1.6,
+        columnspacing=1.0,
+        handletextpad=0.5,
+    )
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
     print(f"Wrote {out_path}")
     return True
 

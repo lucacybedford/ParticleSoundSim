@@ -16,6 +16,7 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+import plot_style
 import numpy as np
 
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
@@ -39,7 +40,7 @@ def main() -> None:
     directory, out_dir = resolve_dirs(sys.argv[1] if len(sys.argv) > 1 else None)
     os.makedirs(out_dir, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.WIDE)
     plotted = 0
     for filename, label, color in CURVES:
         path = os.path.join(directory, filename)
@@ -79,13 +80,14 @@ def main() -> None:
     ax.set_ylim(-60, 1)
     ax.set_xlabel("Time (ms)")
     ax.set_ylabel("Energy decay (dB)")
-    ax.set_title("Averaged energy decay curve: specular vs scattering")
+    # title suppressed: the LaTeX caption carries it (see plot_style)
+    # ax.set_title("Averaged energy decay curve: specular vs scattering")
     ax.grid(True, color="0.9", linewidth=0.5)
     ax.legend(fontsize=9)
 
     out_path = os.path.join(out_dir, "edc_scattering_comparison.png")
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"Wrote {out_path}")
 
     plt.show()

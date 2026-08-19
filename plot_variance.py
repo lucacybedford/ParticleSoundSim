@@ -27,6 +27,7 @@ import os
 import sys
 
 import matplotlib.pyplot as plt
+import plot_style
 import numpy as np
 
 from plot_rir import resolve_dirs
@@ -132,7 +133,7 @@ def main() -> None:
     # T30 per ISO 3382-1: fitted over -5 to -35 dB, extrapolated to a full 60 dB.
     ylabel = r"Mean $T_{30}$ (s)" if metric == "rt60" else r"Mean $C_{50}$ (dB)"
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=plot_style.FULL)
     ax.boxplot(
         value_arrays,
         positions=set_sizes,
@@ -142,10 +143,10 @@ def main() -> None:
             "marker": "o",
             "markerfacecolor": "tab:orange",
             "markeredgecolor": "tab:orange",
-            "markersize": 4,
+            "markersize": 3,
         },
         medianprops={"color": "tab:blue"},
-        flierprops={"marker": ".", "markersize": 4, "markerfacecolor": "0.5"},
+        flierprops={"marker": ".", "markersize": 3, "markerfacecolor": "0.5"},
     )
 
     # The pool mean is what every set size is estimating.
@@ -160,7 +161,8 @@ def main() -> None:
 
     ax.set_xlabel("Runs pooled per set")
     ax.set_ylabel(ylabel)
-    ax.set_title(f"{ylabel} vs runs pooled per set ({NUM_SETS} sets per size)")
+    # title suppressed: the LaTeX caption carries it (see plot_style)
+    # ax.set_title(f"{ylabel} vs runs pooled per set ({NUM_SETS} sets per size)")
     ax.set_xticks(set_sizes)
     ax.set_xticklabels(set_sizes)
     ax.grid(True, axis="y", color="0.85", linewidth=0.5)
@@ -182,7 +184,7 @@ def main() -> None:
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"pooling_boxplot_{metric}_{tag}.png")
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path, dpi=300)
     print(f"\nWrote {out_path}")
     plt.show()
 
