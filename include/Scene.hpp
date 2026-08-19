@@ -4,7 +4,7 @@
 #include "Receiver.hpp"
 #include <vector>
 
-// The Scene holds all room setup info
+// the Scene holds all room setup info
 struct Scene {
   std::vector<Plane> planes;
   std::vector<Emitter> emitters;

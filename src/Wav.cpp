@@ -13,8 +13,7 @@ bool wav_read(const std::string &path, Audio &out) {
 
   const drwav_uint64 frames = wav.totalPCMFrameCount;
   const unsigned channels = wav.channels;
-  // dr_wav converts any supported format (8/16/24/32-bit PCM, float, ADPCM)
-  // to float in [-1, 1]
+  // dr_wav converts any supported format  to float in [-1, 1]
   std::vector<float> interleaved(frames * channels);
   drwav_uint64 got =
       drwav_read_pcm_frames_f32(&wav, frames, interleaved.data());

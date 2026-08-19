@@ -15,7 +15,7 @@ std::size_t next_pow2(std::size_t n) {
   return p;
 }
 
-// Real-to-complex forward FFT of `in` (length nfft) into `out` (nfft/2+1 bins).
+// forward FFT
 void rfft(const std::vector<double> &in,
           std::vector<std::complex<double>> &out) {
   const std::size_t nfft = in.size();
@@ -27,7 +27,7 @@ void rfft(const std::vector<double> &in,
                  in.data(), out.data(), 1.0);
 }
 
-// Complex-to-real inverse FFT, normalised by 1/nfft so it is a true inverse.
+// inverse FFT
 void irfft(const std::vector<std::complex<double>> &in,
            std::vector<double> &out) {
   const std::size_t nfft = out.size();
@@ -53,7 +53,7 @@ std::vector<float> convolve(const std::vector<float> &x,
   const std::size_t B = nfft - M + 1; // input samples consumed per block
   const std::size_t ncplx = nfft / 2 + 1;
 
-  // Transform the IR once.
+  // transform the IR once.
   std::vector<double> buf(nfft, 0.0);
   std::copy(h.begin(), h.end(), buf.begin());
   std::vector<std::complex<double>> H(ncplx);
@@ -72,7 +72,7 @@ std::vector<float> convolve(const std::vector<float> &x,
     rfft(buf, X);
     for (std::size_t i = 0; i < ncplx; ++i)
       X[i] *= H[i];
-    irfft(X, buf); // buf now holds this block's contribution, length nfft
+    irfft(X, buf);
 
     for (std::size_t i = 0; i < nfft; ++i) {
       const std::size_t idx = start + i;

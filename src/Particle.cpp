@@ -32,9 +32,9 @@ double Particle::check_energy() {
   return energy_sum;
 }
 
+// applies the material's absorption coefficients for each frequency band
 void Particle::hit(Plane &plane, double cos_theta) {
   v = glm::normalize(v) * vel;
-  // applies the material's absorption coefficients for each frequency band
   for (size_t i = 0; i < energies.size(); i++) {
     double xi = plane.material.impedance[i];
     // pressure reflection coefficient

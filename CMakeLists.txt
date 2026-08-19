@@ -27,7 +27,6 @@ add_library(pocketfft INTERFACE)
 target_include_directories(pocketfft INTERFACE ${pocketfft_SOURCE_DIR})
 target_compile_definitions(pocketfft INTERFACE POCKETFFT_NO_MULTITHREADING)
 
-# libsamplerate 0.2.2 declares a cmake_minimum_required older than CMake 4 accepts
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(LIBSAMPLERATE_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -38,17 +37,17 @@ FetchContent_Declare(libsamplerate
 )
 FetchContent_MakeAvailable(libsamplerate)
 
-# dr_wav: single-header WAV reader/writer (no tags upstream; pinned by commit)
+# WAV reader/writer
 FetchContent_Declare(dr_libs
   GIT_REPOSITORY https://github.com/mackron/dr_libs.git
   GIT_TAG 47a4f08e777faddf59a8955c4ea84f69f41020d5
-  GIT_SUBMODULES "" # tests-only submodules; not needed for the headers
+  GIT_SUBMODULES ""
 )
 FetchContent_MakeAvailable(dr_libs)
 add_library(dr_libs INTERFACE)
 target_include_directories(dr_libs INTERFACE ${dr_libs_SOURCE_DIR})
 
-# iir1: IIR filter design (Butterworth band-pass for the octave filterbank)
+# Butterworth band-pass
 set(IIR1_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(IIR1_BUILD_DEMO OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(iir1
@@ -77,18 +76,18 @@ target_include_directories(core PUBLIC include)
 target_link_libraries(core PUBLIC glm::glm)
 target_link_libraries(core PRIVATE pocketfft samplerate dr_libs iir_static)
 
-# Front-end: the visual simulation
+# visual simulation
 add_executable(ParticleSoundSim src/app_visual.cpp)
 target_link_libraries(ParticleSoundSim PRIVATE core glfw OpenGL::GL)
 
-# Back-end: the headless offline simulation
+# offline simulation
 add_executable(ParticleSoundSimOffline src/app_offline.cpp)
 target_link_libraries(ParticleSoundSimOffline PRIVATE core)
 
-# Standalone convolver: convolve a pre-computed RIR with a dry input, timed
+# convolve a pre-computed RIR with a dry input
 add_executable(ParticleSoundSimConvolve src/app_convolve.cpp)
 target_link_libraries(ParticleSoundSimConvolve PRIVATE core)
 
-# Experiment driver: seed sweeps + RT60/C50/EDC metrics for convergence studies
+# experiments
 add_executable(ParticleSoundSimExperiments src/app_experiments.cpp)
 target_link_libraries(ParticleSoundSimExperiments PRIVATE core)

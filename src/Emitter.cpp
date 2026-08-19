@@ -17,6 +17,5 @@ std::vector<Particle> Emitter::emit(const int num_particles, double speed,
   for (int i = 0; i < static_cast<int>(num_particles); i++) {
     particles.emplace_back(gen, h_angDist, v_angDist, x, speed);
   }
-  // Should employ NRVO for building directly at call location
   return particles;
 }

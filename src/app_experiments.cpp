@@ -18,7 +18,7 @@
 enum class RoomChoice { Standard, Real };
 static constexpr RoomChoice kRoom = RoomChoice::Real;
 
-// geometry and material of the Real room (Standard is fixed in make_standard)
+// geometry and material of the Real room
 static constexpr float kRealWidth = 4.0f;
 static constexpr float kRealLength = 7.0f;
 static constexpr float kRealHeight = 3.0f;
@@ -31,139 +31,53 @@ static Scene build_room() {
   return make_room(kRealWidth, kRealLength, kRealHeight, material);
 }
 
-// config mode: the two rows of the reference-vs-optimised comparison. The
-// optimised values come from the sweeps; the other modes key off them.
+// config mode
 static constexpr unsigned int kReferenceParticles = 1000000;
 static constexpr unsigned int kReferenceDtMs = 1;
-// Chosen on a single-run criterion rather than on the convergence of a ten-run
-// mean, because a real-time renderer produces one run and not an average.
-//
-// The sweep alone would have selected 100k, whose ten-sample spread reads 0.77
-// of a just-noticeable difference. The pooling test measured the same
-// configuration over 100 runs and found 1.12 JND, so the ten-sample figure was
-// 1.46x low and 100k is in fact outside the threshold. The crossing lies near
-// 126k. This count puts a single run at 0.79 JND with margin for the estimator
-// uncertainty that misled the sweep.
-//
-// Part of the excess at 100k is not sampling error at all: 5 runs in 100 show a
-// second, shallower decay slope from under-damped grazing paths, worth 1.12 JND
-// including them against 0.87 excluding them. That component is a property of
-// the room's absorption asymmetry rather than of the particle count, so it is
-// counted rather than filtered.
-//
-// As a density this is ~2600 particles per m^3 of the standard room, and it
-// scales across rooms with total absorption A = sum(S_i * alpha_i),
-// equivalently V / T60, rather than with volume alone.
 static constexpr unsigned int kOptimisedParticles = 200000;
 static constexpr unsigned int kOptimisedDtMs = 20;
 
-// variance mode: how many runs per set are needed for a stable spread
-// estimate. Fixing the run count is the first experiment, so it cannot use the
-// optimised config — that config is selected by sweeps which themselves need a
-// run count. It runs at a provisional 100k instead, deliberately below any
-// count the sweeps are likely to adopt: spread falls as 1/sqrt(N), so a run
-// count sufficient here is more than sufficient at a larger count, and the
-// conclusion transfers in the safe direction. The step stays at the reference
-// 1 ms because 20 ms is what the next experiment selects.
+// variance mode
 static constexpr unsigned int kVarianceParticles = 100000;
 static constexpr unsigned int kVarianceDtMs = kReferenceDtMs;
-// Pool of independent runs. This mode only simulates the pool and writes it
-// out; the set sizes are formed afterwards by resampling it in
-// plot_variance.py, which draws many independent sets of k distinct runs for
-// each k and takes the spread of their means. That spread is the quantity the
-// run count is actually chosen from. Nesting the sets instead — set k being the
-// first k runs — would show one trajectory of means and so could not measure
-// how much a set of k would move if it were drawn again, which is the whole
-// question. The pool is sized well above the largest set so the finite
-// population it is drawn from barely deflates that spread.
 static constexpr unsigned int kVarianceMaxRuns = 100;
 
-// sweep mode: pick which variable the sweep walks over. The other one is held
-// at its kSweepFixed* value below.
+// sweep mode
 enum class SweepAxis { ParticleCount, TimeStep };
 static constexpr SweepAxis kSweepAxis = SweepAxis::ParticleCount;
 
-// swept when kSweepAxis == ParticleCount, fixed at kSweepFixedDt
 static const std::vector<unsigned int> kSweepParticleCounts = {
     1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000};
 static constexpr double kSweepFixedDt = 0.02;
 
-// swept when kSweepAxis == TimeStep (in milliseconds), fixed at
-// kSweepFixedParticles
 static const std::vector<unsigned int> kSweepDtMs = {1, 2, 5, 10, 20, 50, 100};
-// Held at the reference count, the opposite of the variance test's provisional
-// 100k and for the opposite reason: this sweep concludes that accuracy does not
-// depend on the step, and showing a difference is absent needs the precision to
-// have detected one, so it runs where the run-to-run spread is smallest.
 static constexpr unsigned int kSweepFixedParticles = 1000000;
 
-// Runs averaged at every point of every later experiment, chosen from the
-// pooling test in variance mode. At ten runs the 95% interval on the mean T30
-// is 0.0083 s, about half the 0.016 s just-noticeable difference, so a
-// difference worth reporting would be resolved with margin. Spread falls as
-// 1/sqrt(k), so doubling to twenty would only narrow it to 0.36 of a JND for
-// twice the compute, and every later experiment runs at 200k particles or more
-// where the per-run spread is already smaller than it is in the pool.
 static constexpr unsigned int kNumRuns = 10;
 
-// edc mode: run at the optimised config, the point being that it reproduces
-// the reference. Run once with the scene's own scattering and once forced to
-// s = 0, which is the only setting comparable to a specular ISM baseline.
+// edc mode
 static constexpr unsigned int kEdcParticles = kOptimisedParticles;
 static constexpr unsigned int kEdcDtMs = kOptimisedDtMs;
 
-// This mode averages over more runs than every other, and for a reason that has
-// nothing to do with precision. How far down a decay curve stays smooth is set
-// by the total particle ensemble behind it, runs times particles, because the
-// deep tail is carried by a handful of individual survivors and the mean steps
-// down as each is absorbed. At kNumRuns the ensemble is 1M particles and the
-// stepping begins at -38 dB, inside the 256 ms window the figure plots. A
-// hundred runs makes it 10M and moves the onset to about -48 dB, outside that
-// window. The metrics are unaffected either way, since the T30 range ends at
-// -35 dB; this buys a clean figure, not a better number. Raising the count is
-// four times cheaper than reaching the same ensemble by running at the
-// reference configuration, which would also stop this experiment demonstrating
-// that the optimised configuration reproduces the reference.
 static constexpr unsigned int kEdcRuns = 100;
 
-// Sentinel meaning "leave each surface's own scattering coefficient alone".
-// Any value in [0,1] passed to simulate() overrides every surface instead.
 static constexpr double kSceneScattering = -1.0;
 
-// scatter mode: per-band RT60 at the optimised config across scattering
-// settings. The residual in the per-band Eyring comparison grows with
-// absorption; if it is caused by the field being insufficiently diffuse (so
-// that the incidence-angle distribution departs from random incidence, and
-// Eyring's own diffuse-field assumption weakens), forcing s upward should
-// shrink it. If it is unchanged, the cause lies elsewhere.
+// scatter mode
 static const std::vector<std::pair<std::string, double>> kScatterSettings = {
     {"s000", 0.0}, {"scene", kSceneScattering}, {"s050", 0.5}, {"s100", 1.0}};
 
-// convolve mode: cost of the convolution stage against dry-input length, at a
-// standardised RIR length. This is a pure DSP benchmark with no simulation in
-// it, so it is room-independent and always writes to the top-level experiment
-// directory whatever kRoom is set to.
-static constexpr int kConvSampleRate = 44100; // RIRBuilder's rate
+// convolve mode
+static constexpr int kConvSampleRate = 44100;
 static constexpr unsigned int kConvSeed = 1;
 static constexpr unsigned int kConvWarmups = 1;
 static constexpr unsigned int kConvRepeats = 10;
 
-// Standardised RIR length for the input sweep. 0.5 s covers the measured decay
-// of both rooms (0.33 s and 0.49 s) with margin, and is a stated constant
-// rather than whatever the last simulation happened to produce.
 static constexpr double kConvRirSeconds = 0.5;
 
-// Input lengths. The short end matters: overlap-add consumes the input in
-// blocks of nfft - M + 1 samples (~0.99 s at a 0.5 s RIR), so everything below
-// one block costs the same and the curve is a staircase, not a line. Sampling
-// only the long end would hide that.
 static const std::vector<double> kConvInputSeconds = {
     0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 60.0};
 
-// Secondary sweep: RIR length at a fixed input, to show that the standardised
-// 0.5 s is not a special operating point. nfft doubles with the RIR, but so
-// does the block advance, so cost per second of audio moves far less than the
-// RIR length does.
 static constexpr double kConvRirSweepInputSeconds = 10.0;
 static const std::vector<double> kConvRirSweepSeconds = {0.25, 0.5, 1.0, 2.0};
 
@@ -173,26 +87,19 @@ static const std::string kOutDir = kRoom == RoomChoice::Standard
                                        ? "../output/experiments"
                                        : "../output/experiments/real-room";
 
-// convolve mode only — see kConvRirSeconds for why this ignores kRoom
 static const std::string kConvOutDir = "../output/experiments";
 
 // one run for a given seed
 struct RunResult {
   double rt60 = -1.0;
   double c50 = 0.0;
-  double runtime_ms = 0.0; // particle tracing only, no metric analysis
+  double runtime_ms = 0.0;
   std::array<double, kNumBands> rt60_bands{};
   std::vector<double> edc_norm; // EDC / EDC[0]
   bool has_receiver = false;
 
-  // Broadband decay diagnostics, written out by variance mode so acceptance
-  // limits can be chosen from the measured distribution rather than assumed.
-  // t30_raw is the unguarded estimate, so a pool records what the guard
-  // rejected as well as what it kept.
   double t30_raw = -1.0;
   double t20 = -1.0;
-  double curvature = 0.0;
-  double nonlinearity = 0.0;
 };
 
 static RunResult simulate(double max_time, double dt,
@@ -212,9 +119,6 @@ static RunResult simulate(double max_time, double dt,
 
   Atmosphere air;
 
-  // Times the simulation stage only: emission plus the tracing loop. Scene
-  // construction and the metric analysis below are excluded so the number is
-  // comparable across sweep points.
   const auto t_start = std::chrono::steady_clock::now();
   Simulation sim(room, cfg, air);
   sim.run_offline();
@@ -238,8 +142,6 @@ static RunResult simulate(double max_time, double dt,
   r.rt60 = fit.rt60;
   r.t30_raw = fit.t30;
   r.t20 = fit.t20;
-  r.curvature = fit.curvature;
-  r.nonlinearity = fit.nonlinearity;
   r.c50 = metrics::clarity(energy, bw, 50.0);
 
   // per-band RT60, for the band-wise Eyring-Norris comparison
@@ -249,7 +151,6 @@ static RunResult simulate(double max_time, double dt,
     r.rt60_bands[b] = metrics::rt60(metrics::edc_db(band_edc), bw);
   }
 
-  // normalised EDF to average curves across runs
   r.edc_norm.assign(edc.size(), 0.0);
   if (!edc.empty() && edc[0] > 0.0)
     for (std::size_t i = 0; i < edc.size(); ++i)
@@ -258,10 +159,7 @@ static RunResult simulate(double max_time, double dt,
   return r;
 }
 
-// Simulates the pool of independent runs and writes it out. Forming the sets
-// and taking the spread of their means is left to plot_variance.py: every set
-// size resamples the same pool, so the sets cost nothing beyond the pool
-// itself, and the analysis can be re-run without re-simulating.
+// simulates the pool of independent runs and writes
 static int run_variance(double max_time, double dt) {
   std::printf("Variance test: %u runs at %u particles, dt=%.0f ms\n",
               kVarianceMaxRuns, kVarianceParticles, dt * 1e3);
@@ -274,11 +172,6 @@ static int run_variance(double max_time, double dt) {
                 runs.back().rt60, runs.back().runtime_ms);
   }
 
-  // The pool itself, for the resampling analysis. The filename carries the
-  // configuration it was produced at, because the pools are not
-  // interchangeable: the run count is argued from a pool at the reference step,
-  // while the gross-failure rate is a property of the operating step. A fixed
-  // filename means re-running one silently destroys the other.
   const std::string pool_path = kOutDir + "/variance_pool_" +
                                 std::to_string(kVarianceParticles) + "_dt" +
                                 std::to_string(kVarianceDtMs) + ".csv";
@@ -287,71 +180,51 @@ static int run_variance(double max_time, double dt) {
     std::printf("Failed to open %s\n", pool_path.c_str());
     return 1;
   }
-  pool << "run_index,seed,rt60,c50,runtime_ms,t30_raw,t20,curvature,"
-          "nonlinearity\n";
+  pool << "run_index,seed,rt60,c50,runtime_ms,t30_raw,t20\n";
   for (unsigned int i = 0; i < kVarianceMaxRuns; ++i)
     pool << i << "," << (kSeedStart + i) << "," << runs[i].rt60 << ","
          << runs[i].c50 << "," << runs[i].runtime_ms << "," << runs[i].t30_raw
-         << "," << runs[i].t20 << "," << runs[i].curvature << ","
-         << runs[i].nonlinearity << "\n";
+         << "," << runs[i].t20 << "\n";
   std::printf("Wrote %s\n", pool_path.c_str());
   return 0;
 }
 
-// Seeds whose decay curves are written out by `decay` mode. The first group
-// are the runs with the most non-linear decay curves at 100k, the second a
-// control group with linear ones. Comparing their curves is what distinguishes
-// the two candidate explanations for the rejected runs: a Schroeder-integration
-// artefact, where a sparse late tail flattens into the floor and drags the
-// regression shallow, or genuinely long-lived energy, where the curve holds a
-// clean second slope because particles really are still arriving. The first is
-// an estimator fault worth guarding against, the second is real and filtering
-// it would bias the result.
-static const std::vector<unsigned int> kDecayNonlinear = {3, 30, 57, 66};
-static const std::vector<unsigned int> kDecayLinear = {1, 2, 4, 5};
+static const std::vector<unsigned int> kDecaySeeds = {1, 2, 3, 4, 5, 30, 57, 66};
 
 static int run_decay(double max_time) {
   std::printf("Decay curves at %u particles, dt=%u ms\n", kOptimisedParticles,
               kOptimisedDtMs);
 
-  std::vector<std::pair<std::string, const std::vector<unsigned int> *>>
-      groups = {{"nonlinear", &kDecayNonlinear}, {"linear", &kDecayLinear}};
+  for (unsigned int seed : kDecaySeeds) {
+    RunResult r =
+        simulate(max_time, kOptimisedDtMs * 1e-3, kOptimisedParticles, seed);
+    std::printf("| seed %3u: T30 %.4f  T20 %.4f\n", seed, r.t30_raw, r.t20);
 
-  for (const auto &group : groups) {
-    for (unsigned int seed : *group.second) {
-      RunResult r =
-          simulate(max_time, kOptimisedDtMs * 1e-3, kOptimisedParticles, seed);
-      std::printf("| %-8s seed %3u: T30 %.4f  T20 %.4f  C %6.2f%%  xi %6.2f\n",
-                  group.first.c_str(), seed, r.t30_raw, r.t20, r.curvature,
-                  r.nonlinearity);
-
-      const std::string path = kOutDir + "/decay_" + group.first + "_seed" +
-                               std::to_string(seed) + ".csv";
-      std::ofstream out(path);
-      if (!out) {
-        std::printf("Failed to open %s\n", path.c_str());
-        return 1;
-      }
-      out << "time_ms,edc_db\n";
-      const double lin_floor = 1e-12;
-      for (std::size_t k = 0; k < r.edc_norm.size(); ++k) {
-        double v = r.edc_norm[k];
-        out << (k * Receiver::bin_width * 1e3) << ","
-            << 10.0 * std::log10(v > lin_floor ? v : lin_floor) << "\n";
-      }
+    const std::string path =
+        kOutDir + "/decay_seed" + std::to_string(seed) + ".csv";
+    std::ofstream out(path);
+    if (!out) {
+      std::printf("Failed to open %s\n", path.c_str());
+      return 1;
+    }
+    out << "time_ms,edc_db\n";
+    const double lin_floor = 1e-12;
+    for (std::size_t k = 0; k < r.edc_norm.size(); ++k) {
+      double v = r.edc_norm[k];
+      out << (k * Receiver::bin_width * 1e3) << ","
+          << 10.0 * std::log10(v > lin_floor ? v : lin_floor) << "\n";
     }
   }
   std::printf("Wrote decay_*.csv to %s\n", kOutDir.c_str());
   return 0;
 }
 
-// One point of the sweep: the varying quantity resolved into concrete sim
-// settings, plus the tag that names its output files.
+// one point of the sweep
 struct SweepPoint {
   unsigned int axis_value; // particle count, or dt in ms
   unsigned int num_particles;
   double dt;
-  std::string tag; // filename suffix: "200000" or "dt10"
+  std::string tag; // filename suffix
 };
 
 static std::vector<SweepPoint> build_sweep_points() {
@@ -394,7 +267,7 @@ static int run_sweep(double max_time) {
     double runtime_sum = 0.0;
     std::vector<double> edc_acc; // sum of normalised linear EDC curves
 
-    // per-run scores for this sweep point (same schema as the variance files),
+    // per-run scores for this sweep point
     // so RT60/C50 spread per point can be shown as box plots
     const std::string runs_path = kOutDir + "/sweep_runs_" + pt.tag + ".csv";
     std::ofstream runs(runs_path);
@@ -404,10 +277,7 @@ static int run_sweep(double max_time) {
     }
     runs << "run_index,seed,rt60,c50,runtime_ms\n";
 
-    // Common random numbers: every sweep point replays the same seed sequence,
-    // so run i is measured from the same emitted particle set at every point.
-    // Point-to-point differences are then far less seed-dependent than the
-    // absolute spread within a point suggests.
+    // common random numbers: every sweep point reuses the same seed sequence
     unsigned int seed = kSeedStart;
     for (unsigned int i = 0; i < kNumRuns; ++i, ++seed) {
       RunResult r = simulate(max_time, pt.dt, pt.num_particles, seed);
@@ -479,8 +349,7 @@ static void mean_std(const std::vector<double> &v, double &mean, double &sd) {
   sd = std::sqrt(sd / (v.size() - 1));
 }
 
-// One row of the reference-vs-optimised comparison table, and the same routine
-// reused for one setting of the scatter sweep.
+// one row of the reference-vs-optimised comparison table
 static void run_config(double max_time, const std::string &label,
                        unsigned int num_particles, unsigned int dt_ms,
                        std::ofstream &summary,
@@ -520,7 +389,7 @@ static void run_config(double max_time, const std::string &label,
           << rt_mean << "," << rt_sd << "," << rt60s.size() << "\n";
   summary.flush();
 
-  // per-band RT60 for this config, to sit next to Eyring-Norris per band
+  // per-band RT60 for this config
   const std::string bands_path = kOutDir + "/config_bands_" + label + ".csv";
   std::ofstream bands(bands_path);
   if (bands) {
@@ -539,9 +408,8 @@ static void run_config(double max_time, const std::string &label,
               rt_sd);
 }
 
-// Per-band RT60 at the optimised config across a range of scattering
-// settings, to test whether the frequency-dependent residual against
-// Eyring-Norris is driven by how diffuse the field is.
+// per-band RT60 at the optimised config across a range of scattering
+// settings
 static int run_scatter(double max_time) {
   const std::string summary_path = kOutDir + "/scatter_summary.csv";
   std::ofstream summary(summary_path);
@@ -579,7 +447,7 @@ static int run_configs(double max_time) {
   return 0;
 }
 
-// Averaged EDC at one scattering setting, written as a dB curve.
+// averaged EDC at one scattering setting, written as a dB curve.
 static int write_edc(double max_time, const std::string &label,
                      double scattering) {
   std::vector<double> edc_acc;
@@ -620,12 +488,7 @@ static int run_edc(double max_time) {
   return write_edc(max_time, "scattering", kSceneScattering);
 }
 
-// ---------------------------------------------------------------- convolve
-
-// White noise in [-1, 1], deterministic. The convolver's cost is independent
-// of signal content (pocketfft has no data-dependent branches), but silence
-// would risk denormal handling in the spectral multiply, so noise is the
-// honest choice of filler.
+// white noise in [-1, 1]
 static std::vector<float> conv_noise(std::size_t n, unsigned int seed) {
   std::mt19937 rng(seed);
   std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
@@ -635,9 +498,7 @@ static std::vector<float> conv_noise(std::size_t n, unsigned int seed) {
   return x;
 }
 
-// Synthetic RIR: noise under an envelope decaying 60 dB across its own length.
-// Used rather than a simulated rir.wav so the benchmark reproduces without a
-// prior run — cost depends on the RIR's length alone, not its contents.
+// synthetic RIR
 static std::vector<float> conv_rir(double seconds, unsigned int seed) {
   const std::size_t n =
       static_cast<std::size_t>(seconds * kConvSampleRate + 0.5);
@@ -656,11 +517,8 @@ static double conv_median(std::vector<double> v) {
   return n % 2 ? v[n / 2] : 0.5 * (v[n / 2 - 1] + v[n / 2]);
 }
 
-// One sweep: each point is (input seconds, RIR seconds). Times convolve()
-// alone — signals are built and resident in memory first, and no WAV read,
-// resample or write is inside the timed region. That is the whole point of
-// running this here rather than through ParticleSoundSimConvolve, which times
-// file I/O along with the arithmetic.
+// one sweep
+// each point is (input seconds, RIR seconds)
 static int
 run_convolve_points(const std::string &path,
                     const std::vector<std::pair<double, double>> &points) {
@@ -669,15 +527,12 @@ run_convolve_points(const std::string &path,
     std::printf("Failed to open %s\n", path.c_str());
     return 1;
   }
-  // One row per point: the median over the repeats, and the two normalised
-  // forms of it. The individual repeat times are not kept — they exist only
-  // to make the median robust to a scheduler hiccup in any one call.
+  // one row per point, the median over the repeats
   out << "input_seconds,rir_seconds,median_ms,ms_per_second_audio,rtf\n";
 
   std::printf("%12s %10s %10s %12s %8s\n", "input (s)", "rir (s)", "med (ms)",
               "ms/s audio", "RTF");
 
-  // Keeps the compiler from discarding the convolution as dead work.
   double sink = 0.0;
 
   for (const auto &pt : points) {

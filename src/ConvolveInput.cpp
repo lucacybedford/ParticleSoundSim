@@ -15,7 +15,7 @@ bool convolve_input_file(const std::string &input_path,
 
   Audio dry;
   if (!wav_read(input_path, dry)) {
-    std::printf("No %s found – skipping convolution.\n", input_path.c_str());
+    std::printf("No %s found, skipping convolution.\n", input_path.c_str());
     return true; // absence of input is not an error
   }
 
@@ -25,7 +25,7 @@ bool convolve_input_file(const std::string &input_path,
     dry.samples = resample(dry.samples, dry.sample_rate, rir_sample_rate);
     dry.sample_rate = rir_sample_rate;
     if (dry.samples.empty()) {
-      std::printf("Resampling failed – skipping convolution.\n");
+      std::printf("Resampling failed, skipping convolution.\n");
       return false;
     }
   }

@@ -10,7 +10,7 @@ double Atmosphere::sound_speed() const {
 double Atmosphere::absorption_dB_per_m(double f) const {
   constexpr double pr = 101.325; // reference pressure, kPa
   constexpr double T0 = 293.15;  // reference temperature, K (20 C)
-  constexpr double T01 = 273.16; // triple-point isotherm, K
+  constexpr double T01 = 273.16;
 
   const double T = temperature_c + 273.15;
   const double pa_pr = pressure_kpa / pr;
@@ -20,7 +20,6 @@ double Atmosphere::absorption_dB_per_m(double f) const {
       std::pow(10.0, -6.8346 * std::pow(T01 / T, 1.261) + 4.6151);
   const double h = humidity * psat_pr / pa_pr;
 
-  // oxygen and nitrogen relaxation frequencies (Hz)
   const double frO = pa_pr * (24.0 + 4.04e4 * h * (0.02 + h) / (0.391 + h));
   const double frN =
       pa_pr * std::pow(T / T0, -0.5) *
@@ -38,7 +37,7 @@ double Atmosphere::absorption_dB_per_m(double f) const {
   return alpha; // attenuation coefficient in dB/m
 }
 
+// turning attenuation coefficient into energy absorption coefficient
 double Atmosphere::absorption_m(double f) const {
-  // turning attenuation coefficient into energy absorption coefficient
   return absorption_dB_per_m(f) / 4.343;
 }

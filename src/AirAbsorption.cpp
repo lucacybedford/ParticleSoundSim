@@ -9,8 +9,8 @@ double sub_freq(int n, int i) {
 }
 } // namespace
 
+// precomputing absorption coefficients
 AirAbsorption::AirAbsorption(const Atmosphere &atm) {
-  // precomputing absorption coefficients
   for (int b = 0; b < kNumBands; ++b) {
     const int n = kBandNumbers[b];
     m_centre[b] = atm.absorption_m(std::pow(10.0, n / 10.0));
@@ -19,8 +19,8 @@ AirAbsorption::AirAbsorption(const Atmosphere &atm) {
   }
 }
 
+// apply absorption to each band using centre value
 void AirAbsorption::decay_step(BandEnergies &energies, double dr) const {
-  // apply absorption to each band using centre value
   for (int b = 0; b < kNumBands; ++b)
     energies[b] *= std::exp(-m_centre[b] * dr);
 }

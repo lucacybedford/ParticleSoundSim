@@ -4,8 +4,7 @@
 namespace impedance {
 
 namespace {
-constexpr double XI_PEAK =
-    1.5669; // to account for the peak of alpha_random (~0.951)
+constexpr double XI_PEAK = 1.5669; // to account for the peak of alpha_random
 constexpr double XI_MAX = 1.0e5;
 } // namespace
 
@@ -26,7 +25,7 @@ double calibrate_impedance(double alpha) {
   for (int i = 0; i < 100 && (hi - lo) > 1e-9; ++i) {
     const double mid = 0.5 * (lo + hi);
     if (alpha_random(mid) > alpha)
-      lo = mid; // need less absorption -> larger xi
+      lo = mid;
     else
       hi = mid;
   }

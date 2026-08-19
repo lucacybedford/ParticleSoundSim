@@ -7,7 +7,6 @@ struct Atmosphere {
 
   double sound_speed() const;
 
-  // ISO 9613-1 pure-tone atmospheric absorption at frequency f
   double absorption_dB_per_m(double f) const;
   double absorption_m(double f) const;
 };
