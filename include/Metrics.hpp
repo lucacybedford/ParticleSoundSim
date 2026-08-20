@@ -112,6 +112,8 @@ struct DecayFit {
 inline DecayFit decay_fit(const std::vector<double> &edc_curve_db,
                           double bin_width) {
   DecayFit d;
+  // ISO 3382-1 fit values, starts from -5dB to avoid direct sound and early
+  // reflections
   const LineFit f30 = fit_decay(edc_curve_db, bin_width, -5.0, -35.0);
   if (!f30.ok)
     return d;

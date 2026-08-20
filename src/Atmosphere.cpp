@@ -37,7 +37,8 @@ double Atmosphere::absorption_dB_per_m(double f) const {
   return alpha; // attenuation coefficient in dB/m
 }
 
-// turning attenuation coefficient into energy absorption coefficient
+// turning attenuation coefficient (pressure) into energy absorption coefficient
 double Atmosphere::absorption_m(double f) const {
+  // 4.343 = 10/log(10)
   return absorption_dB_per_m(f) / 4.343;
 }

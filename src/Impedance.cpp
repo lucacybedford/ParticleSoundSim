@@ -4,10 +4,13 @@
 namespace impedance {
 
 namespace {
-constexpr double XI_PEAK = 1.5669; // to account for the peak of alpha_random
+// to account for the peak of alpha_random from impedance reconstruction where
+// max alpha possible is ~0.951
+constexpr double XI_PEAK = 1.5669;
 constexpr double XI_MAX = 1.0e5;
 } // namespace
 
+// from the Paris formula integration
 double alpha_random(double xi) {
   const double bracket =
       xi * (xi + 2.0) / (xi + 1.0) - 2.0 * std::log(xi + 1.0);

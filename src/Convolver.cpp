@@ -50,7 +50,9 @@ std::vector<float> convolve(const std::vector<float> &x,
 
   // FFT length must be comfortably larger than the IR
   std::size_t nfft = std::max<std::size_t>(2048, next_pow2(2 * M));
-  const std::size_t B = nfft - M + 1; // input samples consumed per block
+  // input samples consumed per block for overlap-add
+  // the block is never shorter than the response
+  const std::size_t B = nfft - M + 1;
   const std::size_t ncplx = nfft / 2 + 1;
 
   // transform the IR once.

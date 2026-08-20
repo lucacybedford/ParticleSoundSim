@@ -37,9 +37,9 @@ void Particle::hit(Plane &plane, double cos_theta) {
   v = glm::normalize(v) * vel;
   for (size_t i = 0; i < energies.size(); i++) {
     double xi = plane.material.impedance[i];
-    // pressure reflection coefficient
+    // pressure reflection coefficient from Kuttruff Room Acoustics
     double R = (xi * cos_theta - 1) / (xi * cos_theta + 1);
-    // turns into reflection coefficient and applies it
+    // squared to convert pressure to energy
     energies[i] *= glm::pow(R, 2);
   }
 }
@@ -69,6 +69,8 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
 
   // uses max iterations for calculating particle position after wall
   // interaction
+  // the remaining time is discarded if past iteration cap, particle moves to
+  // next step
   int iteration = 0;
   while (remaining_dt > 0 && iteration < MAX_ITERATIONS) {
     dvec3 x_new = x + v * remaining_dt;
@@ -109,8 +111,10 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       double arrival = time + (dt - remaining_dt) + recT * remaining_dt;
       BandEnergies e = energies;
       // apply summation method of offline
+      // vel * arrival gives total path length since speed is constant from t=0
       if (summation)
         summation->attenuate_total(e, vel * arrival);
+      // then completely absorb the particle
       hitReceiver->receive(arrival, e);
       absorb();
       return;
@@ -119,6 +123,7 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
     if (closestPlane) {
       // reposition particle just off the wall surface
       dvec3 x_hit = x + minT * (x_new - x);
+      // added a slight offset to avoid immediate re-intersection of surface
       x = x_hit + closestPlane->n * 0.00001;
       double incident_ang =
           std::abs(glm::dot(glm::normalize(v), closestPlane->n));
@@ -133,6 +138,7 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       } else {
         double r1 = dist(rng);
         double r2 = dist(rng);
+        // applying Lambertian distribution for reflection
         double cos_theta = sqrt(r1);
         double sin_theta = sqrt(1 - r1);
         double phi = 2 * M_PI * r2;

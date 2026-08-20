@@ -25,6 +25,8 @@ void AirAbsorption::decay_step(BandEnergies &energies, double dr) const {
     energies[b] *= std::exp(-m_centre[b] * dr);
 }
 
+// averaging sub-frequency survivals, since band average diverges from centre as
+// r grows
 void AirAbsorption::attenuate_total(BandEnergies &energies, double r) const {
   for (int b = 0; b < kNumBands; ++b) {
     // summing attenuation factors of sub-frequencies

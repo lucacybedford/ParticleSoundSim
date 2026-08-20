@@ -10,6 +10,8 @@ Emitter::Emitter(const dvec3 &x, float h_start, float h_end, float v_start,
 std::vector<Particle> Emitter::emit(const int num_particles, double speed,
                                     std::mt19937 &gen) {
   std::uniform_real_distribution<double> h_angDist(h_ang_start, h_ang_end);
+  // sampling sin() to avoid clustering at poles -> uniform distribution over
+  // solid angle
   std::uniform_real_distribution<double> v_angDist(std::sin(v_ang_start),
                                                    std::sin(v_ang_end));
   std::vector<Particle> particles;

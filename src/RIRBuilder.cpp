@@ -63,7 +63,8 @@ RIRBuilder::build(const std::vector<BandEnergies> &hist) const {
       synth_energy += v * v;
     }
 
-    // normalise each band's total energy
+    // normalise each band's total energy -> keeps synthesised energy the same
+    // as original arrival energy (same relative loudness)
     if (synth_energy <= 0.0)
       continue; // the band-passed noise carried no energy here
     double g = std::sqrt(target_energy / synth_energy);
