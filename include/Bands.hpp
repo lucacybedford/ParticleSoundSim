@@ -1,6 +1,8 @@
 #pragma once
 #include <array>
 
+// inline for keeping a single instance
+// constexpr for it to exist at compile time
 inline constexpr int kNumBands = 8;
 
 // ANSI band numbers
