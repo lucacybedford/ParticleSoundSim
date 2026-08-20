@@ -1,27 +1,3 @@
-"""Pooling test: how much does averaging k runs tighten the RT60 estimate?
-
-Reads a pool of independent runs written by the experiment app's `variance`
-mode as output/experiments/variance_pool_<particles>_dt<ms>.csv (columns:
-run_index,seed,rt60,c50,runtime_ms). For every set size k from 2 to 20 it draws
-many random sets of k distinct runs from that pool, takes the mean metric of
-each set, and draws one box per k. The boxes show the sampling distribution of
-a k-run pooled estimate: the median tracks the pool mean while the spread
-shrinks, so the plot says how many runs have to be pooled before the estimate
-stops moving.
-
-Sets are drawn without replacement within a set (a run never appears twice in
-one set) but sets are independent of each other, so k=20 gets the same number
-of boxplot samples as k=2. The draw is seeded, so the figure is reproducible.
-
-Several pools coexist, one per configuration, so the tag is carried into the
-figure name and a run with more than one pool present refuses to guess.
-
-    python plot_variance.py [metric] [glob_dir] [tag]
-        metric    rt60 (default) or c50
-        glob_dir  directory to search (default ./output/experiments)
-        tag       which pool, e.g. 100000_dt1; required when several exist
-"""
-
 import glob
 import os
 import sys
@@ -32,29 +8,19 @@ import numpy as np
 
 from plot_rir import resolve_dirs
 
-# Pools are named variance_pool_<particles>_dt<ms>.csv by the experiment app.
-# The tag is carried into the figure name too, so plotting one pool cannot
-# overwrite the figure belonging to another.
 POOL_GLOB = "variance_pool_*.csv"
 
-# Set sizes to test, inclusive. Matches kVarianceMinRuns/kVariancePrefixMax in
-# src/app_experiments.cpp.
 MIN_SET_SIZE = 2
 MAX_SET_SIZE = 20
 
-# Sets drawn per size. Large enough that the box shape is a property of the
-# pool rather than of the draw.
+# Sets drawn per size
 NUM_SETS = 2000
 
 RNG_SEED = 12345
 
 
 def find_pool(directory: str, tag: str = None):
-    """Return (path, tag) for the requested pool, or the only one present.
-
-    Several pools coexist by design — one per configuration — so a bare run has
-    to refuse rather than guess when more than one is available.
-    """
+    """Return (path, tag) for the requested pool, or the only one present."""
     if tag:
         path = os.path.join(directory, f"variance_pool_{tag}.csv")
         if not os.path.exists(path):
@@ -72,8 +38,7 @@ def find_pool(directory: str, tag: str = None):
             os.path.basename(p)[len("variance_pool_") : -len(".csv")] for p in paths
         )
         raise SystemExit(
-            f"several pools in {directory}, name one as the third argument:\n"
-            f"  {names}"
+            f"several pools in {directory}, name one as the third argument:\n  {names}"
         )
     tag = os.path.basename(paths[0])[len("variance_pool_") : -len(".csv")]
     return paths[0], tag
@@ -84,8 +49,7 @@ def load_pool(path: str, metric: str):
     data = np.genfromtxt(path, delimiter=",", names=True)
     values = np.atleast_1d(data[metric]).astype(float)
 
-    # rt60 == -1 flags a run that never decayed far enough to fit a slope; drop
-    # those so they don't distort the pooled means.
+    # rt60 == -1 flags a run that never decayed far enough to fit a slope
     valid = values[values > 0] if metric == "rt60" else values
     name = os.path.basename(path)
     dropped = len(values) - len(valid)
@@ -103,8 +67,9 @@ def pooled_means(pool: np.ndarray, set_sizes, num_sets: int, rng):
     means = []
     for k in set_sizes:
         # One row per set, each row k distinct run indices.
-        picks = np.array([rng.choice(len(pool), size=k, replace=False)
-                          for _ in range(num_sets)])
+        picks = np.array(
+            [rng.choice(len(pool), size=k, replace=False) for _ in range(num_sets)]
+        )
         means.append(pool[picks].mean(axis=1))
     return means
 
@@ -130,7 +95,6 @@ def main() -> None:
     rng = np.random.default_rng(RNG_SEED)
     value_arrays = pooled_means(pool, set_sizes, NUM_SETS, rng)
 
-    # T30 per ISO 3382-1: fitted over -5 to -35 dB, extrapolated to a full 60 dB.
     ylabel = r"Mean $T_{30}$ (s)" if metric == "rt60" else r"Mean $C_{50}$ (dB)"
 
     fig, ax = plt.subplots(figsize=plot_style.FULL)
@@ -161,14 +125,11 @@ def main() -> None:
 
     ax.set_xlabel("Runs pooled per set")
     ax.set_ylabel(ylabel)
-    # title suppressed: the LaTeX caption carries it (see plot_style)
-    # ax.set_title(f"{ylabel} vs runs pooled per set ({NUM_SETS} sets per size)")
     ax.set_xticks(set_sizes)
     ax.set_xticklabels(set_sizes)
     ax.grid(True, axis="y", color="0.85", linewidth=0.5)
 
-    # Print the spread per set size next to the 1/sqrt(k) prediction, so any
-    # departure from ideal independent averaging is visible numerically.
+    # Print the spread per set size
     pool_std = float(np.std(pool, ddof=1))
     print(
         f"\npool mean {np.mean(pool):.4f}  std {pool_std:.4f}\n"

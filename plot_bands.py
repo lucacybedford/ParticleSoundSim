@@ -1,23 +1,3 @@
-"""Per-band RT60 from the experiment app, against the Eyring-Norris prediction.
-
-Reads <dir>/config_bands_<tag>.csv (band_index, rt60_mean, rt60_std,
-valid_runs) and overlays the per-band prediction from plot_rir. Two figures are
-produced, because they answer different questions:
-
-    config_bands_rt60.png    reference vs optimised — does the simulator match
-                             theory per band, and does the cheap configuration
-                             reproduce the expensive one?
-    scatter_bands_rt60.png   the scattering sweep — is the frequency-dependent
-                             part of the residual a diffuse-field effect?
-
-Only tags present on disk are plotted, so a figure whose experiment has not
-been run is skipped rather than failing.
-
-    python plot_bands.py [glob_dir]
-        glob_dir  directory to search (default: EXPERIMENT_DIR for the
-                  selected ROOM in plot_rir.py)
-"""
-
 import csv
 import glob
 import os
@@ -30,17 +10,6 @@ import numpy as np
 
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
-# Display names. s = scene is the physical coefficient of the room's material;
-# the other s values are diagnostics, not configurations anything is reported at.
-#
-# The reference and optimised labels carry a particle count and a step, and
-# those are read from config_summary.csv rather than written here, because the
-# chosen configuration has changed several times and a stale legend is not
-# visible in the figure it is wrong in.
-# Simulated series are T30, the ISO 3382-1 estimator fitted over -5 to -35 dB
-# and extrapolated to a full 60 dB decay. The Eyring-Norris line is a true T60.
-# Both sit on the same seconds-to-decay-60-dB scale, which is why the axis is
-# generic and the estimator is carried in the legend instead.
 LABELS = {
     "reference": r"Reference",
     "optimised": r"Optimised",
@@ -52,11 +21,6 @@ LABELS = {
 
 
 def config_labels(directory: str):
-    """Return LABELS with the reference and optimised rows annotated.
-
-    Reads the particle count and step from config_summary.csv when it is
-    present, so the legend cannot disagree with the data beside it.
-    """
     labels = dict(LABELS)
     path = os.path.join(directory, "config_summary.csv")
     if not os.path.exists(path):
@@ -70,6 +34,7 @@ def config_labels(directory: str):
             count = f"{n // 1000}k" if n < 1_000_000 else f"{n // 1_000_000}M"
             labels[tag] = f"{labels[tag]} ({count}, {int(row['dt_ms'])} ms)"
     return labels
+
 
 # (output filename, title, tags in plotting order)
 FIGURES = [
@@ -157,13 +122,7 @@ def plot_figure(found, tags, out_path, title, predicted, bands, labels=None):
     ax.minorticks_off()
     ax.set_xlabel("Octave band centre (Hz)")
     ax.set_ylabel(r"$T_{30}$ (s)")
-    # title suppressed: the LaTeX caption carries it (see plot_style)
-    # ax.set_title(title)
     ax.grid(True, color="0.9", linewidth=0.5)
-    # Legend inside the axes in a floating box. Below the axes it took about a
-    # third of the figure height, which is height the plot itself can use. The
-    # y-limit is opened up first so the box lands in empty space rather than on
-    # the curves.
     low, high = ax.get_ylim()
     ax.set_ylim(low, high + 0.58 * (high - low))
     ax.legend(

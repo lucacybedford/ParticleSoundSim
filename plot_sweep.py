@@ -1,26 +1,3 @@
-"""Plots for the experiment app's `sweep` mode.
-
-Set SWEEP_AXIS below to match the axis the experiments app was built with
-(`kSweepAxis` in src/app_experiments.cpp).
-
-Reads the sweep outputs from output/experiments:
-    "particles"                             "dt"
-    sweep_runs_<n>.csv                      sweep_runs_dt<ms>.csv
-    edc_<n>.csv                             edc_dt<ms>.csv
-    sweep_summary.csv (optional)            sweep_dt_summary.csv (optional)
-    (run_index,seed,rt60,c50 per run; time_ms,edc_db per averaged EDC curve)
-
-Produces four figures in output/figures, named per axis so the two sweeps
-never overwrite each other:
-    sweep_rt60.png    / sweep_dt_rt60.png       RT60 spread (box plot)
-    sweep_c50.png     / sweep_dt_c50.png        C50  spread (box plot)
-    sweep_edc.png     / sweep_dt_edc.png        averaged EDC curves
-    sweep_runtime.png / sweep_dt_runtime.png    simulation stage cost (log y)
-
-    python plot_sweep.py [glob_dir]
-        glob_dir  directory to search (default ./output/experiments)
-"""
-
 import glob
 import os
 import re
@@ -32,21 +9,12 @@ import numpy as np
 
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
-# "particles" or "dt" — must match kSweepAxis in src/app_experiments.cpp
+# "particles" or "dt"
 SWEEP_AXIS = "dt"
 
-# The per-point EDC overlay is off by default: with accuracy invariant to both
-# N and dt the curves lie on top of each other, and the ISM comparison in
-# plot_rir.py is the figure that actually says something about EDC shape.
 PLOT_EDC = False
 
-# Eyring-Norris reference for the RT60 box plot, reusing plot_rir's per-band
-# implementation (ISO 9613 air absorption included) so there is one definition
-# of the prediction in the project. Its room constants must match the room the
-# sweep was run in — make_standard.
-#
-# The sweep metric is a broadband RT60, so the line needs a single number: the
-# mid-frequency average (500 Hz + 1 kHz), the conventional single-figure RT.
+# Eyring-Norris reference for rt60
 EYRING_BANDS_HZ = (500, 1000)
 
 
@@ -98,7 +66,6 @@ def load_run_sets(directory: str, metric: str, axis: dict):
 
         data = np.genfromtxt(path, delimiter=",", names=True)
         if data.dtype.names is None or metric not in data.dtype.names:
-            # e.g. runtime_ms is absent from CSVs written before it was added
             continue
         values = np.atleast_1d(data[metric]).astype(float)
 
@@ -122,11 +89,7 @@ def load_run_sets(directory: str, metric: str, axis: dict):
 
 
 def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
-    """`reference` draws a horizontal (value, label) line — Eyring for RT60.
-
-    Deliberately not applied to C50: Eyring predicts a decay rate only, and has
-    no clarity-metric analogue.
-    """
+    """`reference` draws a horizontal (value, label) line. Eyring for RT60."""
     axis_values, value_arrays = load_run_sets(directory, metric, axis)
     title = f"{ylabel.split(' (')[0]} {axis['title_suffix']}"
     if not axis_values:
@@ -134,8 +97,7 @@ def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
         return
 
     fig, ax = plt.subplots(figsize=plot_style.FULL)
-    # Evenly spaced positions (the axis spans orders of magnitude, so real
-    # values would bunch the boxes); real values go on the tick labels instead.
+    # Evenly spaced positions
     positions = np.arange(1, len(axis_values) + 1)
     ax.boxplot(
         value_arrays,
@@ -165,8 +127,6 @@ def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
 
     ax.set_xlabel(axis["xlabel"])
     ax.set_ylabel(ylabel)
-    # title suppressed: the LaTeX caption carries it (see plot_style)
-    # ax.set_title(title)
     ax.set_xticks(positions)
     ax.set_xticklabels([axis["tick"](v) for v in axis_values], rotation=45, ha="right")
     ax.grid(True, axis="y", color="0.85", linewidth=0.5)
@@ -187,11 +147,7 @@ def boxplot_metric(directory, metric, ylabel, out_path, axis, reference=None):
 
 
 def plot_runtime(directory, out_path, axis):
-    """Mean simulation-stage runtime per sweep point, with std error bars.
-
-    Its own figure rather than a twin axis on the box plots: runtime spans
-    orders of magnitude and wants a log scale, which would squash the metric.
-    """
+    """Mean simulation-stage runtime per sweep point, with std error bars."""
     axis_values, value_arrays = load_run_sets(directory, "runtime_ms", axis)
     if not axis_values:
         print(f"no runtime_ms column in {axis['runs_glob']}; skipping runtime plot")
@@ -215,8 +171,6 @@ def plot_runtime(directory, out_path, axis):
     ax.set_yscale("log")
     ax.set_xlabel(axis["xlabel"])
     ax.set_ylabel("Simulation runtime (s)")
-    # title suppressed: the LaTeX caption carries it (see plot_style)
-    # ax.set_title(f"Runtime {axis['title_suffix']}")
     ax.set_xticks(positions)
     ax.set_xticklabels([axis["tick"](v) for v in axis_values], rotation=45, ha="right")
     ax.grid(True, which="both", color="0.9", linewidth=0.5)
@@ -258,7 +212,6 @@ def main() -> None:
         directory,
         "rt60",
         # Boxes are T30 (ISO 3382-1, fitted -5 to -35 dB, extrapolated to 60 dB);
-        # the reference line is a true T60, named as such in the legend.
         r"$T_{30}$ (s)",
         os.path.join(out_dir, prefix + "rt60.png"),
         axis,
@@ -290,8 +243,6 @@ def main() -> None:
             )
         ax.set_xlabel("Time (ms)")
         ax.set_ylabel("Energy decay (dB)")
-        # title suppressed: the LaTeX caption carries it (see plot_style)
-        # ax.set_title(f"Averaged EDC curves {axis['title_suffix']}")
         ax.set_ylim(top=1)
         ax.grid(True, color="0.9", linewidth=0.5)
         ax.legend(title=axis["legend_title"], fontsize=8, ncol=2)

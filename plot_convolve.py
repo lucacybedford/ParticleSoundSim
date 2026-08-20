@@ -1,23 +1,3 @@
-"""Plots for the experiment app's `convolve` mode.
-
-Reads the convolution timings from output/experiments:
-    convolve_input_sweep.csv   input length swept, RIR length fixed
-    convolve_rir_sweep.csv     RIR length swept, input length fixed
-    (input_seconds,rir_seconds,median_ms,ms_per_second_audio,rtf — one row per
-     point, the median over the repeats the app timed)
-
-Produces three figures in output/figures:
-    convolve_time.png      convolution time vs input length
-    convolve_rtf.png       real-time factor vs input length
-    convolve_rir.png       cost per second of audio vs RIR length
-
-Unlike the other experiment modes this one is room-independent — it times
-convolve() on synthetic signals with no simulation involved — so there is no
-ROOM toggle here and the paths are fixed.
-
-    python plot_convolve.py [experiment_dir]
-"""
-
 import os
 import sys
 
@@ -54,12 +34,7 @@ def print_table(cols, title):
 
 
 def plot_time(cols, out_path):
-    """Convolution time vs input length, log-log.
-
-    Log axes because the input spans 240x. The flat left-hand end is the real
-    finding: overlap-add consumes the input a block at a time, so every input
-    shorter than one block costs the same.
-    """
+    """Convolution time vs input length, log-log."""
     fig, ax = plt.subplots(figsize=plot_style.FULL)
     ax.plot(
         cols["input_seconds"],
@@ -73,10 +48,6 @@ def plot_time(cols, out_path):
     ax.set_yscale("log")
     ax.set_xlabel("Dry input length (s)")
     ax.set_ylabel("Convolution time (ms)")
-    # title suppressed: the LaTeX caption carries it
-#    ax.set_title(
-#        f"Convolution cost vs input length ({cols['rir_seconds'][0]:.2f} s RIR)"
-#    )
     ax.grid(True, which="both", color="0.9", linewidth=0.5)
 
     fig.tight_layout()
@@ -85,12 +56,7 @@ def plot_time(cols, out_path):
 
 
 def plot_rtf(cols, out_path):
-    """Real-time factor: seconds of audio convolved per second of wall time.
-
-    This is the figure the performance section wants — it states directly how
-    far above real time the convolution stage runs, and the RTF = 1 line makes
-    the margin readable without arithmetic.
-    """
+    """Real-time factor: seconds of audio convolved per second of wall time."""
     fig, ax = plt.subplots(figsize=plot_style.FULL)
     ax.plot(
         cols["input_seconds"],
@@ -111,8 +77,6 @@ def plot_rtf(cols, out_path):
     ax.set_yscale("log")
     ax.set_xlabel("Dry input length (s)")
     ax.set_ylabel("Real-time factor (x)")
-    # title suppressed: the LaTeX caption carries it (see plot_style)
-    # ax.set_title("Convolution speed relative to real time")
     ax.grid(True, which="both", color="0.9", linewidth=0.5)
     ax.legend(fontsize=8, loc="best")
 
@@ -122,12 +86,7 @@ def plot_rtf(cols, out_path):
 
 
 def plot_rir(cols, out_path):
-    """Cost per second of audio vs RIR length, at a fixed input length.
-
-    Guards the input sweep against the charge that its standardised RIR is a
-    lucky operating point: cost per second of audio moves far less than the
-    RIR length does.
-    """
+    """Cost per second of audio vs RIR length, at a fixed input length."""
     x = cols["rir_seconds"]
     y = cols["ms_per_second_audio"]
 
@@ -143,10 +102,6 @@ def plot_rir(cols, out_path):
     ax.set_xmargin(0.12)
     ax.set_xlabel("RIR length (s)")
     ax.set_ylabel("ms per second of audio")
-    # title suppressed: the LaTeX caption carries it
-#    ax.set_title(
-#        f"Convolution cost vs RIR length ({cols['input_seconds'][0]:.0f} s input)"
-#    )
     ax.set_ylim(0, y.max() * 1.25)
     ax.grid(True, color="0.9", linewidth=0.5)
 

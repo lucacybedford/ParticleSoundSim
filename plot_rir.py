@@ -7,11 +7,7 @@ from matplotlib.ticker import MultipleLocator
 
 BANDS_HZ = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
 
-# Must match kRoom in src/app_experiments.cpp. "standard" is the flat-
-# absorption ISM comparison room (make_standard); "real" is the single-material
-# room (make_room) whose absorption varies with frequency. Changing this
-# switches the room constants below, and therefore every Eyring-Norris
-# reference derived from them.
+# 'standard' or 'real'
 ROOM = "standard"
 
 _STANDARD_LX, _STANDARD_LY, _STANDARD_LZ = 3.432, 5.148, 4.29
@@ -20,11 +16,7 @@ _WOOD = [0.19, 0.19, 0.23, 0.25, 0.30, 0.37, 0.42, 0.42]  # materials::mSolidWoo
 
 
 def _room_geometry(room: str):
-    """Return (dimensions, surfaces) for the selected room.
-
-    Surfaces are (area m^2, per-band absorption) pairs. Grouping identical
-    surfaces is safe because only the area-weighted mean absorption is used.
-    """
+    """Return (dimensions, surfaces) for the selected room."""
     if room == "standard":
         lx, ly, lz = _STANDARD_LX, _STANDARD_LY, _STANDARD_LZ
         surfaces = [
@@ -44,7 +36,6 @@ def _room_geometry(room: str):
 (ROOM_LX, ROOM_LY, ROOM_LZ), ROOM_SURFACES = _room_geometry(ROOM)
 
 # Default input/output directories for the selected room, mirroring kOutDir.
-# Figures are separated too, so a run in one room cannot overwrite the other's.
 EXPERIMENT_DIR = (
     "./output/experiments" if ROOM == "standard" else "./output/experiments/real-room"
 )
@@ -52,13 +43,7 @@ FIGURE_DIR = "./output/figures" if ROOM == "standard" else "./output/figures/rea
 
 
 def resolve_dirs(directory=None):
-    """Return (experiment_dir, figure_dir) for an optional explicit directory.
-
-    Passing a directory overrides where data is read from, but the Eyring-Norris
-    reference always follows ROOM — so reading one room's data while ROOM names
-    the other silently produces a plot with the wrong reference line. Warn
-    loudly and send the figure somewhere that matches the data.
-    """
+    """Return (experiment_dir, figure_dir) for an optional explicit directory."""
     import os
 
     if directory is None:
@@ -125,7 +110,7 @@ def air_absorption_m(
             )
         )
     )
-    return alpha_db / 4.343  # dB/m -> nepers/m (energy basis)
+    return alpha_db / 4.343  # dB/m -> nepers/m (energy)
 
 
 def eyring_norris_rt60():
@@ -246,7 +231,6 @@ def main() -> None:
     ax_total.set_xlim(0, x_limit)  # shared axis crops both subplots
     for ax in (ax_total, ax_bands):
         ax.set_box_aspect(1)  # force each panel to a square box
-        # 10 equal divisions along x -> 9 interior gridlines.
         ax.xaxis.set_major_locator(MultipleLocator(x_limit / 10.0))
         ax.grid(True, axis="x", color="0.8", linewidth=0.5)
     fig.tight_layout()

@@ -1,17 +1,3 @@
-"""Averaged energy decay curves from the experiment app's `edc` mode.
-
-Two curves at the same configuration, differing only in scattering:
-
-    edc_specular.csv    s = 0   — comparable to a specular ISM baseline
-    edc_scattering.csv  s > 0   — the scene's own scattering coefficients
-
-The s = 0 curve is the one to hold against the Allen 1979 figures; the gap
-between the two is what diffuse scattering does to the decay.
-
-    python plot_edc.py [glob_dir]
-        glob_dir  directory to search (default ./output/experiments)
-"""
-
 import os
 import sys
 
@@ -22,7 +8,7 @@ import numpy as np
 from plot_rir import BANDS_HZ, eyring_norris_rt60, resolve_dirs
 
 # The ISM paper figures stop at 256 ms; matching that makes the visual
-# comparison direct. Set to None to plot the full decay.
+# comparison direct.
 XLIM_MS = 256
 
 CURVES = [
@@ -80,8 +66,6 @@ def main() -> None:
     ax.set_ylim(-60, 1)
     ax.set_xlabel("Time (ms)")
     ax.set_ylabel("Energy decay (dB)")
-    # title suppressed: the LaTeX caption carries it (see plot_style)
-    # ax.set_title("Averaged energy decay curve: specular vs scattering")
     ax.grid(True, color="0.9", linewidth=0.5)
     ax.legend(fontsize=9)
 
