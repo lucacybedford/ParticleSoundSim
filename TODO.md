@@ -4,6 +4,34 @@
 
 ## In Progress
 
+Priorities from supervisors, 01-10-2026. Absolute energy first: moving-emitter
+validation is in physical levels, and continuous emission needs per-packet
+energy in real units.
+
+### Absolute energy units
+
+- [ ] Give `Emitter` a sound power per band `W_b` (W), settable as `L_W` in dB re 1e-12 W
+- [ ] Particle initial energy `e_0,b = W_b·T/N` (`T`: emission duration). Particles currently start at 1.0/band, so the earlier "Define particle initial energy" item is only half done
+- [ ] Make `Particle::energy_threshold` relative to initial energy (it is absolute `1e-6`; with real units it would cull everything or nothing)
+- [ ] Receiver bins → intensity `I = E/(πr²·Δt_bin)` → `p² = ρc·I` → SPL dB re 20 µPa per band; output SPL vs time and Leq
+- [ ] Replace the `1/√N` RIR calibration in `app_offline.cpp` with the physical scaling; choose a stated dBFS ↔ Pa reference for WAV output
+- [ ] Validate: free-field direct sound vs `W/(4πd²)`; reverberant level in a room vs `L_W + 10·log10(4/A)` (Sabine diffuse field)
+
+### Moving emitters
+
+Design: [docs/moving_emitters.md](docs/moving_emitters.md) — baked positions + crossfade (Steam Audio style).
+
+- [ ] Check how Steam Audio actually splits direct and baked reflections (the design note states it from memory)
+- [ ] Emitter trajectory: position as a function of time (start with a straight line, constant velocity)
+- [ ] Bake along the path: run the static simulation at sampled source positions on the trajectory; store each receiver's histogram per position
+- [ ] Reflections only: remove the direct arrival from baked histograms (or bake with direct excluded) so it is not doubled at runtime
+- [ ] Runtime direct path: per-sample variable delay line from the current source–receiver distance, with `1/r²` energy attenuation and per-band air absorption (gives propagation delay and Doppler)
+- [ ] Runtime reflections: interpolate the two nearest baked histograms by position, synthesise one RIR from the result; equal-power crossfade of RIRs as the fallback
+- [ ] Probe spacing study: bake at two spacings, compare receiver level error, pick spacing from the result
+- [ ] Ground-truth reference: continuous emission (emit from the current position during `step()`, receiver histogram over absolute time); report the baked method's level error against it
+- [ ] Validate in free field: fly-by level time history vs analytic `1/r²` with retarded time; report LAmax and SEL
+- [ ] Visual app: draw the moving emitter, its trail and the baked positions
+
 ---
 
 ## This week
@@ -24,7 +52,7 @@
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
 - [ ] CPU parallelisation (multithreading, SIMD)
 - [ ] GPU acceleration
-- [ ] Progressive RIR re-baking as source/listener moves through the scene
+- [ ] Progressive RIR re-baking as the listener moves (moving source: see In Progress)
 - [ ] Enable movable listener
 - [ ] output sound energy heatmap
 - [ ] waveform display
