@@ -10,8 +10,8 @@ Simulation::Simulation(Scene scene_in, SimConfig cfg_in,
 
   const double c = atmosphere.sound_speed();
 
-  for (Emitter &em : scene.emitters) {
-    auto emitted = em.emit(cfg.num_particles, c, rng);
+  for (unsigned int e = 0; e < scene.emitters.size(); ++e) {
+    auto emitted = scene.emitters[e].emit(cfg.num_particles, c, rng, e);
     particles.insert(particles.end(), emitted.begin(), emitted.end());
   }
 }

@@ -10,8 +10,10 @@
 Particle::Particle(std::mt19937 &gen,
                    std::uniform_real_distribution<double> &h_angDist,
                    std::uniform_real_distribution<double> &v_angDist,
-                   dvec3 &position, double speed, unsigned int num_particles)
+                   dvec3 &position, double speed, unsigned int num_particles,
+                   unsigned int emitter_id)
     : vel(speed), x(position) {
+  emit_id = emitter_id;
   energies.fill(1.0 / num_particles);
   initial_energy = std::accumulate(energies.begin(), energies.end(), 0.0);
   double h_ang = h_angDist(gen);
@@ -116,7 +118,7 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
       if (summation)
         summation->attenuate_total(e, vel * arrival);
       // then completely absorb the particle
-      hitReceiver->receive(arrival, e);
+      hitReceiver->receive(arrival, e, emit_id);
       absorb();
       return;
     }

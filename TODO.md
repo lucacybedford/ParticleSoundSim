@@ -18,7 +18,6 @@ time `t_k`). A source of power `W_b(t)` gives
 `W_b·Σ_k H_b(k)/(πr²)`. One trace serves any source spectrum or thrust setting,
 and a moving source can weight particles by `W_b(t_emit)` afterwards.
 
-- [ ] Give `Emitter` a sound power per band `W_b` (W), settable as `L_W` in dB re 1e-12 W. A scale factor applied at output, not the particles' starting energy
 - [ ] Receiver bins → intensity by convolving `W_b(t)` with `H_b` (summed form for a constant source; no emission duration `T`) → `p² = ρc·I` → SPL dB re 20 µPa per band; output SPL vs time and Leq
 - [ ] Normalisation checks: (a) multiply initial energy by a constant `c` — every bin must scale by `c` (bit-exact if `c` is a power of 2; nothing depends on absolute energy); (b) trace at two particle counts `N` — SPL must agree within Monte Carlo noise
 - [ ] Replace the `1/√N` RIR calibration in `app_offline.cpp` with the physical scaling; choose a stated dBFS ↔ Pa reference for WAV output
@@ -118,3 +117,4 @@ Design: [docs/moving_emitters.md](docs/moving_emitters.md) — baked positions +
 - [x] **Stage timing.** Time simulation stage and convolution stage separately (convolution via the standalone tool) so real-time feasibility of each is reported independently.
 - [x] Normalise particle initial energy to `1/N` per band, so each band's total emitted energy is 1.
 - [x] Make `Particle::energy_threshold` relative to initial energy (it is absolute `1e-6`). Nothing else in the tracer may depend on absolute energy, or the post-hoc scaling stops being exact
+- [x] Give `Emitter` a sound power per band `W_b` (W), settable as `L_W` in dB re 1e-12 W. A scale factor applied at output, not the particles' starting energy

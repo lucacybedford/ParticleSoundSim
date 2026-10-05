@@ -10,6 +10,7 @@ struct Particle {
   static constexpr int MAX_ITERATIONS = 15;
   // static constexpr double energy_threshold = 1e-6;
   static constexpr double energy_threshold = 1e-6;
+  unsigned int emit_id;
   double initial_energy;
   double vel;
   dvec3 x;
@@ -19,7 +20,7 @@ struct Particle {
 
   Particle(std::mt19937 &gen, std::uniform_real_distribution<double> &h_angDist,
            std::uniform_real_distribution<double> &v_angDist, dvec3 &position,
-           double speed, unsigned int num_particles);
+           double speed, unsigned int num_particles, unsigned int emitter_id);
 
   void hit(Plane &plane, double cos_theta);
   // summation is only defined for offline mode to employ accurate absorption

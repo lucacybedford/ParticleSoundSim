@@ -6,7 +6,6 @@
 #include "SimConfig.hpp"
 #include "Simulation.hpp"
 #include "Wav.hpp"
-#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
@@ -105,7 +104,9 @@ int main(int argc, char *argv[]) {
 
   // save receiver information to csv file
   for (std::size_t i = 0; i < sim.scene.receivers.size(); ++i) {
-    const auto &hist = sim.scene.receivers[i].histogram;
+    const auto &hists = sim.scene.receivers[i].histograms;
+
+    // TODO: fix the output to use multiple histograms in the recievers
 
     // sum energy across all bands and bins
     // return earliest sound detection
