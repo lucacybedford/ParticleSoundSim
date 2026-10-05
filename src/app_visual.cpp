@@ -119,8 +119,9 @@ int main() {
     glBegin(GL_POINTS);
     for (Particle &p : sim.particles) {
       double energy = p.check_energy();
-      float t = static_cast<float>(
-          std::log10(energy) / -6); // rescale to 0 for full and 1 at threshold
+      float t =
+          static_cast<float>(std::log10(energy / p.initial_energy) /
+                             -6); // rescale to 0 for full and 1 at threshold
       t = std::clamp(t, 0.0f, 1.0f);
       glColor3f(1 - t, 1 - t, 1 - 0.8 * t);
       glVertex3d(p.x[0], p.x[1], p.x[2]);

@@ -8,9 +8,9 @@ using glm::dvec3;
 
 struct Emitter {
   dvec3 x;
-  // float, not double, only to keep results bit-reproducible against the
-  // published result set: widening these defaults shifts every launch
-  // direction by ~1e-7 rad, which is enough to decorrelate a run.
+  // real absolute energy of source, applied to the output (Watts per band)
+  // initialised to 1.0 in case no source power is given
+  BandEnergies source_power;
   float h_ang_start = 0;
   float h_ang_end = M_PI * 2;
   float v_ang_start = -M_PI / 2;
@@ -18,6 +18,6 @@ struct Emitter {
   Emitter(const dvec3 &x);
   Emitter(const dvec3 &x, float h_start, float h_end, float v_start,
           float v_end);
-  std::vector<Particle> emit(int particle_num, double speed,
+  std::vector<Particle> emit(unsigned int particle_num, double speed,
                              std::mt19937 &gen);
 };

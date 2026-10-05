@@ -4,16 +4,25 @@
 
 ## In Progress
 
-Priorities from supervisors, 01-10-2026. Absolute energy first: moving-emitter
-validation is in physical levels, and continuous emission needs per-packet
-energy in real units.
+Priorities from supervisors, 01-10-2026. Absolute energy first (Luca,
+05-10-2026): moving-emitter validation is in physical levels, and moving
+emitters need more research before implementing.
 
 ### Absolute energy units
 
-- [ ] Give `Emitter` a sound power per band `W_b` (W), settable as `L_W` in dB re 1e-12 W
-- [ ] Particle initial energy `e_0,b = W_b·T/N` (`T`: emission duration). Particles currently start at 1.0/band, so the earlier "Define particle initial energy" item is only half done
-- [ ] Make `Particle::energy_threshold` relative to initial energy (it is absolute `1e-6`; with real units it would cull everything or nothing)
-- [ ] Receiver bins → intensity `I = E/(πr²·Δt_bin)` → `p² = ρc·I` → SPL dB re 20 µPa per band; output SPL vs time and Leq
+Approach (05-10-2026): trace normalised energy, apply sound power at output.
+Propagation is linear in energy, so the trace is an energy impulse response:
+`H_b(k)` is the fraction of emitted energy landing in receiver bin `k` (arrival
+time `t_k`). A source of power `W_b(t)` gives
+`I_b(t) = (1/πr²)·Σ_k W_b(t − t_k)·H_b(k)`; for a constant source this is
+`W_b·Σ_k H_b(k)/(πr²)`. One trace serves any source spectrum or thrust setting,
+and a moving source can weight particles by `W_b(t_emit)` afterwards.
+
+- [ ] Give `Emitter` a sound power per band `W_b` (W), settable as `L_W` in dB re 1e-12 W. A scale factor applied at output, not the particles' starting energy
+- [ ] Normalise particle initial energy to `1/N` per band, so each band's total emitted energy is 1. Particles currently start at 1.0/band (total N), so the earlier "Define particle initial energy" item is only half done
+- [ ] Make `Particle::energy_threshold` relative to initial energy (it is absolute `1e-6`). Nothing else in the tracer may depend on absolute energy, or the post-hoc scaling stops being exact
+- [ ] Receiver bins → intensity by convolving `W_b(t)` with `H_b` (summed form for a constant source; no emission duration `T`) → `p² = ρc·I` → SPL dB re 20 µPa per band; output SPL vs time and Leq
+- [ ] Normalisation checks: (a) multiply initial energy by a constant `c` — every bin must scale by `c` (bit-exact if `c` is a power of 2; nothing depends on absolute energy); (b) trace at two particle counts `N` — SPL must agree within Monte Carlo noise
 - [ ] Replace the `1/√N` RIR calibration in `app_offline.cpp` with the physical scaling; choose a stated dBFS ↔ Pa reference for WAV output
 - [ ] Validate: free-field direct sound vs `W/(4πd²)`; reverberant level in a room vs `L_W + 10·log10(4/A)` (Sabine diffuse field)
 

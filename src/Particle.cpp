@@ -10,9 +10,10 @@
 Particle::Particle(std::mt19937 &gen,
                    std::uniform_real_distribution<double> &h_angDist,
                    std::uniform_real_distribution<double> &v_angDist,
-                   dvec3 &position, double speed)
+                   dvec3 &position, double speed, unsigned int num_particles)
     : vel(speed), x(position) {
-  energies.fill(1.0);
+  energies.fill(1.0 / num_particles);
+  initial_energy = std::accumulate(energies.begin(), energies.end(), 0.0);
   double h_ang = h_angDist(gen);
   double v_ang = v_angDist(gen); // sin(elevation)
   double r = std::sqrt(1.0 - v_ang * v_ang);
@@ -26,7 +27,7 @@ void Particle::absorb() { alive = false; }
 
 double Particle::check_energy() {
   double energy_sum = std::accumulate(energies.begin(), energies.end(), 0.0);
-  if (energy_sum < energy_threshold) {
+  if (energy_sum < energy_threshold * initial_energy) {
     absorb();
   }
   return energy_sum;
