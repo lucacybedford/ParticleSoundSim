@@ -176,11 +176,7 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      // calibration: dividing amplitude by sqrt(N) makes RIR independent of N
-      const float cal = 1.0f / std::sqrt(static_cast<float>(cfg.num_particles));
-
-      for (float &v : rir)
-        v *= cal;
+      // histogram is already normalised (1/N per particle)
 
       Audio rir_audio{builder.sample_rate, rir};
       if (!wav_write(rir_path, rir_audio)) {
