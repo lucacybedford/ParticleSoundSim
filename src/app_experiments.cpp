@@ -141,7 +141,7 @@ static RunResult simulate(double max_time, double dt,
     return r;
   r.has_receiver = true;
 
-  const auto &hist = sim.scene.receivers[0].histogram;
+  const auto &hist = sim.scene.receivers[0].histograms[0];
   const double bw = Receiver::bin_width;
 
   std::vector<double> energy = metrics::broadband_energy(hist);

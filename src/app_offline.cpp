@@ -1,5 +1,6 @@
 #include "Bands.hpp"
 #include "ConvolveInput.hpp"
+#include "Convolver.hpp"
 #include "Materials.hpp"
 #include "RIRBuilder.hpp"
 #include "Scene.hpp"
@@ -11,6 +12,31 @@
 #include <iomanip>
 #include <string>
 #include <vector>
+
+static std::vector<BandEnergies>
+apply_power(const std::vector<BandEnergies> &hist, const Emitter &em) {
+  std::vector<BandEnergies> out = hist;
+  if (!em.source_power)
+    return out;
+  for (auto &bin : out)
+    for (int b = 0; b < kNumBands; ++b)
+      bin[b] *= (*em.source_power)[b];
+  return out;
+}
+
+static std::vector<BandEnergies>
+combine_histograms(const Receiver &rec, const std::vector<Emitter> &emitters) {
+  std::vector<BandEnergies> combined;
+  for (std::size_t e = 0; e < rec.histograms.size(); ++e) {
+    auto hist = apply_power(rec.histograms[e], emitters[e]);
+    if (hist.size() > combined.size())
+      combined.resize(hist.size(), BandEnergies{});
+    for (std::size_t t = 0; t < hist.size(); ++t)
+      for (int b = 0; b < kNumBands; ++b)
+        combined[t][b] += hist[t][b];
+  }
+  return combined;
+}
 
 static bool write_histogram_csv(const std::string &path,
                                 const std::vector<BandEnergies> &hist,
@@ -88,6 +114,16 @@ int main(int argc, char *argv[]) {
     break;
   }
 
+  // check all emitters have or do not have power
+  size_t em_with_power = 0;
+  for (const Emitter &em : room.emitters) {
+    if (em.source_power)
+      em_with_power++;
+  }
+  if (em_with_power > 0 && em_with_power < room.emitters.size())
+    std::printf(
+        "Some emitters do not have source power: inconsistent levels.\n");
+
   Simulation sim(room, cfg, air);
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
@@ -104,14 +140,14 @@ int main(int argc, char *argv[]) {
 
   // save receiver information to csv file
   for (std::size_t i = 0; i < sim.scene.receivers.size(); ++i) {
-    const auto &hists = sim.scene.receivers[i].histograms;
-
-    // TODO: fix the output to use multiple histograms in the recievers
+    const auto &rec = sim.scene.receivers[i];
+    const auto hist = combine_histograms(rec, sim.scene.emitters);
 
     // sum energy across all bands and bins
     // return earliest sound detection
     double total = 0;
     int first_bin = -1;
+
     for (std::size_t b = 0; b < hist.size(); ++b) {
       double bin_total = 0;
       for (double e : hist[b])
@@ -146,9 +182,29 @@ int main(int argc, char *argv[]) {
 
   std::string r_particles = std::to_string(cfg.num_particles);
 
-  std::string input_path = "dry.wav";
-  if (argc == 2) {
-    input_path = argv[1];
+  std::vector<std::string> dry_paths(argv + 1, argv + argc);
+  if (dry_paths.empty())
+    dry_paths.push_back("dry.wav");
+
+  const std::size_t num_emitters = sim.scene.emitters.size();
+  if (dry_paths.size() > num_emitters)
+    std::printf("%zu dry files given for %zu emitters, ignoring the extras\n",
+                dry_paths.size(), num_emitters);
+  const std::string last = dry_paths.back();
+  dry_paths.resize(num_emitters, last);
+
+  for (std::size_t e = 0; e < num_emitters; ++e)
+    std::printf("Emitter %zu <- %s\n", e, dry_paths[e].c_str());
+
+  RIRBuilder builder;
+  builder.bin_width = Receiver::bin_width;
+
+  std::vector<std::vector<float>> dry(num_emitters);
+  for (std::size_t e = 0; e < num_emitters; ++e) {
+    if (!load_dry(dry_paths[e], builder.sample_rate, dry[e]))
+      continue;
+    if (sim.scene.emitters[e].source_power)
+      normalise_rms(dry[e]);
   }
 
   std::string stem;
@@ -158,27 +214,26 @@ int main(int argc, char *argv[]) {
     stem = r_particles + "_" + geometry;
   }
 
-  // receiver converted to rir then convolved with input
-  if (!sim.scene.receivers.empty()) {
-    RIRBuilder builder;
-    builder.bin_width = Receiver::bin_width;
+  // one RIR per (receiver, emitter) pair, convolved with that emitter's dry
+  // signal; the wet signals are summed so relative source levels are kept
+  for (std::size_t r = 0; r < sim.scene.receivers.size(); ++r) {
+    const Receiver &rec = sim.scene.receivers[r];
+    std::vector<float> mix;
 
-    const std::size_t num_receivers = sim.scene.receivers.size();
+    for (std::size_t e = 0; e < num_emitters; ++e) {
+      const std::string tag =
+          "_r" + std::to_string(r) + "_e" + std::to_string(e);
 
-    for (std::size_t h = 0; h < num_receivers; h++) {
-      std::string rir_path =
-          "../output/" + stem + "_rir_" + std::to_string(h) + ".wav";
-      std::string output_path =
-          "../output/" + stem + "_" + std::to_string(h) + ".wav";
-
-      std::vector<float> rir = builder.build(sim.scene.receivers[h].histogram);
+      // independent noise carrier per pair, so sources don't correlate
+      builder.seed = 1234 + static_cast<unsigned>(r * num_emitters + e);
+      std::vector<float> rir =
+          builder.build(apply_power(rec.histograms[e], sim.scene.emitters[e]));
       if (rir.empty()) {
-        std::printf("Receiver %zu: RIR is empty (no energy reached it).\n", h);
+        std::printf("Receiver %zu, emitter %zu: no energy arrived.\n", r, e);
         continue;
       }
 
-      // histogram is already normalised (1/N per particle)
-
+      const std::string rir_path = "../output/" + stem + "_rir" + tag + ".wav";
       Audio rir_audio{builder.sample_rate, rir};
       if (!wav_write(rir_path, rir_audio)) {
         std::printf("Failed to write %s (directory must exist)\n",
@@ -189,16 +244,39 @@ int main(int argc, char *argv[]) {
                   rir.size(),
                   rir.size() / static_cast<double>(builder.sample_rate));
 
-      if (!wav_write("rir.wav", rir_audio))
+      // default input for ParticleSoundSimConvolve
+      if (r == 0 && e == 0 && !wav_write("rir.wav", rir_audio))
         std::printf("Failed to write rir.wav\n");
 
-      // reading and convolving with input
-      if (!convolve_input_file(input_path, rir, builder.sample_rate,
-                               output_path)) {
-        return 1;
-      }
-    }
-  }
+      if (dry[e].empty())
+        continue; // dry file is missing, nothing to convolve
 
+      std::vector<float> wet = convolve(dry[e], rir);
+
+      if (wet.size() > mix.size())
+        mix.resize(wet.size(), 0.0f);
+      for (std::size_t i = 0; i < wet.size(); ++i)
+        mix[i] += wet[i];
+
+      // per-source listening copy, normalised on its own
+      normalize_peak(wet);
+      wav_write("../output/" + stem + tag + ".wav",
+                Audio{builder.sample_rate, wet});
+    }
+
+    if (mix.empty())
+      continue;
+
+    // normalise the sum only, so relative source levels survive
+    normalize_peak(mix);
+    const std::string output_path =
+        "../output/" + stem + "_" + std::to_string(r) + ".wav";
+    if (!wav_write(output_path, Audio{builder.sample_rate, mix})) {
+      std::printf("Failed to write %s (directory must exist)\n",
+                  output_path.c_str());
+      return 1;
+    }
+    std::printf("Wrote %s\n", output_path.c_str());
+  }
   return 0;
 }

@@ -2,6 +2,29 @@
 #include "Convolver.hpp"
 #include "Wav.hpp"
 #include <cstdio>
+#include <utility>
+
+bool load_dry(const std::string &path, int target_rate,
+              std::vector<float> &out) {
+  Audio dry;
+  if (!wav_read(path, dry)) {
+    std::printf("No %s found.\n", path.c_str());
+    return false;
+  }
+
+  if (dry.sample_rate != target_rate) {
+    std::printf("Resampling %s from %d Hz to %d Hz\n", path.c_str(),
+                dry.sample_rate, target_rate);
+    dry.samples = resample(dry.samples, dry.sample_rate, target_rate);
+    if (dry.samples.empty()) {
+      std::printf("Resampling failed.\n");
+      return false;
+    }
+  }
+
+  out = std::move(dry.samples);
+  return true;
+}
 
 bool convolve_input_file(const std::string &input_path,
                          const std::vector<float> &rir, int rir_sample_rate,
@@ -11,26 +34,15 @@ bool convolve_input_file(const std::string &input_path,
     return false;
   }
 
-  Audio dry;
-  if (!wav_read(input_path, dry)) {
-    std::printf("No %s found, skipping convolution.\n", input_path.c_str());
-    return true; // absence of input is not an error
+  std::vector<float> dry;
+  if (!load_dry(input_path, rir_sample_rate, dry)) {
+    std::printf("Skipping convolution.\n");
+    return true;
   }
 
-  if (dry.sample_rate != rir_sample_rate) {
-    std::printf("Resampling %s from %d Hz to %d Hz\n", input_path.c_str(),
-                dry.sample_rate, rir_sample_rate);
-    dry.samples = resample(dry.samples, dry.sample_rate, rir_sample_rate);
-    dry.sample_rate = rir_sample_rate;
-    if (dry.samples.empty()) {
-      std::printf("Resampling failed, skipping convolution.\n");
-      return false;
-    }
-  }
+  std::vector<float> wet = convolve(dry, rir);
 
-  std::vector<float> wet = convolve(dry.samples, rir);
-
-  if (!wav_write(output_path, Audio{dry.sample_rate, wet})) {
+  if (!wav_write(output_path, Audio{rir_sample_rate, wet})) {
     std::printf("Failed to write %s (directory must exist)\n",
                 output_path.c_str());
     return false;

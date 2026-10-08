@@ -16,6 +16,9 @@ bool wav_write(const std::string &path, const Audio &in);
 // old peak normalisation
 void normalize_peak(std::vector<float> &samples, float peak = 0.9f);
 
+// dry-signal calibration
+void normalise_rms(std::vector<float> &samples, float rms = 1.0f);
+
 // resamples audio to out_rate
 std::vector<float> resample(const std::vector<float> &in, int in_rate,
                             int out_rate);

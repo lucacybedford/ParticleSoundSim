@@ -86,3 +86,18 @@ void normalize_peak(std::vector<float> &samples, float peak) {
   for (float &v : samples)
     v *= g;
 }
+
+void normalise_rms(std::vector<float> &samples, float rms) {
+  if (samples.empty())
+    return;
+
+  double sum_sq = 0.0;
+  for (float v : samples)
+    sum_sq += static_cast<double>(v) * v;
+  double current = std::sqrt(sum_sq / samples.size());
+  if (current <= 0.0)
+    return; // silent input
+  float g = static_cast<float>(rms / current);
+  for (float &v : samples)
+    v *= g;
+}

@@ -10,6 +10,10 @@ Simulation::Simulation(Scene scene_in, SimConfig cfg_in,
 
   const double c = atmosphere.sound_speed();
 
+  for (Receiver &r : scene.receivers) {
+    r.histograms.assign(scene.emitters.size(), {});
+  }
+
   for (unsigned int e = 0; e < scene.emitters.size(); ++e) {
     auto emitted = scene.emitters[e].emit(cfg.num_particles, c, rng, e);
     particles.insert(particles.end(), emitted.begin(), emitted.end());
