@@ -1,4 +1,6 @@
+#include "AirAbsorption.hpp"
 #include "Convolver.hpp"
+#include "Levels.hpp"
 #include "Materials.hpp"
 #include "Metrics.hpp"
 #include "Scene.hpp"
@@ -80,6 +82,13 @@ static const std::vector<double> kConvInputSeconds = {
 
 static constexpr double kConvRirSweepInputSeconds = 10.0;
 static const std::vector<double> kConvRirSweepSeconds = {0.25, 0.5, 1.0, 2.0};
+
+// freefield mode: one emitter, no planes, receivers on four axes so none
+// shadows another
+static constexpr unsigned int kFreeParticles = 2000000;
+static constexpr double kFreeRadius = 0.2;
+static constexpr double kFreeL_W = 90.0; // dB re 1 pW, every band
+static const std::vector<double> kFreeDistances = {1.0, 2.0, 4.0, 8.0};
 
 static constexpr unsigned int kSeedStart = 1;
 
@@ -616,6 +625,79 @@ static int run_convolve() {
                              rir_sweep);
 }
 
+// steady-state SPL smoke test: constant source in free field against
+// W/(4 pi d^2), with and without ISO 9613-1 air absorption over d
+static int run_freefield() {
+  SimConfig cfg;
+  cfg.num_particles = kFreeParticles;
+  cfg.dt = 0.005;
+  cfg.max_time = 1.2 * kFreeDistances.back() / Atmosphere{}.sound_speed();
+  cfg.deterministic = true;
+  cfg.seed = kSeedStart;
+
+  BandEnergies L_W;
+  L_W.fill(kFreeL_W);
+  Scene scene;
+  scene.emitters.emplace_back(dvec3{0.0, 0.0, 0.0});
+  scene.emitters[0].set_power_dB(L_W);
+  const std::array<dvec3, 4> axes{dvec3{1, 0, 0}, dvec3{-1, 0, 0},
+                                  dvec3{0, 1, 0}, dvec3{0, -1, 0}};
+  for (std::size_t i = 0; i < kFreeDistances.size(); ++i)
+    scene.receivers.emplace_back(axes[i % axes.size()] * kFreeDistances[i],
+                                 kFreeRadius);
+
+  Atmosphere atm;
+  Simulation sim(scene, cfg, atm);
+  sim.run_offline();
+
+  const double rho_c = atm.air_density() * atm.sound_speed();
+  const BandEnergies &W = *sim.scene.emitters[0].source_power;
+  std::printf("Free field: N = %u, r = %.2f m, L_W = %.1f dB, rho c = %.1f\n",
+              kFreeParticles, kFreeRadius, kFreeL_W, rho_c);
+
+  std::ofstream csv = open_csv(kConvOutDir + "/freefield_spl.csv");
+  csv << "distance_m,band_hz,hits,spl_sim,spl_geom,spl_air,diff_geom,diff_air\n";
+
+  for (std::size_t i = 0; i < kFreeDistances.size(); ++i) {
+    const Receiver &rec = sim.scene.receivers[i];
+    const double d = kFreeDistances[i];
+    std::vector<BandEnergies> hist = rec.histograms[0];
+    for (BandEnergies &bin : hist)
+      for (int b = 0; b < kNumBands; ++b)
+        bin[b] *= W[b];
+    const BandEnergies L = levels::band_spl(
+        levels::steady_intensity(hist, rec.size), rho_c);
+
+    BandEnergies air_gain;
+    air_gain.fill(1.0);
+    sim.air.attenuate_total(air_gain, d);
+
+    // every hit carries 1/N times the air loss, so the hit count follows
+    // from the 63 Hz sum (air loss there is negligible)
+    double sum63 = 0;
+    for (const BandEnergies &bin : rec.histograms[0])
+      sum63 += bin[0];
+    const double hits = sum63 * kFreeParticles / air_gain[0];
+
+    std::printf("d = %.0f m, ~%.0f hits (MC 1-sigma ~%.2f dB)\n", d, hits,
+                hits > 0 ? 4.343 / std::sqrt(hits) : 0.0);
+    std::printf("  band    sim    W/4pid2  +air    diff  diff(air)\n");
+    for (int b = 0; b < kNumBands; ++b) {
+      const double I_geom = W[b] / (4 * M_PI * d * d);
+      const double L_geom = levels::spl_dB(I_geom, rho_c);
+      const double L_air = levels::spl_dB(I_geom * air_gain[b], rho_c);
+      std::printf("  %5.0f  %6.2f  %6.2f  %6.2f  %+6.2f  %+6.2f\n",
+                  kBandCentres[b], L[b], L_geom, L_air, L[b] - L_geom,
+                  L[b] - L_air);
+      csv << d << "," << kBandCentres[b] << "," << hits << "," << L[b] << ","
+          << L_geom << "," << L_air << "," << L[b] - L_geom << ","
+          << L[b] - L_air << "\n";
+    }
+  }
+  std::printf("Wrote %s/freefield_spl.csv\n", kConvOutDir.c_str());
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
   std::string mode = (argc >= 2) ? argv[1] : "variance";
 
@@ -641,10 +723,12 @@ int main(int argc, char *argv[]) {
     return run_convolve();
   if (mode == "decay")
     return run_decay(20);
+  if (mode == "freefield")
+    return run_freefield();
 
   std::printf(
       "Unknown mode '%s' (expected 'variance', 'sweep', 'config', 'edc', "
-      "'scatter', 'convolve' or 'decay')\n",
+      "'scatter', 'convolve', 'decay' or 'freefield')\n",
       mode.c_str());
   return 1;
 }

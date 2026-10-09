@@ -18,10 +18,12 @@ time `t_k`). A source of power `W_b(t)` gives
 `W_b·Σ_k H_b(k)/(πr²)`. One trace serves any source spectrum or thrust setting,
 and a moving source can weight particles by `W_b(t_emit)` afterwards.
 
-- [ ] Receiver bins → intensity by convolving `W_b(t)` with `H_b` (summed form for a constant source; no emission duration `T`) → `p² = ρc·I` → SPL dB re 20 µPa per band; output SPL vs time and Leq
+- [x] Receiver bins → intensity, constant source: `I_b = W_b·Σ_k H_b(k)/(πr²)` → `p² = ρc·I` → SPL dB re 20 µPa per band plus overall (energy sum over bands); `include/Levels.hpp`, `Atmosphere::air_density()`, printed per receiver by `app_offline` when every emitter has a power (09-10-2026)
+- [ ] Time-varying source: convolve `W_b(t)` with `H_b` → SPL vs time and Leq (not started; needs a source time history to convolve with)
 - [ ] Normalisation checks: (a) multiply initial energy by a constant `c` — every bin must scale by `c` (bit-exact if `c` is a power of 2; nothing depends on absolute energy); (b) trace at two particle counts `N` — SPL must agree within Monte Carlo noise
 - [ ] Replace the `1/√N` RIR calibration in `app_offline.cpp` with the physical scaling; choose a stated dBFS ↔ Pa reference for WAV output
 - [ ] Validate: free-field direct sound vs `W/(4πd²)`; reverberant level in a room vs `L_W + 10·log10(4/A)` (Sabine diffuse field)
+  - Free-field smoke test (09-10-2026, `ParticleSoundSimExperiments freefield`, N = 2M, r = 0.2 m, d = 1/2/4/8 m): within +0.08/+0.04/+0.06/−0.29 dB of `W/(4πd²)` with air absorption over `d`, all inside 1.2σ of Monte Carlo noise. Without air absorption, 8 kHz is −1.2 dB at 8 m, which is the air loss. Still to do: multiple seeds, the `r/d` bias of the capture sphere (+0.04 dB at r/d = 0.2), and the room case
 
 ### Moving emitters
 

@@ -20,7 +20,7 @@ This produces four executables in `build/`:
 ./build/ParticleSoundSim
 ./build/ParticleSoundSimOffline [dry.wav]
 ./build/ParticleSoundSimConvolve [rir.wav] [dry.wav] [output.wav]
-./build/ParticleSoundSimExperiments <variance|sweep|config|edc|scatter|convolve|decay>
+./build/ParticleSoundSimExperiments <variance|sweep|config|edc|scatter|convolve|decay|freefield>
 ```
 
 The experiment and offline apps write to paths relative to `build/`, so run them from there.

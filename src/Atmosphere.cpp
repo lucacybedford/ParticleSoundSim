@@ -6,6 +6,20 @@ double Atmosphere::sound_speed() const {
   return c0 * std::sqrt((273.15 + temperature_c) / 293.15);
 }
 
+// ideal-gas density of humid air: dry air and water vapour partial pressures
+double Atmosphere::air_density() const {
+  constexpr double R_d = 287.058; // J/(kg K), dry air
+  constexpr double R_v = 461.495; // J/(kg K), water vapour
+  constexpr double T01 = 273.16;
+  const double T = temperature_c + 273.15;
+  const double p = pressure_kpa * 1e3;
+  // saturation vapour pressure, same expression as ISO 9613-1 below
+  const double p_sat =
+      101325.0 * std::pow(10.0, -6.8346 * std::pow(T01 / T, 1.261) + 4.6151);
+  const double p_v = humidity / 100.0 * p_sat;
+  return (p - p_v) / (R_d * T) + p_v / (R_v * T);
+}
+
 // ISO 9613-1 atmospheric absorption
 double Atmosphere::absorption_dB_per_m(double f) const {
   constexpr double pr = 101.325; // reference pressure, kPa

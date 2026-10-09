@@ -6,6 +6,7 @@ struct Atmosphere {
   double pressure_kpa = 101.325; // atmospheric pressure
 
   double sound_speed() const;
+  double air_density() const; // kg/m^3, humid air
 
   double absorption_dB_per_m(double f) const;
   double absorption_m(double f) const;

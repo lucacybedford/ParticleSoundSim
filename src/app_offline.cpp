@@ -1,6 +1,7 @@
 #include "Bands.hpp"
 #include "ConvolveInput.hpp"
 #include "Convolver.hpp"
+#include "Levels.hpp"
 #include "Materials.hpp"
 #include "RIRBuilder.hpp"
 #include "Scene.hpp"
@@ -124,6 +125,10 @@ int main(int argc, char *argv[]) {
     std::printf(
         "Some emitters do not have source power: inconsistent levels.\n");
 
+  BandEnergies L_W;
+  L_W.fill(70.0);
+  room.emitters[0].set_power_dB(L_W);
+
   Simulation sim(room, cfg, air);
 
   std::printf("Speed of sound: %.2f m/s (T = %.1f C)\n", air.sound_speed(),
@@ -137,6 +142,11 @@ int main(int argc, char *argv[]) {
 
   std::printf("Offline run finished at t = %.3f s, %zu particles still alive\n",
               sim.time, sim.particles.size());
+
+  bool all_powered = true;
+  for (const Emitter &em : sim.scene.emitters)
+    all_powered = all_powered && em.source_power.has_value();
+  const double rho_c = air.air_density() * air.sound_speed();
 
   // save receiver information to csv file
   for (std::size_t i = 0; i < sim.scene.receivers.size(); ++i) {
@@ -162,6 +172,17 @@ int main(int argc, char *argv[]) {
     std::printf("Receiver %zu: %zu time bins, first arrival = %.1f ms, total "
                 "energy = %g\n",
                 i, hist.size(), first_ms, total);
+
+    // steady-state SPL for constant sources (needs every emitter's power)
+    if (all_powered && total > 0) {
+      const BandEnergies I = levels::steady_intensity(hist, rec.size);
+      const BandEnergies L = levels::band_spl(I, rho_c);
+      std::printf("  SPL (dB re 20 uPa, constant source):");
+      for (int b = 0; b < kNumBands; ++b)
+        std::printf(" %g Hz %.1f%s", kBandCentres[b], L[b],
+                    b + 1 < kNumBands ? "," : "\n");
+      std::printf("  Overall SPL: %.1f dB\n", levels::overall_spl(I, rho_c));
+    }
 
     std::string csv_path;
     if (standard) {
