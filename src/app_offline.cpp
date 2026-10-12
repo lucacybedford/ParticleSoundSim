@@ -125,11 +125,11 @@ int main(int argc, char *argv[]) {
     std::printf(
         "Some emitters do not have source power: inconsistent levels.\n");
 
-  // sets a power level for the first emitter
+  // sets a power level for emitters (in dB re 1 pW at source)
   BandEnergies L_W0;
   BandEnergies L_W1;
   L_W0.fill(70.0);
-  L_W1.fill(120.0);
+  L_W1.fill(75.0);
   room.emitters[0].set_power_dB(L_W0);
   room.emitters[1].set_power_dB(L_W1);
 

@@ -9,6 +9,7 @@ Emitter::Emitter(const dvec3 &x, float h_start, float h_end, float v_start,
       v_ang_end(v_end) {}
 
 void Emitter::set_power_dB(const BandEnergies &L_W) {
+  // takes sound power level (dB) and outputs power in Watts
   BandEnergies W;
   for (int b = 0; b < kNumBands; ++b) {
     W[b] = 1e-12 * std::pow(10, L_W[b] / 10);
