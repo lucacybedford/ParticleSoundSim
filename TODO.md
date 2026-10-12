@@ -4,19 +4,9 @@
 
 ## In Progress
 
-Priorities from supervisors, 01-10-2026. Absolute energy first (Luca,
-05-10-2026): moving-emitter validation is in physical levels, and moving
-emitters need more research before implementing.
+- [ ] Design large 'outdoor' room
 
 ### Absolute energy units
-
-Approach (05-10-2026): trace normalised energy, apply sound power at output.
-Propagation is linear in energy, so the trace is an energy impulse response:
-`H_b(k)` is the fraction of emitted energy landing in receiver bin `k` (arrival
-time `t_k`). A source of power `W_b(t)` gives
-`I_b(t) = (1/πr²)·Σ_k W_b(t − t_k)·H_b(k)`; for a constant source this is
-`W_b·Σ_k H_b(k)/(πr²)`. One trace serves any source spectrum or thrust setting,
-and a moving source can weight particles by `W_b(t_emit)` afterwards.
 
 - [ ] Time-varying source: convolve `W_b(t)` with `H_b` → SPL vs time and Leq (not started; needs a source time history to convolve with)
 - [ ] Normalisation checks: (a) multiply initial energy by a constant `c` — every bin must scale by `c` (bit-exact if `c` is a power of 2; nothing depends on absolute energy); (b) trace at two particle counts `N` — SPL must agree within Monte Carlo noise
