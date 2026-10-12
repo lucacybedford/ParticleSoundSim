@@ -30,9 +30,9 @@ int main() {
   Material room_material = materials::mConcrete;
 
   Atmosphere air;
-  // Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
+  Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
   // Simulation sim(make_cathedral(room_material), cfg, air);
-  Simulation sim(make_coupled_rooms(), cfg, air);
+  // Simulation sim(make_coupled_rooms(), cfg, air);
 
   // dt is not tied to Receiver::bin_width: Particle::move resolves the exact
   // crossing time within a step, so arrivals land in the right 1 ms bin even
@@ -50,6 +50,9 @@ int main() {
 
   glfwMakeContextCurrent(window);
   glfwSetScrollCallback(window, scroll_callback);
+
+  float xscale, yscale;
+  glfwGetWindowContentScale(window, &xscale, &yscale);
 
   dvec3 bb_min{1e30}, bb_max{-1e30};
   for (const Plane &pl : sim.scene.planes) {
@@ -115,7 +118,7 @@ int main() {
     }
 
     // Draw particles
-    glPointSize(POINT_RADIUS * 2);
+    glPointSize(POINT_RADIUS * xscale);
     glBegin(GL_POINTS);
     for (Particle &p : sim.particles) {
       double energy = p.check_energy();
@@ -129,7 +132,7 @@ int main() {
     glEnd();
 
     // Draw receivers
-    glPointSize(14);
+    glPointSize(14 * xscale);
     glBegin(GL_POINTS);
     for (const Receiver &r : sim.scene.receivers) {
       glColor3f(1.0f, 0.0f, 0.0f);
@@ -138,7 +141,7 @@ int main() {
     glEnd();
 
     // Draw emitters
-    glPointSize(10);
+    glPointSize(10 * xscale);
     glBegin(GL_POINTS);
     for (const Emitter &e : sim.scene.emitters) {
       glColor3f(0.7f, 1.0f, 0.0f);

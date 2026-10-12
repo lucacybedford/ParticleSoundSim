@@ -61,6 +61,7 @@ Scene make_room(double width, double length, double height,
   const double src_z = std::min(1.6, 0.25 * height);
   const double rcv_z = std::min(1.2, 0.20 * height);
 
+  scene.emitters.emplace_back(dvec3{-0.10 * width, 0.30 * length, src_z});
   scene.emitters.emplace_back(dvec3{0.10 * width, -0.30 * length, src_z});
   scene.receivers.emplace_back(
       Receiver{{-0.06 * width, -0.08 * length, rcv_z}, 0.5});
