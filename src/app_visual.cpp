@@ -34,10 +34,6 @@ int main() {
   // Simulation sim(make_cathedral(room_material), cfg, air);
   // Simulation sim(make_coupled_rooms(), cfg, air);
 
-  // dt is not tied to Receiver::bin_width: Particle::move resolves the exact
-  // crossing time within a step, so arrivals land in the right 1 ms bin even
-  // when dt is much larger.
-
   GLFWwindow *window;
   if (!glfwInit())
     return -1;
