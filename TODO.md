@@ -6,6 +6,12 @@
 
 - [ ] Design large 'outdoor' room
 
+### Use Blender for scene generation
+
+- [ ] Convert Planes to use polygons
+- [ ] Write scene parser to convert scene file to Scene object
+- [ ] Write python exporter for Blender
+
 ### Absolute energy units
 
 - [ ] Time-varying source: convolve `W_b(t)` with `H_b` → SPL vs time and Leq (not started; needs a source time history to convolve with)

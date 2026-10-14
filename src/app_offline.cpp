@@ -46,7 +46,6 @@ static bool write_histogram_csv(const std::string &path,
   if (!out)
     return false;
 
-  // enough digits to round-trip the analysis in the plotting scripts
   out << std::setprecision(10);
 
   out << "time_ms";
