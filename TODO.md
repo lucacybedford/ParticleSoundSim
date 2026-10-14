@@ -8,7 +8,7 @@
 
 ### Use Blender for scene generation
 
-- [ ] Convert Planes to use polygons
+- [x] Convert Planes to use polygons
 - [ ] Write scene parser to convert scene file to Scene object
 - [ ] Write python exporter for Blender
 

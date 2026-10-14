@@ -30,8 +30,8 @@ int main() {
   Material room_material = materials::mStone;
 
   Atmosphere air;
-  // Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
-  Simulation sim(make_cathedral(room_material), cfg, air);
+  Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
+  // Simulation sim(make_cathedral(room_material), cfg, air);
   // Simulation sim(make_coupled_rooms(), cfg, air);
 
   GLFWwindow *window;

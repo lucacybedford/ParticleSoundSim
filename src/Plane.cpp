@@ -9,7 +9,7 @@
 // any unit vector perpendicular to n
 static dvec3 tangent_for(const dvec3 &n) {
   if (std::abs(n[2]) > 0.999)
-    return {1, 0, 0};
+    return glm::normalize(dvec3{1, 0, 0} - n[0] * n);
   return glm::normalize(dvec3{-n[1], n[0], 0});
 }
 
@@ -42,6 +42,23 @@ Plane::Plane(std::vector<dvec3> vertices, const Material &material)
     throw std::invalid_argument("Plane: degenerate polygon (zero area)");
   n = glm::normalize(sum);
 
+  // check planarity
+  for (const dvec3 &v : corners)
+    if (std::abs(glm::dot(v - p, n)) > 1e-5)
+      throw std::invalid_argument("Plane: polygon is not planar");
+
+  // check polygon is convex and no duplicate vertices
+  for (std::size_t i = 0; i < k; ++i) {
+    const dvec3 e0 = corners[(i + 1) % k] - corners[i];
+    const dvec3 e1 = corners[(i + 2) % k] - corners[(i + 1) % k];
+    const double l0 = glm::length(e0), l1 = glm::length(e1);
+    if (l0 < 1e-9)
+      throw std::invalid_argument("Plane: duplicate consecutive vertices");
+    const double turn = glm::dot(glm::cross(e0, e1), n);
+    if (turn < -1e-9 * l0 * l1)
+      throw std::invalid_argument("Plane: polygon is not convex");
+  }
+
   // get tangents
   h_tangent = tangent_for(n);
   v_tangent = glm::cross(n, h_tangent);
@@ -57,3 +74,11 @@ Plane::Plane(dvec3 normal, dvec3 point, double length, double height,
              const Material &material)
     : Plane(rect_corners(glm::normalize(normal), point, length, height),
             material) {}
+
+bool Plane::contains(const dvec3 &x) const {
+  constexpr double eps = 1e-9;
+  for (std::size_t i = 0; i < corners.size(); ++i)
+    if (glm::dot(x - corners[i], edge_normals[i]) < -eps)
+      return false;
+  return true;
+}

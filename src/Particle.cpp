@@ -91,9 +91,7 @@ void Particle::move(double time, double dt, std::vector<Plane> &planes,
         continue;
       // verify the crossing is on the finite segment, not the infinite plane
       dvec3 x_hit = x + t * (x_new - x);
-      double h_dist = glm::dot(x_hit - p.p, p.h_tangent);
-      double v_dist = glm::dot(x_hit - p.p, p.v_tangent);
-      if (std::abs(h_dist) > p.l / 2 || std::abs(v_dist) > p.h / 2)
+      if (!p.contains(x_hit))
         continue;
       minT = t;
       closestPlane = &p;
