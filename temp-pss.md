@@ -84,7 +84,7 @@ receiver -0.24 -0.56 1.2 0.5
 - [x] the hardcoded `set_power_dB` at `app_offline.cpp:132-133` applies only to the factory scenes, or to emitters with no `source_power`; a file's power wins
 
 ### 5. Tests
-- [ ] save `make_room(4, 7, 3, wood)` → load → run. Total energy and T30 should match the status table above within noise.
+- [x] save `make_room(4, 7, 3, wood)` → load → run. Total energy and T30 should match the status table above within noise.
 - [x] write the triangulated shoebox by hand (12 triangles) and run it: the seam-leak test carried over from `temp-polygon.md`
 - [x] save every factory scene to a `.pss` file, as reference files for the Blender exporter
 - [x] error cases: unknown material, wrong vertex count, non-planar face, missing version, leftover token. Each gives a message with the line number.
