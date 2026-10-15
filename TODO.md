@@ -9,7 +9,9 @@
 ### Use Blender for scene generation
 
 - [x] Convert Planes to use polygons
-- [ ] Write scene parser to convert scene file to Scene object
+- [x] Write scene parser to convert scene file to Scene object (15-10-2026, `fe3e82c`)
+- [x] Scene saver writes a `Scene` to `.pss`; `app_offline` takes the scene file as an argument; hard-coded scenes saved in `scenes/` (15-10-2026, `e2aa88a`, `3e763a8`, `e428aad`)
+- [ ] Check that each `.pss` scene reproduces its hard-coded original (in `6297e58` the `4x7x3_wood_room` outputs changed size; not yet explained)
 - [ ] Write python exporter for Blender
 
 ### Absolute energy units
