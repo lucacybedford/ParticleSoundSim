@@ -1,0 +1,26 @@
+# ParticleSoundSim scene
+# Seam-leak test: the 4 x 7 x 3 m wood shoebox with each face split into
+# two triangles (12 planes). Total energy and T30 should match
+# shoebox_4x7x3_wood.pss within ~1%; particles escaping through the
+# diagonal seams would show up as lower energy / shorter decay.
+pss 1
+
+# each quad (v0 v1 v2 v3) is split into (v0 v1 v2) and (v0 v2 v3),
+# which keeps the CCW-from-inside winding
+plane wood 3   -2 -3.5 0    2 -3.5 0    2  3.5 0     # floor
+plane wood 3   -2 -3.5 0    2  3.5 0   -2  3.5 0
+plane wood 3   -2 -3.5 3   -2  3.5 3    2  3.5 3     # ceiling
+plane wood 3   -2 -3.5 3    2  3.5 3    2 -3.5 3
+plane wood 3   -2 -3.5 0   -2  3.5 0   -2  3.5 3     # wall x=-2
+plane wood 3   -2 -3.5 0   -2  3.5 3   -2 -3.5 3
+plane wood 3    2 -3.5 0    2 -3.5 3    2  3.5 3     # wall x=+2
+plane wood 3    2 -3.5 0    2  3.5 3    2  3.5 0
+plane wood 3   -2 -3.5 0   -2 -3.5 3    2 -3.5 3     # wall y=-3.5
+plane wood 3   -2 -3.5 0    2 -3.5 3    2 -3.5 0
+plane wood 3   -2  3.5 0    2  3.5 0    2  3.5 3     # wall y=+3.5
+plane wood 3   -2  3.5 0    2  3.5 3   -2  3.5 3
+
+emitter -0.4  2.1 0.75  power_db 70 70 70 70 70 70 70 70
+emitter  0.4 -2.1 0.75  power_db 75 75 75 75 75 75 75 75
+
+receiver -0.24 -0.56 0.6 0.5

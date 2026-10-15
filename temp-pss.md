@@ -59,20 +59,20 @@ receiver -0.24 -0.56 1.2 0.5
 ## Steps
 
 ### 1. Material lookup
-- [ ] in `Materials.hpp`, a way to find a stock material by name (e.g. a function that returns the stock materials as a `std::map<std::string, Material>`)
+- [x] in `Materials.hpp`, a way to find a stock material by name (e.g. a function that returns the stock materials as a `std::map<std::string, Material>`)
 
 ### 2. Loader
-- [ ] `Scene load_scene(const std::string &path);` declared in `Scene.hpp`. It throws `std::runtime_error("file:line: ...")`.
-- [ ] reject paths that don't end in `.pss`
-- [ ] read with `std::getline`; strip everything after `#`; skip blank lines
-- [ ] read the keyword with `std::istringstream`, then dispatch
-- [ ] require `pss 1` as the first record
-- [ ] `material`: check the `absorption` / `scattering` labels, then `materials::make(name, absorption, scattering)`, then insert into the map (overriding a stock entry is allowed)
-- [ ] `plane`: look up the material (unknown name → error), read k, read 3k numbers, then construct a `Plane`. **Catch `std::invalid_argument` from `Plane` and rethrow it with the line number.**
-- [ ] `emitter`: position, then loop over the optional keywords; `power_db` → `set_power_dB`; convert the angles from degrees
-- [ ] `receiver`: position + radius (radius > 0)
-- [ ] after each record, **check for leftover tokens** (`iss >> extra` succeeding means an error). This catches typos like `power_dB`.
-- [ ] every numeric read is checked (`if (!(iss >> x))` → error naming the field)
+- [x] `Scene load_scene(const std::string &path);` declared in `Scene.hpp`. It throws `std::runtime_error("file:line: ...")`.
+- [x] reject paths that don't end in `.pss`
+- [x] read with `std::getline`; strip everything after `#`; skip blank lines
+- [x] read the keyword with `std::istringstream`, then dispatch
+- [x] require `pss 1` as the first record
+- [x] `material`: check the `absorption` / `scattering` labels, then `materials::make(name, absorption, scattering)`, then insert into the map (overriding a stock entry is allowed)
+- [x] `plane`: look up the material (unknown name → error), read k, read 3k numbers, then construct a `Plane`. **Catch `std::invalid_argument` from `Plane` and rethrow it with the line number.**
+- [x] `emitter`: position, then loop over the optional keywords; `power_db` → `set_power_dB`; convert the angles from degrees
+- [x] `receiver`: position + radius (radius > 0)
+- [x] after each record, **check for leftover tokens** (`iss >> extra` succeeding means an error). This catches typos like `power_dB`.
+- [x] every numeric read is checked (`if (!(iss >> x))` → error naming the field)
 
 ### 3. Saver
 - [ ] `void save_scene(const Scene &, const std::string &path);`, about 20 lines: `pss 1`, a `material` line for any material that isn't stock, a `plane` line from `corners` + `material.name`, then emitters and receivers

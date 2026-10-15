@@ -88,31 +88,32 @@ int main(int argc, char *argv[]) {
   const Material &room_material = materials::mSolidWood;
   std::string geometry;
   Scene room;
-  switch (which) {
-  case Room::Standard:
-    room = make_standard();
-    geometry = "standard";
-    break;
-  case Room::Cathedral:
-    room = make_cathedral(room_material);
-    geometry = "cathedral_" + room_material.name;
-    break;
-  case Room::LivingRoom:
-    room = make_common_room();
-    geometry = "living_room";
-    break;
-  case Room::CoupledRooms:
-    room = make_coupled_rooms();
-    geometry = "coupled_rooms";
-    break;
-  case Room::Box:
-    room = make_room(room_width, room_length, room_height, room_material);
-    geometry = std::to_string(static_cast<int>(room_width)) + "x" +
-               std::to_string(static_cast<int>(room_length)) + "x" +
-               std::to_string(static_cast<int>(room_height)) + "_" +
-               room_material.name + "_room";
-    break;
-  }
+  room = load_scene("../scenes/hall_stage_gable.pss");
+  // switch (which) {
+  // case Room::Standard:
+  //   room = make_standard();
+  //   geometry = "standard";
+  //   break;
+  // case Room::Cathedral:
+  //   room = make_cathedral(room_material);
+  //   geometry = "cathedral_" + room_material.name;
+  //   break;
+  // case Room::LivingRoom:
+  //   room = make_common_room();
+  //   geometry = "living_room";
+  //   break;
+  // case Room::CoupledRooms:
+  //   room = make_coupled_rooms();
+  //   geometry = "coupled_rooms";
+  //   break;
+  // case Room::Box:
+  //   room = make_room(room_width, room_length, room_height, room_material);
+  //   geometry = std::to_string(static_cast<int>(room_width)) + "x" +
+  //              std::to_string(static_cast<int>(room_length)) + "x" +
+  //              std::to_string(static_cast<int>(room_height)) + "_" +
+  //              room_material.name + "_room";
+  //   break;
+  // }
 
   // check all emitters have or do not have power
   size_t em_with_power = 0;

@@ -1,0 +1,25 @@
+# ParticleSoundSim scene
+# 4 x 7 x 3 m wood shoebox: same geometry, sources and receiver as
+# make_room(4, 7, 3, materials::mSolidWood). Results should match that
+# factory scene within noise.
+pss 1
+
+# identical to stock wood, so the physics is unchanged; exercises the
+# material record (used on the ceiling)
+material wood2  absorption 0.19 0.19 0.23 0.25 0.30 0.37 0.42 0.42  scattering 0.30
+
+# plane <material> <k> then x y z per vertex, CCW viewed from inside
+plane wood  4   -2 -3.5 0    2 -3.5 0    2  3.5 0   -2  3.5 0   # floor     (+z)
+plane wood2 4   -2 -3.5 3   -2  3.5 3    2  3.5 3    2 -3.5 3   # ceiling   (-z)
+plane wood  4   -2 -3.5 0   -2  3.5 0   -2  3.5 3   -2 -3.5 3   # wall x=-2 (+x)
+plane wood  4    2 -3.5 0    2 -3.5 3    2  3.5 3    2  3.5 0   # wall x=+2 (-x)
+plane wood  4   -2 -3.5 0   -2 -3.5 3    2 -3.5 3    2 -3.5 0   # wall y=-3.5 (+y)
+plane wood  4   -2  3.5 0    2  3.5 0    2  3.5 3   -2  3.5 3   # wall y=+3.5 (-y)
+
+# emitter x y z [power_db 8 values] [h_ang start end] [v_ang start end]
+# emitter 1's angles equal the defaults (full sphere), so physics is unchanged
+emitter -0.4  2.1 0.75  power_db 70 70 70 70 70 70 70 70
+emitter  0.4 -2.1 0.75  v_ang -90 90  power_db 75 75 75 75 75 75 75 75  h_ang 0 360
+
+# receiver x y z radius
+receiver -0.24 -0.56 0.6 0.5

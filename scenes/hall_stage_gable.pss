@@ -1,0 +1,66 @@
+# ParticleSoundSim scene
+# Small hall: 6 x 10 m floor plan, 4 m walls, gable roof with ridge at 6 m
+# running along y. Raised stage (0.6 m) across the +y end. Volume 292.8 m^3.
+#
+# Exercises:
+#   - non-rectangular polygons (gable triangle, pentagon end wall)
+#   - sloped faces (roof), so normals are not axis-aligned
+#   - a non-convex room (the stage step)
+#   - coplanar faces with T-junctions (window, door, absorber panel, carpet
+#     aisle split out of larger surfaces), like a Blender export
+#   - custom materials, several stock materials, directional emitter
+#
+# x: -3 .. 3 (width)   y: -5 .. 5 (length, stage at +y)   z: up
+pss 1
+
+material velvet   absorption 0.05 0.12 0.35 0.45 0.38 0.36 0.36 0.36  scattering 0.30
+material parquet  absorption 0.04 0.04 0.07 0.06 0.06 0.07 0.07 0.07  scattering 0.10
+
+# --- floor, z = 0 (normal +z), y from -5 to the stage riser at y = 3 ---
+plane parquet 4   -3    -5 0   -0.75 -5 0   -0.75 3 0   -3    3 0
+plane carpet  4   -0.75 -5 0    0.75 -5 0    0.75 3 0   -0.75 3 0   # aisle
+plane parquet 4    0.75 -5 0    3    -5 0    3    3 0    0.75 3 0
+
+# --- stage ---
+plane wood 4   -3 3 0     3 3 0     3 3 0.6   -3 3 0.6   # riser, y = 3 (-y)
+plane wood 4   -3 3 0.6   3 3 0.6   3 5 0.6   -3 5 0.6   # top, z = 0.6 (+z)
+
+# --- side wall x = +3 (normal -x), window from y -3..1, z 1.2..3 ---
+plane plaster 4   3 -5 0     3 -5 4     3 -3 4     3 -3 0
+plane plaster 4   3 -3 0     3 -3 1.2   3  1 1.2   3  1 0     # below window
+plane glass   4   3 -3 1.2   3 -3 3     3  1 3     3  1 1.2   # window
+plane plaster 4   3 -3 3     3 -3 4     3  1 4     3  1 3     # above window
+plane plaster 4   3  1 0     3  1 4     3  3 4     3  3 0
+plane plaster 4   3  3 0.6   3  3 4     3  5 4     3  5 0.6   # beside stage
+
+# --- side wall x = -3 (normal +x), absorber panel y -2..0, z 1..3 ---
+plane plaster  4   -3 -5 0   -3 -2 0   -3 -2 4   -3 -5 4
+plane plaster  4   -3 -2 0   -3  0 0   -3  0 1   -3 -2 1    # below panel
+plane absorber 4   -3 -2 1   -3  0 1   -3  0 3   -3 -2 3    # panel
+plane plaster  4   -3 -2 3   -3  0 3   -3  0 4   -3 -2 4    # above panel
+plane plaster  4   -3  0 0   -3  3 0   -3  3 4   -3  0 4
+plane plaster  4   -3  3 0.6 -3  5 0.6 -3  5 4   -3  3 4    # beside stage
+
+# --- back wall y = -5 (normal +y), door x -0.5..0.5, z 0..2.1 ---
+plane plaster 4   -3   -5 0     -3   -5 4     -0.5 -5 4     -0.5 -5 0
+plane wood    4   -0.5 -5 0     -0.5 -5 2.1    0.5 -5 2.1    0.5 -5 0   # door
+plane plaster 4   -0.5 -5 2.1   -0.5 -5 4      0.5 -5 4      0.5 -5 2.1
+plane plaster 4    0.5 -5 0      0.5 -5 4      3   -5 4      3   -5 0
+plane plaster 3   -3   -5 4      0   -5 6      3   -5 4                 # gable
+
+# --- stage end wall y = +5 (normal -y): curtained pentagon above the stage ---
+plane velvet 5   -3 5 0.6   3 5 0.6   3 5 4   0 5 6   -3 5 4
+
+# --- roof (plasterboard), ridge at x = 0, z = 6; eaves at x = +-3, z = 4 ---
+plane plasterboard 4    3 -5 4   0 -5 6   0 5 6    3 5 4   # +x slope
+plane plasterboard 4   -3 -5 4  -3  5 4   0 5 6    0 -5 6  # -x slope
+
+# --- sources on stage (stage top is z = 0.6) ---
+# emitter 0: faces the audience (-y half-space: azimuth 180..360)
+emitter  0   4 2.1  power_db 90 92 94 95 95 93 90 86  h_ang 180 360
+# emitter 1: omnidirectional
+emitter -1.5 4 1.8  power_db 85 85 85 85 85 85 85 85
+
+# --- receivers in the audience ---
+receiver  1.5 -1   1.2 0.5
+receiver -1.5 -3.5 1.2 0.5

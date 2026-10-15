@@ -1,9 +1,176 @@
 #include "Scene.hpp"
+#include "Bands.hpp"
 #include "Emitter.hpp"
 #include "Materials.hpp"
 #include "Receiver.hpp"
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+
+// Scene file loader. Emitters and receivers are indexed in file order:
+// histograms use emitter_id = position in the file, and app_offline
+// relies on emitters[0] / [1].
+Scene load_scene(const std::string &path) {
+  if (std::filesystem::path(path).extension() != ".pss")
+    throw std::runtime_error(path + ": expected a .pss file");
+
+  std::ifstream in(path);
+  if (!in)
+    throw std::runtime_error(path + ": cannot open");
+
+  Scene scene;
+  auto mats = materials::stock();
+  bool have_version = false;
+
+  std::string line;
+  int line_no = 0;
+  while (std::getline(in, line)) {
+    ++line_no;
+    auto fail = [&](const std::string &msg) {
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": " +
+                               msg);
+    };
+    // read one number, naming the field if it's missing or malformed
+    auto read = [&](std::istringstream &iss, double &x,
+                    const std::string &what) {
+      if (!(iss >> x))
+        fail("expected " + what);
+    };
+    auto read_bands = [&](std::istringstream &iss, BandEnergies &out,
+                          const std::string &what) {
+      for (int b = 0; b < kNumBands; ++b)
+        read(iss, out[b], what + " band " + std::to_string(b + 1));
+    };
+
+    if (auto hash = line.find('#'); hash != std::string::npos)
+      line.erase(hash);
+    std::istringstream iss(line);
+    std::string keyword;
+    if (!(iss >> keyword))
+      continue; // blank or comment-only line
+
+    if (!have_version) {
+      int v;
+      if (keyword != "pss")
+        fail("first record must be 'pss <version>'");
+      if (!(iss >> v))
+        fail("expected version number");
+      if (v != 1)
+        fail("unsupported version " + std::to_string(v));
+      have_version = true;
+    } else if (keyword == "receiver") {
+      double x, y, z, r;
+      read(iss, x, "receiver x");
+      read(iss, y, "receiver y");
+      read(iss, z, "receiver z");
+      read(iss, r, "receiver radius");
+      if (r <= 0)
+        fail("receiver radius must be > 0");
+      scene.receivers.emplace_back(dvec3{x, y, z}, r);
+    } else if (keyword == "material") {
+      std::string name, label;
+      BandEnergies absorption;
+      double scattering;
+
+      if (!(iss >> name))
+        fail("expected material name");
+
+      if (!(iss >> label) || label != "absorption")
+        fail("expected 'absorption' after material name");
+      read_bands(iss, absorption, "absorption");
+
+      if (!(iss >> label) || label != "scattering")
+        fail("expected 'scattering' after absorption values");
+      read(iss, scattering, "scattering");
+
+      for (double a : absorption)
+        if (a < 0 || a > 1)
+          fail("absorption values must be in [0, 1]");
+      mats.insert_or_assign(name,
+                            materials::make(name, absorption, scattering));
+    } else if (keyword == "plane") {
+      std::string mat_name;
+      int k;
+
+      if (!(iss >> mat_name))
+        fail("expected material name");
+      auto it = mats.find(mat_name);
+      if (it == mats.end())
+        fail("unknown material '" + mat_name + "'");
+
+      if (!(iss >> k))
+        fail("expected vertex count");
+      if (k < 3)
+        fail("plane needs at least 3 vertices, got " + std::to_string(k));
+
+      std::vector<dvec3> verts(k);
+      for (int i = 0; i < k; ++i) {
+        std::string v = "vertex " + std::to_string(i + 1);
+        read(iss, verts[i].x, v + " x");
+        read(iss, verts[i].y, v + " y");
+        read(iss, verts[i].z, v + " z");
+      }
+
+      try {
+        scene.planes.emplace_back(std::move(verts), it->second);
+      } catch (const std::invalid_argument &e) {
+        fail(e.what());
+      }
+    } else if (keyword == "emitter") {
+      double x, y, z;
+      read(iss, x, "emitter x");
+      read(iss, y, "emitter y");
+      read(iss, z, "emitter z");
+      Emitter em{dvec3{x, y, z}};
+
+      std::string opt;
+      while (iss >> opt) {
+        if (opt == "power_db") {
+          BandEnergies L_W;
+          read_bands(iss, L_W, "power_db");
+          em.set_power_dB(L_W);
+        } else if (opt == "h_ang") {
+          double start, end;
+          read(iss, start, "h_ang start");
+          read(iss, end, "h_ang end");
+          if (end <= start)
+            fail("h_ang end must be greater than start (write a wrap-around "
+                 "range as e.g. -10 10)");
+          if (end - start > 360)
+            fail("h_ang span must be at most 360 degrees");
+          em.h_ang_start = glm::radians(start);
+          em.h_ang_end = glm::radians(end);
+        } else if (opt == "v_ang") {
+          double start, end;
+          read(iss, start, "v_ang start");
+          read(iss, end, "v_ang end");
+          if (end <= start)
+            fail("v_ang end must be greater than start");
+          if (start < -90 || end > 90)
+            fail("v_ang must be within [-90, 90]");
+          em.v_ang_start = glm::radians(start);
+          em.v_ang_end = glm::radians(end);
+        } else {
+          fail("unknown emitter option '" + opt + "'");
+        }
+      }
+
+      scene.emitters.push_back(em);
+    } else {
+      fail("unknown record '" + keyword + "'");
+    }
+
+    if (std::string extra; iss >> extra)
+      fail("unexpected '" + extra + "'");
+  }
+
+  if (!have_version)
+    throw std::runtime_error(path + ": empty file (no 'pss' record)");
+  return scene;
+}
 
 Scene make_standard() {
   Scene scene;

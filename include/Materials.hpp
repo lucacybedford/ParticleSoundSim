@@ -2,6 +2,7 @@
 #include "Bands.hpp"
 #include "Impedance.hpp"
 #include "Material.hpp"
+#include <map>
 
 namespace materials {
 
@@ -31,4 +32,13 @@ inline const Material mSolidWood =
     make("wood", {0.19, 0.19, 0.23, 0.25, 0.30, 0.37, 0.42, 0.42}, 0.30);
 inline const Material mAbsorber =
     make("absorber", {0.45, 0.65, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00}, 0.60);
+
+inline std::map<std::string, Material> stock() {
+  std::map<std::string, Material> m;
+  for (const Material &mat : {mStone, mConcrete, mCarpet, mGlass, mPlaster,
+                              mPlasterboard, mSolidWood, mAbsorber}) {
+    m.emplace(mat.name, mat);
+  }
+  return m;
+}
 } // namespace materials
