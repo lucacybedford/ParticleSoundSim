@@ -80,14 +80,14 @@ receiver -0.24 -0.56 1.2 0.5
 - [x] write with enough precision to round-trip (`std::setprecision(17)` for doubles)
 
 ### 4. `app_offline`
-- [ ] scene path on the command line, e.g. `ParticleSoundSimOffline [scene.pss] [dry.wav]` (chosen by extension) or a `--scene` flag. `argv[1]` is currently the dry WAV.
-- [ ] the hardcoded `set_power_dB` at `app_offline.cpp:132-133` applies only to the factory scenes, or to emitters with no `source_power`; a file's power wins
+- [x] scene path on the command line, e.g. `ParticleSoundSimOffline [scene.pss] [dry.wav]` (chosen by extension) or a `--scene` flag. `argv[1]` is currently the dry WAV.
+- [x] the hardcoded `set_power_dB` at `app_offline.cpp:132-133` applies only to the factory scenes, or to emitters with no `source_power`; a file's power wins
 
 ### 5. Tests
 - [ ] save `make_room(4, 7, 3, wood)` → load → run. Total energy and T30 should match the status table above within noise.
-- [ ] write the triangulated shoebox by hand (12 triangles) and run it: the seam-leak test carried over from `temp-polygon.md`
-- [ ] save every factory scene to a `.pss` file, as reference files for the Blender exporter
-- [ ] error cases: unknown material, wrong vertex count, non-planar face, missing version, leftover token. Each gives a message with the line number.
+- [x] write the triangulated shoebox by hand (12 triangles) and run it: the seam-leak test carried over from `temp-polygon.md`
+- [x] save every factory scene to a `.pss` file, as reference files for the Blender exporter
+- [x] error cases: unknown material, wrong vertex count, non-planar face, missing version, leftover token. Each gives a message with the line number.
 
 ### 6. Blender exporter (`blend_exporter.py`)
 - [ ] write the same keywords as the format above (lowercase)

@@ -2,13 +2,14 @@
 #include "ConvolveInput.hpp"
 #include "Convolver.hpp"
 #include "Levels.hpp"
-#include "Materials.hpp"
 #include "RIRBuilder.hpp"
 #include "Scene.hpp"
 #include "SimConfig.hpp"
 #include "Simulation.hpp"
 #include "Wav.hpp"
 #include <cstdio>
+#include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <string>
@@ -66,8 +67,24 @@ static bool write_histogram_csv(const std::string &path,
   return static_cast<bool>(out);
 }
 
-// app_offline [input.wav]
+// app_offline [scene.pss] [input.wav]
 int main(int argc, char *argv[]) {
+
+  if (argc < 2) {
+    std::fprintf(stderr, "usage: %s scene.pss [dry.wav ...]\n", argv[0]);
+    return 1;
+  }
+  std::string scene_path = argv[1];
+  std::string geometry = std::filesystem::path(scene_path).stem().string();
+
+  Scene room;
+  try {
+    room = load_scene(scene_path);
+  } catch (const std::exception &e) {
+    std::fprintf(stderr, "Error loading scene: %s\n", e.what());
+    return 1;
+  }
+
   SimConfig cfg;
   Atmosphere air;
 
@@ -75,23 +92,8 @@ int main(int argc, char *argv[]) {
   Configuration
   */
 
-  enum class Room { Box, Cathedral, LivingRoom, CoupledRooms, Standard };
-  const Room which = Room::Box;
-  const bool standard = which == Room::Standard;
-
   cfg.num_particles = 200000;
   cfg.dt = 0.020;
-
-  double room_width = 4;
-  double room_length = 7;
-  double room_height = 3;
-  const Material &room_material = materials::mSolidWood;
-  std::string geometry;
-  // Scene room;
-  // room = load_scene("../scenes/hall_stage_gable.pss");
-  Scene room = load_scene("../scenes/hall_stage_gable.pss");
-  save_scene(room, "../scenes/rt1.pss");
-  save_scene(load_scene("../scenes/rt1.pss"), "../scenes/rt2.pss");
 
   // check all emitters have or do not have power
   size_t em_with_power = 0;
@@ -102,14 +104,6 @@ int main(int argc, char *argv[]) {
   if (em_with_power > 0 && em_with_power < room.emitters.size())
     std::printf(
         "Some emitters do not have source power: inconsistent levels.\n");
-
-  // sets a power level for emitters (in dB re 1 pW at source)
-  BandEnergies L_W0;
-  BandEnergies L_W1;
-  L_W0.fill(70.0);
-  L_W1.fill(75.0);
-  room.emitters[0].set_power_dB(L_W0);
-  room.emitters[1].set_power_dB(L_W1);
 
   Simulation sim(room, cfg, air);
 
@@ -167,16 +161,8 @@ int main(int argc, char *argv[]) {
     }
 
     std::string csv_path;
-    if (standard) {
-      csv_path = "../output/standard/histogram_receiver_[" + std::to_string(i) +
-                 "]_" + std::to_string(cfg.num_particles) + ".csv";
-    } else if (which != Room::Box) {
-      csv_path = "../output/histogram_receiver_[" + std::to_string(i) + "]_" +
-                 geometry + "_" + std::to_string(cfg.num_particles) + ".csv";
-    } else {
-      csv_path = "../output/histogram_receiver_[" + std::to_string(i) + "]_" +
-                 std::to_string(cfg.num_particles) + ".csv";
-    }
+    csv_path = "../output/histogram_receiver_[" + std::to_string(i) + "]_" +
+               geometry + "_" + std::to_string(cfg.num_particles) + ".csv";
     if (write_histogram_csv(csv_path, hist, Receiver::bin_width))
       std::printf("Wrote %s\n", csv_path.c_str());
     else
@@ -185,7 +171,7 @@ int main(int argc, char *argv[]) {
 
   std::string r_particles = std::to_string(cfg.num_particles);
 
-  std::vector<std::string> dry_paths(argv + 1, argv + argc);
+  std::vector<std::string> dry_paths(argv + 2, argv + argc);
   if (dry_paths.empty())
     dry_paths.push_back("dry.wav");
 
@@ -210,12 +196,7 @@ int main(int argc, char *argv[]) {
       normalise_rms(dry[e]);
   }
 
-  std::string stem;
-  if (standard) {
-    stem = "standard/standard-room-" + r_particles;
-  } else {
-    stem = r_particles + "_" + geometry;
-  }
+  std::string stem = r_particles + "_" + geometry;
 
   // one RIR per (receiver, emitter) pair, convolved with that emitter's dry
   // signal; the wet signals are summed so relative source levels are kept
