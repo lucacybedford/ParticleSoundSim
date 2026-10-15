@@ -75,9 +75,9 @@ receiver -0.24 -0.56 1.2 0.5
 - [x] every numeric read is checked (`if (!(iss >> x))` → error naming the field)
 
 ### 3. Saver
-- [ ] `void save_scene(const Scene &, const std::string &path);`, about 20 lines: `pss 1`, a `material` line for any material that isn't stock, a `plane` line from `corners` + `material.name`, then emitters and receivers
-- [ ] for `power_db`: `source_power` is stored in W, so either convert back to dB (`10·log10(W / 1e-12)`) or also store the dB values on `Emitter`
-- [ ] write with enough precision to round-trip (`std::setprecision(17)` for doubles)
+- [x] `void save_scene(const Scene &, const std::string &path);`, about 20 lines: `pss 1`, a `material` line for any material that isn't stock, a `plane` line from `corners` + `material.name`, then emitters and receivers
+- [x] for `power_db`: `source_power` is stored in W, so either convert back to dB (`10·log10(W / 1e-12)`) or also store the dB values on `Emitter`
+- [x] write with enough precision to round-trip (`std::setprecision(17)` for doubles)
 
 ### 4. `app_offline`
 - [ ] scene path on the command line, e.g. `ParticleSoundSimOffline [scene.pss] [dry.wav]` (chosen by extension) or a `--scene` flag. `argv[1]` is currently the dry WAV.

@@ -1,0 +1,37 @@
+# ParticleSoundSim scene
+pss 1
+
+material parquet  absorption 0.04 0.04 0.07 0.06 0.06 0.07 0.07 0.07  scattering 0.1
+material velvet  absorption 0.05 0.12 0.35 0.45 0.38 0.36 0.36 0.36  scattering 0.3
+
+plane parquet 4   -3 -5 0   -0.75 -5 0   -0.75 3 0   -3 3 0
+plane carpet 4   -0.75 -5 0   0.75 -5 0   0.75 3 0   -0.75 3 0
+plane parquet 4   0.75 -5 0   3 -5 0   3 3 0   0.75 3 0
+plane wood 4   -3 3 0   3 3 0   3 3 0.6   -3 3 0.6
+plane wood 4   -3 3 0.6   3 3 0.6   3 5 0.6   -3 5 0.6
+plane plaster 4   3 -5 0   3 -5 4   3 -3 4   3 -3 0
+plane plaster 4   3 -3 0   3 -3 1.2   3 1 1.2   3 1 0
+plane glass 4   3 -3 1.2   3 -3 3   3 1 3   3 1 1.2
+plane plaster 4   3 -3 3   3 -3 4   3 1 4   3 1 3
+plane plaster 4   3 1 0   3 1 4   3 3 4   3 3 0
+plane plaster 4   3 3 0.6   3 3 4   3 5 4   3 5 0.6
+plane plaster 4   -3 -5 0   -3 -2 0   -3 -2 4   -3 -5 4
+plane plaster 4   -3 -2 0   -3 0 0   -3 0 1   -3 -2 1
+plane absorber 4   -3 -2 1   -3 0 1   -3 0 3   -3 -2 3
+plane plaster 4   -3 -2 3   -3 0 3   -3 0 4   -3 -2 4
+plane plaster 4   -3 0 0   -3 3 0   -3 3 4   -3 0 4
+plane plaster 4   -3 3 0.6   -3 5 0.6   -3 5 4   -3 3 4
+plane plaster 4   -3 -5 0   -3 -5 4   -0.5 -5 4   -0.5 -5 0
+plane wood 4   -0.5 -5 0   -0.5 -5 2.1   0.5 -5 2.1   0.5 -5 0
+plane plaster 4   -0.5 -5 2.1   -0.5 -5 4   0.5 -5 4   0.5 -5 2.1
+plane plaster 4   0.5 -5 0   0.5 -5 4   3 -5 4   3 -5 0
+plane plaster 3   -3 -5 4   0 -5 6   3 -5 4
+plane velvet 5   -3 5 0.6   3 5 0.6   3 5 4   0 5 6   -3 5 4
+plane plasterboard 4   3 -5 4   0 -5 6   0 5 6   3 5 4
+plane plasterboard 4   -3 -5 4   -3 5 4   0 5 6   0 -5 6
+
+emitter 0 4 2.1  power_db 90 92 94 95 95 93 90 86  h_ang 180 360
+emitter -1.5 4 1.8  power_db 85 85 85 85 85 85 85 85
+
+receiver 1.5 -1 1.2 0.5
+receiver -1.5 -3.5 1.2 0.5

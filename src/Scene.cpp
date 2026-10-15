@@ -4,11 +4,23 @@
 #include "Materials.hpp"
 #include "Receiver.hpp"
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+
+// shortest text that reads back to exactly the same value (double or float)
+template <typename T> static std::string num(T x) {
+  char buf[32];
+  auto [end, ec] = std::to_chars(buf, buf + sizeof buf, x);
+  return std::string(buf, end);
+}
+
+static bool same(const Material &a, const Material &b) {
+  return a.absorption == b.absorption && a.scattering == b.scattering;
+}
 
 // Scene file loader. Emitters and receivers are indexed in file order:
 // histograms use emitter_id = position in the file, and app_offline
@@ -170,6 +182,75 @@ Scene load_scene(const std::string &path) {
   if (!have_version)
     throw std::runtime_error(path + ": empty file (no 'pss' record)");
   return scene;
+}
+
+void save_scene(const Scene &scene, const std::string &path) {
+  if (std::filesystem::path(path).extension() != ".pss")
+    throw std::runtime_error(path + ": expected a .pss file");
+
+  std::map<std::string, Material> used;
+  for (const Plane &pl : scene.planes) {
+    const std::string &name = pl.material.name;
+    if (name.empty() || name.find_first_of(" \t#") != std::string::npos)
+      throw std::runtime_error("material name '" + name +
+                               "' can't be written to a .pss file");
+    auto [it, inserted] = used.emplace(name, pl.material);
+    if (!inserted && !same(it->second, pl.material))
+      throw std::runtime_error("two different materials named '" + name + "'");
+  }
+
+  std::ofstream out(path);
+  if (!out)
+    throw std::runtime_error(path + ": cannot open for writing");
+
+  out << "# ParticleSoundSim scene\npss 1\n\n";
+
+  const auto stock = materials::stock();
+  for (const auto &[name, mat] : used) {
+    auto s = stock.find(name);
+    if (s != stock.end() && same(s->second, mat))
+      continue;
+    out << "material " << name << "  absorption";
+    for (double a : mat.absorption)
+      out << ' ' << num(a);
+    out << "  scattering " << num(mat.scattering) << '\n';
+  }
+
+  out << '\n';
+  for (const Plane &pl : scene.planes) {
+    out << "plane " << pl.material.name << ' ' << pl.corners.size();
+    for (const dvec3 &v : pl.corners)
+      out << "   " << num(v.x) << ' ' << num(v.y) << ' ' << num(v.z);
+    out << '\n';
+  }
+
+  out << '\n';
+  const Emitter def{dvec3{0}};
+  for (const Emitter &em : scene.emitters) {
+    out << "emitter " << num(em.x.x) << ' ' << num(em.x.y) << ' '
+        << num(em.x.z);
+    if (em.source_power) {
+      out << "  power_db";
+      for (double W : *em.source_power)
+        out << ' ' << num(10 * std::log10(W / 1e-12));
+    }
+    if (em.h_ang_start != def.h_ang_start || em.h_ang_end != def.h_ang_end)
+      out << "  h_ang " << num(glm::degrees(em.h_ang_start)) << ' '
+          << num(glm::degrees(em.h_ang_end));
+    if (em.v_ang_start != def.v_ang_start || em.v_ang_end != def.v_ang_end)
+      out << "  v_ang " << num(glm::degrees(em.v_ang_start)) << ' '
+          << num(glm::degrees(em.v_ang_end));
+    out << '\n';
+  }
+
+  out << '\n';
+  for (const Receiver &r : scene.receivers) {
+    out << "receiver " << num(r.x.x) << ' ' << num(r.x.y) << ' ' << num(r.x.z)
+        << ' ' << num(r.size) << '\n';
+  }
+
+  if (!out)
+    throw std::runtime_error(path + ": write failed");
 }
 
 Scene make_standard() {

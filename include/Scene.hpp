@@ -21,3 +21,4 @@ Scene make_diamond_scene(double room_radius = 2.4);
 Scene make_L_room(const Material &material);
 Scene make_standard();
 Scene load_scene(const std::string &path);
+void save_scene(const Scene &scene, const std::string &path);
