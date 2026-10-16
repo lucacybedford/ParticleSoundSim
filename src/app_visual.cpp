@@ -33,7 +33,7 @@ int main() {
   // Simulation sim(make_room(5, 8, 3, room_material), cfg, air);
   // Simulation sim(make_cathedral(room_material), cfg, air);
   // Simulation sim(make_coupled_rooms(), cfg, air);
-  Scene room = load_scene("../scenes/hall_stage_gable.pss");
+  Scene room = load_scene("../scenes/scene.pss");
   Simulation sim(room, cfg, air);
 
   GLFWwindow *window;

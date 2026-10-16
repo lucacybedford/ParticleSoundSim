@@ -90,10 +90,10 @@ receiver -0.24 -0.56 1.2 0.5
 - [x] error cases: unknown material, wrong vertex count, non-planar face, missing version, leftover token. Each gives a message with the line number.
 
 ### 6. Blender exporter (`blend_exporter.py`)
-- [ ] write the same keywords as the format above (lowercase)
-- [ ] use `obj.matrix_world` for vertices and for Empty positions
-- [ ] Blender normals point outward: reverse the vertex order (or use "Recalculate Inside" in Blender)
+- [x] write the same keywords as the format above (lowercase)
+- [x] use `obj.matrix_world` for vertices and for Empty positions
+- [x] Blender normals point outward: reverse the vertex order (or use "Recalculate Inside" in Blender)
 - [ ] triangulate concave ngons and non-planar faces (`bmesh.ops.triangulate`) before writing
-- [ ] emitter Empties: custom properties `power_db` (8 values), and optionally `h_ang` / `v_ang`
-- [ ] receiver Empties: display type Sphere, radius = `empty_display_size * max(obj.scale)`
+- [x] emitter Empties: custom properties `power_db` (8 values), and optionally `h_ang` / `v_ang`
+- [x] receiver Empties: display type Sphere, radius = `empty_display_size * max(obj.scale)`
 - [ ] write emitters and receivers in a stable order (sort by object name), so indices don't change between exports
