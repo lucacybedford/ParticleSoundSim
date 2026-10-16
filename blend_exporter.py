@@ -25,7 +25,9 @@ def is_valid_plane(face):
     return True
 
 
-with open(bpy.path.abspath("//scene.pss"), "w") as f:
+with open(
+    "/Users/lucabedford/code/Important/ParticleSoundSim/scenes/scene.pss", "w"
+) as f:
     f.write("pss 1\n")
 
     emitters, receivers = [], []

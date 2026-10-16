@@ -8,11 +8,6 @@
 
 ### Use Blender for scene generation
 
-- [x] Convert Planes to use polygons
-- [x] Write scene parser to convert scene file to Scene object (15-10-2026, `fe3e82c`)
-- [x] Scene saver writes a `Scene` to `.pss`; `app_offline` takes the scene file as an argument; hard-coded scenes saved in `scenes/` (15-10-2026, `e2aa88a`, `3e763a8`, `e428aad`)
-- [ ] Check that each `.pss` scene reproduces its hard-coded original (in `6297e58` the `4x7x3_wood_room` outputs changed size; not yet explained)
-- [ ] Write python exporter for Blender
 
 ### Absolute energy units
 
@@ -118,3 +113,8 @@ Design: [docs/moving_emitters.md](docs/moving_emitters.md) — baked positions +
 - [x] Make `Particle::energy_threshold` relative to initial energy (it is absolute `1e-6`). Nothing else in the tracer may depend on absolute energy, or the post-hoc scaling stops being exact
 - [x] Give `Emitter` a sound power per band `W_b` (W), settable as `L_W` in dB re 1e-12 W. A scale factor applied at output, not the particles' starting energy
 - [x] Receiver bins → intensity, constant source: `I_b = W_b·Σ_k H_b(k)/(πr²)` → `p² = ρc·I` → SPL dB re 20 µPa per band plus overall (energy sum over bands); `include/Levels.hpp`, `Atmosphere::air_density()`, printed per receiver by `app_offline` when every emitter has a power (09-10-2026)
+- [x] Convert Planes to use polygons
+- [x] Write scene parser to convert scene file to Scene object (15-10-2026, `fe3e82c`)
+- [x] Scene saver writes a `Scene` to `.pss`; `app_offline` takes the scene file as an argument; hard-coded scenes saved in `scenes/` (15-10-2026, `e2aa88a`, `3e763a8`, `e428aad`)
+- [x] Check that each `.pss` scene reproduces its hard-coded original (in `6297e58` the `4x7x3_wood_room` outputs changed size; not yet explained)
+- [x] Write python exporter for Blender
