@@ -3,6 +3,7 @@ build/
 *.a
 *~
 .DS_Store
+output/**/*.wav
 
 # Python
 .venv/

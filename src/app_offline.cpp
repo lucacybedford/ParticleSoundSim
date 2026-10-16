@@ -198,6 +198,7 @@ int main(int argc, char *argv[]) {
 
   std::string stem = r_particles + "_" + geometry;
 
+  std::filesystem::create_directories("../output/RIR");
   // one RIR per (receiver, emitter) pair, convolved with that emitter's dry
   // signal; the wet signals are summed so relative source levels are kept
   for (std::size_t r = 0; r < sim.scene.receivers.size(); ++r) {
@@ -217,7 +218,7 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      const std::string rir_path = "../output/" + stem + "_rir" + tag + ".wav";
+      const std::string rir_path = "../output/RIR/" + stem + tag + "_rir.wav";
       Audio rir_audio{builder.sample_rate, rir};
       if (!wav_write(rir_path, rir_audio)) {
         std::printf("Failed to write %s (directory must exist)\n",
