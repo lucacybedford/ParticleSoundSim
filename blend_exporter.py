@@ -26,7 +26,7 @@ def is_valid_plane(face):
 
 
 with open(
-    "/Users/lucabedford/code/Important/ParticleSoundSim/scenes/scene.pss", "w"
+    "/Users/lucabedford/Code/Important/ParticleSoundSim/scenes/scene.pss", "w"
 ) as f:
     f.write("pss 1\n")
 
