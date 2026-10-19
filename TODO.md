@@ -4,7 +4,16 @@
 
 ## In Progress
 
+### Large scenes
+
+Before moving emitters (supervision, 19-10-2026).
+
+- [ ] Scale study: extend the free-field experiment (`ParticleSoundSimExperiments freefield`, now d = 1–8 m) to approach-scale distances; record level error, spread over seeds, receiver hits and runtime, and the N needed to stay within a chosen error
 - [ ] Design large 'outdoor' room
+- [ ] Performance: time the large outdoor scene against a room at the same N (spatial acceleration / parallelisation in Not Done if it is too slow)
+- [ ] Receiver: radius scaling with distance from the emitter (constant r/d), with incoming energy weighted by the distance travelled inside the receiver; compare with the current receiver in the free-field test at the same N (level error and spread vs distance); then check near the ground in the outdoor scene
+- [ ] Scene files in YAML or TOML instead of `.pss`: loader, saver and Blender exporter; convert `scenes/` and check each loads to the same `Scene` as its `.pss`. Do this before cone emitters add fields
+- [ ] Cone emitters: a cone from each aircraft (emitter) position, aimed at the receiver; scale per-particle energy by the cone's solid angle `Ω/4π` so SPL stays correct (free-field check); find each cone's radius by testing level error against radius in a scene with a ground (in free field any cone containing the receiver gives the right level)
 
 ### Use Blender for scene generation
 
@@ -16,21 +25,6 @@
 - [ ] Replace the `1/√N` RIR calibration in `app_offline.cpp` with the physical scaling; choose a stated dBFS ↔ Pa reference for WAV output
 - [ ] Validate: free-field direct sound vs `W/(4πd²)`; reverberant level in a room vs `L_W + 10·log10(4/A)` (Sabine diffuse field)
   - Free-field smoke test (09-10-2026, `ParticleSoundSimExperiments freefield`, N = 2M, r = 0.2 m, d = 1/2/4/8 m): within +0.08/+0.04/+0.06/−0.29 dB of `W/(4πd²)` with air absorption over `d`, all inside 1.2σ of Monte Carlo noise. Without air absorption, 8 kHz is −1.2 dB at 8 m, which is the air loss. Still to do: multiple seeds, the `r/d` bias of the capture sphere (+0.04 dB at r/d = 0.2), and the room case
-
-### Moving emitters
-
-Design: [docs/moving_emitters.md](docs/moving_emitters.md) — baked positions + crossfade (Steam Audio style).
-
-- [ ] Check how Steam Audio actually splits direct and baked reflections (the design note states it from memory)
-- [ ] Emitter trajectory: position as a function of time (start with a straight line, constant velocity)
-- [ ] Bake along the path: run the static simulation at sampled source positions on the trajectory; store each receiver's histogram per position
-- [ ] Reflections only: remove the direct arrival from baked histograms (or bake with direct excluded) so it is not doubled at runtime
-- [ ] Runtime direct path: per-sample variable delay line from the current source–receiver distance, with `1/r²` energy attenuation and per-band air absorption (gives propagation delay and Doppler)
-- [ ] Runtime reflections: interpolate the two nearest baked histograms by position, synthesise one RIR from the result; equal-power crossfade of RIRs as the fallback
-- [ ] Probe spacing study: bake at two spacings, compare receiver level error, pick spacing from the result
-- [ ] Ground-truth reference: continuous emission (emit from the current position during `step()`, receiver histogram over absolute time); report the baked method's level error against it
-- [ ] Validate in free field: fly-by level time history vs analytic `1/r²` with retarded time; report LAmax and SEL
-- [ ] Visual app: draw the moving emitter, its trail and the baked positions
 
 ---
 
@@ -52,11 +46,28 @@ Design: [docs/moving_emitters.md](docs/moving_emitters.md) — baked positions +
 - [ ] Spatial acceleration structure (BVH / uniform grid) for particle–surface intersection
 - [ ] CPU parallelisation (multithreading, SIMD)
 - [ ] GPU acceleration
-- [ ] Progressive RIR re-baking as the listener moves (moving source: see In Progress)
+- [ ] Progressive RIR re-baking as the listener moves (moving source: see Moving emitters below)
 - [ ] Enable movable listener
-- [ ] output sound energy heatmap
+- [ ] output sound energy heatmap (SPL on the ground; later, after Large scenes)
 - [ ] waveform display
 - [ ] HRTF implementation
+
+### Moving emitters
+
+Deferred at the 19-10-2026 supervision: Large scenes first.
+
+Design: [docs/moving_emitters.md](docs/moving_emitters.md) — baked positions + crossfade (Steam Audio style).
+
+- [ ] Check how Steam Audio actually splits direct and baked reflections (the design note states it from memory)
+- [ ] Emitter trajectory: position as a function of time (start with a straight line, constant velocity)
+- [ ] Bake along the path: run the static simulation at sampled source positions on the trajectory; store each receiver's histogram per position
+- [ ] Reflections only: remove the direct arrival from baked histograms (or bake with direct excluded) so it is not doubled at runtime
+- [ ] Runtime direct path: per-sample variable delay line from the current source–receiver distance, with `1/r²` energy attenuation and per-band air absorption (gives propagation delay and Doppler)
+- [ ] Runtime reflections: interpolate the two nearest baked histograms by position, synthesise one RIR from the result; equal-power crossfade of RIRs as the fallback
+- [ ] Probe spacing study: bake at two spacings, compare receiver level error, pick spacing from the result
+- [ ] Ground-truth reference: continuous emission (emit from the current position during `step()`, receiver histogram over absolute time); report the baked method's level error against it
+- [ ] Validate in free field: fly-by level time history vs analytic `1/r²` with retarded time; report LAmax and SEL
+- [ ] Visual app: draw the moving emitter, its trail and the baked positions
 
 ---
 
