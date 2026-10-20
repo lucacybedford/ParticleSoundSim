@@ -11,7 +11,7 @@ Before moving emitters (supervision, 19-10-2026).
 - [ ] Scale study: extend the free-field experiment (`ParticleSoundSimExperiments freefield`, now d = 1–8 m) to approach-scale distances; record level error, spread over seeds, receiver hits and runtime, and the N needed to stay within a chosen error
 - [ ] Design large 'outdoor' room
 - [ ] Performance: time the large outdoor scene against a room at the same N (spatial acceleration / parallelisation in Not Done if it is too slow)
-- [ ] Receiver: radius scaling with distance from the emitter (constant r/d), with incoming energy weighted by the distance travelled inside the receiver; compare with the current receiver in the free-field test at the same N (level error and spread vs distance); then check near the ground in the outdoor scene
+- [ ] Receiver: radius scaling with distance from the emitter (constant r/d), with incoming energy weighted by the distance travelled inside the receiver (receivers absorb particles on entry, `src/Particle.cpp:119–120`, so this needs pass-through particles); compare with the current receiver in the free-field test at the same N (level error and spread vs distance); then check near the ground in the outdoor scene
 - [ ] Scene files in YAML or TOML instead of `.pss`: loader, saver and Blender exporter; convert `scenes/` and check each loads to the same `Scene` as its `.pss`. Do this before cone emitters add fields
 - [ ] Cone emitters: a cone from each aircraft (emitter) position, aimed at the receiver; scale per-particle energy by the cone's solid angle `Ω/4π` so SPL stays correct (free-field check); find each cone's radius by testing level error against radius in a scene with a ground (in free field any cone containing the receiver gives the right level)
 
