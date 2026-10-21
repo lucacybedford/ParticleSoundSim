@@ -1,4 +1,5 @@
 #include "AirAbsorption.hpp"
+#include "Bands.hpp"
 #include "Convolver.hpp"
 #include "Levels.hpp"
 #include "Materials.hpp"
@@ -83,12 +84,11 @@ static const std::vector<double> kConvInputSeconds = {
 static constexpr double kConvRirSweepInputSeconds = 10.0;
 static const std::vector<double> kConvRirSweepSeconds = {0.25, 0.5, 1.0, 2.0};
 
-// freefield mode: one emitter, no planes, receivers on four axes so none
-// shadows another
 static constexpr unsigned int kFreeParticles = 2000000;
 static constexpr double kFreeRadius = 0.2;
 static constexpr double kFreeL_W = 90.0; // dB re 1 pW, every band
-static const std::vector<double> kFreeDistances = {1.0, 2.0, 4.0, 8.0};
+static const std::vector<double> kFreeDistances = {2,  4,  8,   16,
+                                                   32, 64, 128, 256};
 
 static constexpr unsigned int kSeedStart = 1;
 
@@ -625,13 +625,12 @@ static int run_convolve() {
                              rir_sweep);
 }
 
-// steady-state SPL smoke test: constant source in free field against
+// constant source in free field against
 // W/(4 pi d^2), with and without ISO 9613-1 air absorption over d
 static int run_freefield() {
   SimConfig cfg;
   cfg.num_particles = kFreeParticles;
   cfg.dt = 0.005;
-  cfg.max_time = 1.2 * kFreeDistances.back() / Atmosphere{}.sound_speed();
   cfg.deterministic = true;
   cfg.seed = kSeedStart;
 
@@ -640,37 +639,43 @@ static int run_freefield() {
   Scene scene;
   scene.emitters.emplace_back(dvec3{0.0, 0.0, 0.0});
   scene.emitters[0].set_power_dB(L_W);
-  const std::array<dvec3, 4> axes{dvec3{1, 0, 0}, dvec3{-1, 0, 0},
-                                  dvec3{0, 1, 0}, dvec3{0, -1, 0}};
-  for (std::size_t i = 0; i < kFreeDistances.size(); ++i)
-    scene.receivers.emplace_back(axes[i % axes.size()] * kFreeDistances[i],
-                                 kFreeRadius);
-
-  Atmosphere atm;
-  Simulation sim(scene, cfg, atm);
-  sim.run_offline();
-
-  const double rho_c = atm.air_density() * atm.sound_speed();
-  const BandEnergies &W = *sim.scene.emitters[0].source_power;
-  std::printf("Free field: N = %u, r = %.2f m, L_W = %.1f dB, rho c = %.1f\n",
-              kFreeParticles, kFreeRadius, kFreeL_W, rho_c);
+  scene.receivers.emplace_back(Receiver{{0, 0, 0}, kFreeRadius});
 
   std::ofstream csv = open_csv(kConvOutDir + "/freefield_spl.csv");
-  csv << "distance_m,band_hz,hits,spl_sim,spl_geom,spl_air,diff_geom,diff_air\n";
+  csv << "distance_m,band_hz,hits,spl_sim,spl_geom,spl_air,diff_geom,diff_"
+         "air\n";
+  Atmosphere atm;
+  const AirAbsorption air(atm);
+  std::vector<Receiver> receivers;
+  receivers.reserve(kFreeDistances.size());
+  const double rho_c = atm.air_density() * atm.sound_speed();
+  std::printf("Free field: N = %u, r = %.2f m, L_W = %.1f dB, rho c = %.1f\n",
+              kFreeParticles, kFreeRadius, kFreeL_W, rho_c);
+  for (std::size_t i = 0; i < kFreeDistances.size(); ++i) {
+    scene.receivers[0] = {{kFreeDistances[i], 0, 0}, kFreeRadius};
+
+    cfg.max_time = 1.2 * kFreeDistances[i] / atm.sound_speed();
+    Simulation sim(scene, cfg, atm);
+    sim.run_offline();
+
+    receivers.emplace_back(sim.scene.receivers[0]);
+  }
+
+  const BandEnergies &W = *scene.emitters[0].source_power;
 
   for (std::size_t i = 0; i < kFreeDistances.size(); ++i) {
-    const Receiver &rec = sim.scene.receivers[i];
+    const Receiver &rec = receivers[i];
     const double d = kFreeDistances[i];
     std::vector<BandEnergies> hist = rec.histograms[0];
     for (BandEnergies &bin : hist)
       for (int b = 0; b < kNumBands; ++b)
         bin[b] *= W[b];
-    const BandEnergies L = levels::band_spl(
-        levels::steady_intensity(hist, rec.size), rho_c);
+    const BandEnergies L =
+        levels::band_spl(levels::steady_intensity(hist, rec.size), rho_c);
 
     BandEnergies air_gain;
     air_gain.fill(1.0);
-    sim.air.attenuate_total(air_gain, d);
+    air.attenuate_total(air_gain, d);
 
     // every hit carries 1/N times the air loss, so the hit count follows
     // from the 63 Hz sum (air loss there is negligible)
